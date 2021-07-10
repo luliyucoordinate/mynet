@@ -112,14 +112,15 @@ class Tensor {
    *        Dies on out of range index.
    */
   inline int CanonicalAxisIndex(int axis_index) const {
-    CHECK_GE(axis_index, -num_axes())
-        << "axis " << axis_index << " out of range for " << num_axes()
+    int num_axes_t = static_cast<int>(num_axes());
+    CHECK_GE(axis_index, -num_axes_t)
+        << "axis " << axis_index << " out of range for " << num_axes_t
         << "-D Tensor with shape " << shape_string();
-    CHECK_LT(axis_index, num_axes())
-        << "axis " << axis_index << " out of range for " << num_axes()
+    CHECK_LT(axis_index, num_axes_t)
+        << "axis " << axis_index << " out of range for " << num_axes_t
         << "-D Tensor with shape " << shape_string();
     if (axis_index < 0) {
-      return axis_index + num_axes();
+      return axis_index + num_axes_t;
     }
     return axis_index;
   }

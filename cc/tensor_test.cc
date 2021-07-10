@@ -1,6 +1,7 @@
 #include "tensor.hpp"
 #include "common.hpp"
 #include "mynet_test_main.hpp"
+#include "filler.hpp"
 
 namespace mynet {
 
@@ -251,7 +252,7 @@ TYPED_TEST(TensorMathTest, TestScaleData) {
   EXPECT_NEAR(expected_diff_asum_before_scale, this->tensor_->asum_diff(),
               this->epsilon_ * expected_diff_asum_before_scale);
   switch (TypeParam::device) {
-  case mynet::CPU:
+  case Mynet::CPU:
     this->tensor_->mutable_cpu_diff();
     break;
   default:

@@ -3,6 +3,7 @@ cc_test(
     srcs = ["tensor_test.cc"],
     deps = [
         ":tensor",
+        ":filler",
         ":mynet_test_main",
     ],
 )

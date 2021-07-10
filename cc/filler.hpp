@@ -33,8 +33,8 @@ class UniformFiller : public Filler<Dtype> {
     CHECK(Tensor->count());
     mynet_rng_uniform<Dtype>(Tensor->count(), Dtype(this->filler_param_.min()),
         Dtype(this->filler_param_.max()), Tensor->mutable_cpu_data());
-    CHECK_EQ(this->filler_param_.sparse(), -1)
-         << "Sparsity not supported by this Filler.";
+    // CHECK_EQ(this->filler_param_.sparse(), -1)
+    //      << "Sparsity not supported by this Filler.";
   }
 };
 
