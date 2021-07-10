@@ -34,6 +34,10 @@ private:\
   template class classname<float>; \
   template class classname<double>
 
+// A simple macro to mark codes that are not implemented, so that when the code
+// is executed we will see a fatal log.
+#define NOT_IMPLEMENTED LOG(FATAL) << "Not Implemented Yet"
+
 namespace mynet {
 
 void GlobalInit(int* pargc, char*** pargv);

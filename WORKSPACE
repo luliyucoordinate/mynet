@@ -44,8 +44,8 @@ rules_foreign_cc_dependencies()
 http_archive(
    name = "openblas",
    build_file_content = all_content,
-   strip_prefix = "OpenBLAS-0.3.2",
-   urls = ["https://github.com/xianyi/OpenBLAS/archive/v0.3.2.tar.gz"],
+   strip_prefix = "OpenBLAS-0.3.15",
+   urls = ["https://github.com/xianyi/OpenBLAS/archive/v0.3.15.tar.gz"],
 )
 
 # Eigen source code repository

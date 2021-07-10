@@ -47,7 +47,7 @@ template <typename Dtype>
 void Tensor<Dtype>::Reshape(const TensorShape& shape) {
   CHECK_LE(shape.dim_size(), kMaxTensorAxes);
   std::vector<int> shape_vec(shape.dim_size());
-  for (size_t i = 0; i < shape.dim_size(); ++i) {
+  for (int i = 0; i < shape.dim_size(); ++i) {
     shape_vec[i] = shape.dim(i);
   }
   Reshape(shape_vec);
@@ -121,6 +121,12 @@ void Tensor<Dtype>::ShareDiff(const Tensor& other) {
   diff_ = other.diff();
 }
 
+// The "update" method is used for parameter tensors in a Net, which are stored
+// as Tensor<float> or Tensor<double> -- hence we do not define it for
+// Tensor<int> or Tensor<unsigned int>.
+template <> void Tensor<unsigned int>::Update() { NOT_IMPLEMENTED; }
+template <> void Tensor<int>::Update() { NOT_IMPLEMENTED; }
+
 template <typename Dtype>
 void Tensor<Dtype>::Update() {
   // We will perform update based on where the data is located.
@@ -138,6 +144,16 @@ void Tensor<Dtype>::Update() {
   }
 }
 
+template <> unsigned int Tensor<unsigned int>::asum_data() const {
+  NOT_IMPLEMENTED;
+  return 0;
+}
+
+template <> int Tensor<int>::asum_data() const {
+  NOT_IMPLEMENTED;
+  return 0;
+}
+
 template <typename Dtype>
 Dtype Tensor<Dtype>::asum_data() const {
   if (!data_) { return 0; }
@@ -153,6 +169,16 @@ Dtype Tensor<Dtype>::asum_data() const {
   return 0;
 }
 
+template <> unsigned int Tensor<unsigned int>::asum_diff() const {
+  NOT_IMPLEMENTED;
+  return 0;
+}
+
+template <> int Tensor<int>::asum_diff() const {
+  NOT_IMPLEMENTED;
+  return 0;
+}
+
 template <typename Dtype>
 Dtype Tensor<Dtype>::asum_diff() const {
   if (!diff_) { return 0; }
@@ -165,6 +191,16 @@ Dtype Tensor<Dtype>::asum_diff() const {
   default:
     LOG(FATAL) << "Unknown SyncedMemory head state: " << diff_->head();
   }
+  return 0;
+}
+
+template <> unsigned int Tensor<unsigned int>::sumsq_data() const {
+  NOT_IMPLEMENTED;
+  return 0;
+}
+
+template <> int Tensor<int>::sumsq_data() const {
+  NOT_IMPLEMENTED;
   return 0;
 }
 
@@ -188,6 +224,16 @@ Dtype Tensor<Dtype>::sumsq_data() const {
   return sumsq;
 }
 
+template <> unsigned int Tensor<unsigned int>::sumsq_diff() const {
+  NOT_IMPLEMENTED;
+  return 0;
+}
+
+template <> int Tensor<int>::sumsq_diff() const {
+  NOT_IMPLEMENTED;
+  return 0;
+}
+
 template <typename Dtype>
 Dtype Tensor<Dtype>::sumsq_diff() const {
   Dtype sumsq;
@@ -207,6 +253,14 @@ Dtype Tensor<Dtype>::sumsq_diff() const {
   return sumsq;
 }
 
+template <> void Tensor<unsigned int>::scale_data(unsigned int scale_factor) {
+  NOT_IMPLEMENTED;
+}
+
+template <> void Tensor<int>::scale_data(int scale_factor) {
+  NOT_IMPLEMENTED;
+}
+
 template <typename Dtype>
 void Tensor<Dtype>::scale_data(Dtype scale_factor) {
   Dtype* data;
@@ -222,6 +276,14 @@ void Tensor<Dtype>::scale_data(Dtype scale_factor) {
   default:
     LOG(FATAL) << "Unknown SyncedMemory head state: " << data_->head();
   }
+}
+
+template <> void Tensor<unsigned int>::scale_diff(unsigned int scale_factor) {
+  NOT_IMPLEMENTED;
+}
+
+template <> void Tensor<int>::scale_diff(int scale_factor) {
+  NOT_IMPLEMENTED;
 }
 
 template <typename Dtype>

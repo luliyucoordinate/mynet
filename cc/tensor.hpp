@@ -64,10 +64,10 @@ class Tensor {
    *        "canonicalized" using CanonicalAxisIndex.
    *        Dies on out of range index.
    */
-  inline int shape(int index) const {
+  inline size_t shape(int index) const {
     return shape_[CanonicalAxisIndex(index)];
   }
-  inline int num_axes() const { return shape_.size(); }
+  inline size_t num_axes() const { return shape_.size(); }
   inline int count() const { return count_; }
 
   /**
@@ -137,7 +137,8 @@ class Tensor {
         << "Cannot use legacy accessors on Tensors with > 4 axes.";
     CHECK_LT(index, 4);
     CHECK_GE(index, -4);
-    if (index >= num_axes() || index < -num_axes()) {
+    int num_axes_t = static_cast<int>(num_axes());
+    if (index >= num_axes_t || index < -num_axes_t) {
       // Axis is out of range, but still in [0, 3] (or [-4, -1] for reverse
       // indexing) -- this special case simulates the one-padding used to fill
       // extraneous axes of legacy Tensors.
@@ -162,7 +163,7 @@ class Tensor {
   inline int offset(const std::vector<int>& indices) const {
     CHECK_LE(indices.size(), num_axes());
     int offset = 0;
-    for (int i = 0; i < num_axes(); ++i) {
+    for (size_t i = 0; i < num_axes(); ++i) {
       offset *= shape(i);
       if (indices.size() > i) {
         CHECK_GE(indices[i], 0);

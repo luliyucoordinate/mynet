@@ -2,7 +2,7 @@
 #define MYNET_CC_MATH_FUNCTIONS_H_
 
 #include <stdint.h>
-#include <cblas.h>
+#include <openblas/cblas.h>
 #include "common.hpp"
 
 namespace mynet {
@@ -22,10 +22,17 @@ template <typename Dtype>
 Dtype mynet_cpu_dot(const int n, const Dtype* x, const Dtype* y);
 
 template <typename Dtype>
+Dtype mynet_cpu_strided_dot(const int n, const Dtype* x, const int incx,
+    const Dtype* y, const int incy);
+
+template <typename Dtype>
 void mynet_scal(const int N, const Dtype alpha, Dtype *X);
 
 template <typename Dtype>
 void mynet_cpu_scale(const int n, const Dtype alpha, const Dtype *x, Dtype* y);
+
+template <typename Dtype>
+void mynet_rng_uniform(const int n, const Dtype a, const Dtype b, Dtype* r);
 
 }  // namespace mynet
 
