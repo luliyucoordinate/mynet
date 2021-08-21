@@ -1,62 +1,58 @@
 /**
- * @brief A layer factory that allows one to register layers.
- * During runtime, registered layers can be called by passing a LayerParameter
- * protobuffer to the CreateLayer function:
+ * @brief A Ops factory that allows one to register Opss.
+ * During runtime, registered Opss can be called by passing a OpsParameter
+ * protobuffer to the CreateOps function:
  *
- *     LayerRegistry<Dtype>::CreateLayer(param);
+ *     OpsRegistry<Dtype>::CreateOps(param);
  *
- * There are two ways to register a layer. Assuming that we have a layer like:
+ * There are two ways to register a Ops. Assuming that we have a Ops like:
  *
  *   template <typename Dtype>
- *   class MyAwesomeLayer : public Layer<Dtype> {
+ *   class MyAwesomeOps : public Ops<Dtype> {
  *     // your implementations
  *   };
  *
- * and its type is its C++ class name, but without the "Layer" at the end
- * ("MyAwesomeLayer" -> "MyAwesome").
+ * and its type is its C++ class name, but without the "Ops" at the end
+ * ("MyAwesomeOps" -> "MyAwesome").
  *
- * If the layer is going to be created simply by its constructor, in your c++
+ * If the Ops is going to be created simply by its constructor, in your c++
  * file, add the following line:
  *
- *    REGISTER_LAYER_CLASS(MyAwesome);
+ *    REGISTER_Ops_CLASS(MyAwesome);
  *
- * Or, if the layer is going to be created by another creator function, in the
+ * Or, if the Ops is going to be created by another creator function, in the
  * format of:
  *
  *    template <typename Dtype>
- *    Layer<Dtype*> GetMyAwesomeLayer(const LayerParameter& param) {
+ *    Ops<Dtype*> GetMyAwesomeOps(const OpsParameter& param) {
  *      // your implementation
  *    }
  *
- * (for example, when your layer has multiple backends, see GetConvolutionLayer
+ * (for example, when your Ops has multiple backends, see GetConvolutionOps
  * for a use case), then you can register the creator function instead, like
  *
- * REGISTER_LAYER_CREATOR(MyAwesome, GetMyAwesomeLayer)
+ * REGISTER_Ops_CREATOR(MyAwesome, GetMyAwesomeOps)
  *
- * Note that each layer type should only be registered once.
+ * Note that each Ops type should only be registered once.
  */
 
-#ifndef CAFFE_LAYER_FACTORY_H_
-#define CAFFE_LAYER_FACTORY_H_
+#ifndef MYNET_OPS_FACTORY_H_
+#define MYNET_OPS_FACTORY_H_
 
-#include <map>
-#include <string>
-#include <vector>
+#include "common.hpp"
+#include "ops.hpp"
+#include "core/protobuf/mynet.pb.h"
 
-#include "caffe/common.hpp"
-#include "caffe/layer.hpp"
-#include "caffe/proto/caffe.pb.h"
-
-namespace caffe {
+namespace mynet {
 
 template <typename Dtype>
-class Layer;
+class Ops;
 
 template <typename Dtype>
-class LayerRegistry {
+class OpsRegistry {
  public:
-  typedef shared_ptr<Layer<Dtype> > (*Creator)(const LayerParameter&);
-  typedef std::map<string, Creator> CreatorRegistry;
+  typedef std::shared_ptr<Ops<Dtype> > (*Creator)(const OpsParameter&);
+  typedef std::map<std::string, Creator> CreatorRegistry;
 
   static CreatorRegistry& Registry() {
     static CreatorRegistry* g_registry_ = new CreatorRegistry();
@@ -67,75 +63,74 @@ class LayerRegistry {
   static void AddCreator(const string& type, Creator creator) {
     CreatorRegistry& registry = Registry();
     CHECK_EQ(registry.count(type), 0)
-        << "Layer type " << type << " already registered.";
+        << "Ops type " << type << " already registered.";
     registry[type] = creator;
   }
 
-  // Get a layer using a LayerParameter.
-  static shared_ptr<Layer<Dtype> > CreateLayer(const LayerParameter& param) {
-    if (Caffe::root_solver()) {
-      LOG(INFO) << "Creating layer " << param.name();
+  // Get a Ops using a OpsParameter.
+  static std::shared_ptr<Ops<Dtype> > CreateOps(const OpsParameter& param) {
+    if (mynet::root_solver()) {
+      LOG(INFO) << "Creating Ops " << param.name();
     }
     const string& type = param.type();
     CreatorRegistry& registry = Registry();
-    CHECK_EQ(registry.count(type), 1) << "Unknown layer type: " << type
-        << " (known types: " << LayerTypeListString() << ")";
+    CHECK_EQ(registry.count(type), 1) << "Unknown Ops type: " << type
+        << " (known types: " << OpsTypeListString() << ")";
     return registry[type](param);
   }
 
-  static vector<string> LayerTypeList() {
+  static std::vector<std::string> OpsTypeList() {
     CreatorRegistry& registry = Registry();
-    vector<string> layer_types;
+    std::vector<std::string> Ops_types;
     for (typename CreatorRegistry::iterator iter = registry.begin();
          iter != registry.end(); ++iter) {
-      layer_types.push_back(iter->first);
+      Ops_types.push_back(iter->first);
     }
-    return layer_types;
+    return Ops_types;
   }
 
  private:
-  // Layer registry should never be instantiated - everything is done with its
+  // Ops registry should never be instantiated - everything is done with its
   // static variables.
-  LayerRegistry() {}
+  OpsRegistry() {}
 
-  static string LayerTypeListString() {
-    vector<string> layer_types = LayerTypeList();
-    string layer_types_str;
-    for (vector<string>::iterator iter = layer_types.begin();
-         iter != layer_types.end(); ++iter) {
-      if (iter != layer_types.begin()) {
-        layer_types_str += ", ";
+  static string OpsTypeListString() {
+    std::vector<std::string> Ops_types = OpsTypeList();
+    string Ops_types_str;
+    for (std::vector<std::string>::iterator iter = Ops_types.begin();
+         iter != Ops_types.end(); ++iter) {
+      if (iter != Ops_types.begin()) {
+        Ops_types_str += ", ";
       }
-      layer_types_str += *iter;
+      Ops_types_str += *iter;
     }
-    return layer_types_str;
+    return Ops_types_str;
   }
 };
 
 
 template <typename Dtype>
-class LayerRegisterer {
+class OpsRegisterer {
  public:
-  LayerRegisterer(const string& type,
-                  shared_ptr<Layer<Dtype> > (*creator)(const LayerParameter&)) {
-    // LOG(INFO) << "Registering layer type: " << type;
-    LayerRegistry<Dtype>::AddCreator(type, creator);
+  OpsRegisterer(const string& type,
+                  std::shared_ptr<Ops<Dtype>> (*creator)(const OpsParameter&)) {
+    OpsRegistry<Dtype>::AddCreator(type, creator);
   }
 };
 
 
-#define REGISTER_LAYER_CREATOR(type, creator)                                  \
-  static LayerRegisterer<float> g_creator_f_##type(#type, creator<float>);     \
-  static LayerRegisterer<double> g_creator_d_##type(#type, creator<double>)    \
+#define REGISTER_OPS_CREATOR(type, creator)                                  \
+  static OpsRegisterer<float> g_creator_f_##type(#type, creator<float>);     \
+  static OpsRegisterer<double> g_creator_d_##type(#type, creator<double>)    \
 
-#define REGISTER_LAYER_CLASS(type)                                             \
-  template <typename Dtype>                                                    \
-  shared_ptr<Layer<Dtype> > Creator_##type##Layer(const LayerParameter& param) \
-  {                                                                            \
-    return shared_ptr<Layer<Dtype> >(new type##Layer<Dtype>(param));           \
-  }                                                                            \
-  REGISTER_LAYER_CREATOR(type, Creator_##type##Layer)
+#define REGISTER_OPS_CLASS(type)                                             \
+  template <typename Dtype>                                                  \
+  std::shared_ptr<Ops<Dtype>> Creator_##type##Ops(const OpsParameter& param) \
+  {                                                                          \
+    return std::shared_ptr<Ops<Dtype>>(new type##Ops<Dtype>(param));        \
+  }                                                                          \
+  REGISTER_OPS_CREATOR(type, Creator_##type##Ops)
 
-}  // namespace caffe
+}  // namespace mynet
 
-#endif  // CAFFE_LAYER_FACTORY_H_
+#endif  // mynet_Ops_FACTORY_H_
