@@ -1,0 +1,81 @@
+namespace mynet;
+
+table TensorShape {
+    dim: [long];
+}
+
+table TensorProto {
+    num: int;
+    channels: int;
+    height: int;
+    width: int;
+
+    data: [float];
+    diff: [float];
+    shape: TensorShape;
+    double_data: [double];
+    double_diff: [double];
+}
+
+table TensorProtoVector {
+    tensors: [TensorProto];
+}
+
+table ConvolutionParameter {
+    num_output: uint;
+    bias_term: bool;
+
+    pad: [uint];
+    kernel_size: [uint];
+    stride: [uint];
+    dilation: [uint];
+
+    pad_h: uint;
+    pad_w: uint;
+    kernel_h: uint;
+    kernel_w: uint;
+    stride_h: uint;
+    stride_w: uint;
+
+    group: uint;
+    axis: int;
+    force_nd_im2col: bool;
+}
+
+table OpsParameter {
+    name: string;
+    type: string;
+    bottom: [string];
+    top: [string];
+    loss_weight: [float];
+    tensors: [TensorProto];
+    convolution_param: ConvolutionParameter;
+}
+
+table NetParameter {
+    name: string;
+    input: [string];
+    input_shape: [TensorShape];
+    input_dim: [int];
+
+    force_backward: bool;
+    debug_info: bool;
+    ops: [OpsParameter];
+}
+
+enum VarianceNorm : byte {
+    FAN_IN = 0,
+    FAN_OUT = 1,
+    AVERAGE = 2
+}
+table FillerParameter {
+    type: string;
+    value: float;
+    min: float;
+    max: float;
+    mean: float;
+    std: float;
+    sparse: int;
+
+    variance_norm: VarianceNorm;
+}

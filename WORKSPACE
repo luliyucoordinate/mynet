@@ -1,10 +1,4 @@
-load("@bazel_tools//tools/build_defs/repo:git.bzl", "git_repository")
 load("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive")
-git_repository(
-    name = "com_github_gflags_gflags",
-    remote = "https://github.com/gflags/gflags.git",
-    tag = "v2.2.2"
-)
 
 http_archive(
     name = "com_github_gflags_gflags",
@@ -31,9 +25,9 @@ all_content = """filegroup(name = "all", srcs = glob(["**"]), visibility = ["//v
 
 # Rule repository
 http_archive(
-   name = "rules_foreign_cc",
-   strip_prefix = "rules_foreign_cc-master",
-   url = "https://github.com/bazelbuild/rules_foreign_cc/archive/master.zip",
+    name = "rules_foreign_cc",
+    strip_prefix = "rules_foreign_cc-0.0.9",
+    url = "https://github.com/bazelbuild/rules_foreign_cc/archive/0.0.9.tar.gz",
 )
 
 load("@rules_foreign_cc//:workspace_definitions.bzl", "rules_foreign_cc_dependencies")
@@ -69,3 +63,10 @@ http_archive(
 load("@rules_proto//proto:repositories.bzl", "rules_proto_dependencies", "rules_proto_toolchains")
 rules_proto_dependencies()
 rules_proto_toolchains()
+
+http_archive(
+  name = "com_github_google_flatbuffers",
+  urls = ["https://github.com/google/flatbuffers/archive/refs/tags/v2.0.0.zip"],
+  sha256 = "ffd68aebdfb300c9e82582ea38bf4aa9ce65c77344c94d5047f3be754cc756ea",
+  strip_prefix = "flatbuffers-2.0.0",
+)
