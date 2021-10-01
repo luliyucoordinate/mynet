@@ -24,7 +24,7 @@ message TensorProto {
 // The TensorProtoVector is simply a way to pass multiple Tensorproto instances
 // around.
 message TensorProtoVector {
-  repeated TensorProto Tensors = 1;
+  repeated TensorProto tensors = 1;
 }
 
 message NetParameter {
@@ -71,7 +71,7 @@ message OpsParameter {
   repeated float loss_weight = 5;
 
   // The Tensors containing the numeric parameters of the ops.
-  repeated TensorProto Tensors = 7;
+  repeated TensorProto tensors = 7;
 
   ConvolutionParameter convolution_param = 106;
 }
@@ -138,5 +138,5 @@ message FillerParameter {
     FAN_OUT = 1;
     AVERAGE = 2;
   }
- VarianceNorm variance_norm = 8;
+  VarianceNorm variance_norm = 8;
 }
