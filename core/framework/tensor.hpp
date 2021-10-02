@@ -2,7 +2,8 @@
 #define MYNET_CC_TENSOR_HPP_
 
 #include "common.hpp"
-#include "core/protobuf/mynet.pb.h"
+// #include "core/protobuf/mynet.pb.h"
+#include "core/schema/mynet_generated.h"
 #include "syncedmem.hpp"
 
 const int kMaxTensorAxes = 32;
@@ -220,8 +221,10 @@ class Tensor {
   Dtype* mutable_cpu_data();
   Dtype* mutable_cpu_diff();
   void Update();
-  void FromProto(const TensorProto& proto, bool reshape = true);
-  void ToProto(TensorProto* proto, bool write_diff = false) const;
+  // void FromProto(const TensorProto& proto, bool reshape = true);
+  // void ToProto(TensorProto* proto, bool write_diff = false) const;
+  void FromFlat(const TensorFlat* flat, bool reshape = true);
+  std::vector<char> ToFlat(bool write_diff = false) const;
 
   /// @brief Compute the sum of absolute values (L1 norm) of the data.
   Dtype asum_data() const;
@@ -256,7 +259,7 @@ class Tensor {
    */
   void ShareDiff(const Tensor& other);
 
-  bool ShapeEquals(const TensorProto& other);
+  bool ShapeEquals(const TensorFlat* other);
 
  protected:
   std::shared_ptr<SyncedMemory> data_;

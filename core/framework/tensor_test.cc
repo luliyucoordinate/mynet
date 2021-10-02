@@ -47,9 +47,13 @@ TYPED_TEST(TensorSimpleTest, TestReshapeZero) {
   EXPECT_EQ(this->tensor_->count(), 0);
 }
 
-TYPED_TEST(TensorSimpleTest, TestLegacytensorProtoShapeEquals) {
-  TensorProto tensor_proto;
-
+TYPED_TEST(TensorSimpleTest, TestLegacytensorFlatShapeEquals) {
+  flatbuffers::FlatBufferBuilder flatbuffer_builder;
+  flatbuffer_builder.ForceDefaults(true);
+  auto ff = CreateTensorFlat(flatbuffer_builder);
+  flatbuffer_builder.Finish(ff);
+  
+  auto tensor_flat = flatbuffers::GetMutableRoot<TensorFlat>(flatbuffer_builder.GetBufferPointer());
   // Reshape to (3 x 2).
   std::vector<int> shape(2);
   shape[0] = 3;
@@ -57,47 +61,47 @@ TYPED_TEST(TensorSimpleTest, TestLegacytensorProtoShapeEquals) {
   this->tensor_->Reshape(shape);
 
   // (3 x 2) tensor == (1 x 1 x 3 x 2) legacy tensor
-  tensor_proto.set_num(1);
-  tensor_proto.set_channels(1);
-  tensor_proto.set_height(3);
-  tensor_proto.set_width(2);
-  EXPECT_TRUE(this->tensor_->ShapeEquals(tensor_proto));
+  tensor_flat->mutate_num(1);
+  tensor_flat->mutate_channels(1);
+  tensor_flat->mutate_height(3);
+  tensor_flat->mutate_width(2);
+  EXPECT_TRUE(this->tensor_->ShapeEquals(tensor_flat));
 
   // (3 x 2) tensor != (0 x 1 x 3 x 2) legacy tensor
-  tensor_proto.set_num(0);
-  tensor_proto.set_channels(1);
-  tensor_proto.set_height(3);
-  tensor_proto.set_width(2);
-  EXPECT_FALSE(this->tensor_->ShapeEquals(tensor_proto));
+  tensor_flat->mutate_num(0);
+  tensor_flat->mutate_channels(1);
+  tensor_flat->mutate_height(3);
+  tensor_flat->mutate_width(2);
+  EXPECT_FALSE(this->tensor_->ShapeEquals(tensor_flat));
 
   // (3 x 2) tensor != (3 x 1 x 3 x 2) legacy tensor
-  tensor_proto.set_num(3);
-  tensor_proto.set_channels(1);
-  tensor_proto.set_height(3);
-  tensor_proto.set_width(2);
-  EXPECT_FALSE(this->tensor_->ShapeEquals(tensor_proto));
+  tensor_flat->mutate_num(3);
+  tensor_flat->mutate_channels(1);
+  tensor_flat->mutate_height(3);
+  tensor_flat->mutate_width(2);
+  EXPECT_FALSE(this->tensor_->ShapeEquals(tensor_flat));
 
   // Reshape to (1 x 3 x 2).
   shape.insert(shape.begin(), 1);
   this->tensor_->Reshape(shape);
 
   // (1 x 3 x 2) tensor == (1 x 1 x 3 x 2) legacy tensor
-  tensor_proto.set_num(1);
-  tensor_proto.set_channels(1);
-  tensor_proto.set_height(3);
-  tensor_proto.set_width(2);
-  EXPECT_TRUE(this->tensor_->ShapeEquals(tensor_proto));
+  tensor_flat->mutate_num(1);
+  tensor_flat->mutate_channels(1);
+  tensor_flat->mutate_height(3);
+  tensor_flat->mutate_width(2);
+  EXPECT_TRUE(this->tensor_->ShapeEquals(tensor_flat));
 
   // Reshape to (2 x 3 x 2).
   shape[0] = 2;
   this->tensor_->Reshape(shape);
 
   // (2 x 3 x 2) tensor != (1 x 1 x 3 x 2) legacy tensor
-  tensor_proto.set_num(1);
-  tensor_proto.set_channels(1);
-  tensor_proto.set_height(3);
-  tensor_proto.set_width(2);
-  EXPECT_FALSE(this->tensor_->ShapeEquals(tensor_proto));
+  tensor_flat->mutate_num(1);
+  tensor_flat->mutate_channels(1);
+  tensor_flat->mutate_height(3);
+  tensor_flat->mutate_width(2);
+  EXPECT_FALSE(this->tensor_->ShapeEquals(tensor_flat));
 }
 
 template <typename TypeParam>
@@ -121,9 +125,11 @@ TYPED_TEST(TensorMathTest, TestSumOfSquares) {
   // Uninitialized tensor should have sum of squares == 0.
   EXPECT_EQ(0, this->tensor_->sumsq_data());
   EXPECT_EQ(0, this->tensor_->sumsq_diff());
-  FillerParameter filler_param;
-  filler_param.set_min(-3);
-  filler_param.set_max(3);
+  flatbuffers::FlatBufferBuilder flatbuffer_builder;
+  auto fp = CreateFillerParameterDirect(flatbuffer_builder, nullptr, 0, -3, 3);
+  flatbuffer_builder.Finish(fp);
+  
+  auto filler_param = flatbuffers::GetMutableRoot<FillerParameter>(flatbuffer_builder.GetBufferPointer());
   UniformFiller<Dtype> filler(filler_param);
   filler.Fill(this->tensor_);
   Dtype expected_sumsq = 0;
@@ -170,9 +176,11 @@ TYPED_TEST(TensorMathTest, TestAsum) {
   // Uninitialized tensor should have asum == 0.
   EXPECT_EQ(0, this->tensor_->asum_data());
   EXPECT_EQ(0, this->tensor_->asum_diff());
-  FillerParameter filler_param;
-  filler_param.set_min(-3);
-  filler_param.set_max(3);
+  flatbuffers::FlatBufferBuilder flatbuffer_builder;
+  auto fp = CreateFillerParameterDirect(flatbuffer_builder, nullptr, 0, -3, 3);
+  flatbuffer_builder.Finish(fp);
+  
+  auto filler_param = flatbuffers::GetMutableRoot<FillerParameter>(flatbuffer_builder.GetBufferPointer());
   UniformFiller<Dtype> filler(filler_param);
   filler.Fill(this->tensor_);
   Dtype expected_asum = 0;
@@ -217,9 +225,11 @@ TYPED_TEST(TensorMathTest, TestScaleData) {
 
   EXPECT_EQ(0, this->tensor_->asum_data());
   EXPECT_EQ(0, this->tensor_->asum_diff());
-  FillerParameter filler_param;
-  filler_param.set_min(-3);
-  filler_param.set_max(3);
+  flatbuffers::FlatBufferBuilder flatbuffer_builder;
+  auto fp = CreateFillerParameterDirect(flatbuffer_builder, nullptr, 0, -3, 3);
+  flatbuffer_builder.Finish(fp);
+  
+  auto filler_param = flatbuffers::GetMutableRoot<FillerParameter>(flatbuffer_builder.GetBufferPointer());
   UniformFiller<Dtype> filler(filler_param);
   filler.Fill(this->tensor_);
   const Dtype asum_before_scale = this->tensor_->asum_data();

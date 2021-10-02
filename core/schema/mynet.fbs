@@ -1,10 +1,10 @@
 namespace mynet;
 
 table TensorShape {
-    dim: [long];
+    dim: [int];
 }
 
-table TensorProto {
+table TensorFlat {
     num: int;
     channels: int;
     height: int;
@@ -15,10 +15,6 @@ table TensorProto {
     shape: TensorShape;
     double_data: [double];
     double_diff: [double];
-}
-
-table TensorProtoVector {
-    tensors: [TensorProto];
 }
 
 table ConvolutionParameter {
@@ -48,7 +44,7 @@ table OpsParameter {
     bottom: [string];
     top: [string];
     loss_weight: [float];
-    tensors: [TensorProto];
+    tensors: [TensorFlat];
     convolution_param: ConvolutionParameter;
 }
 
@@ -68,14 +64,15 @@ enum VarianceNorm : byte {
     FAN_OUT = 1,
     AVERAGE = 2
 }
+
 table FillerParameter {
     type: string;
     value: float;
     min: float;
-    max: float;
+    max: float = 1;
     mean: float;
-    std: float;
-    sparse: int;
+    std: float = 1;
+    sparse: int = -1;
 
     variance_norm: VarianceNorm;
 }

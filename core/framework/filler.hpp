@@ -16,23 +16,23 @@ namespace mynet {
 template <typename Dtype>
 class Filler {
 public:
-  explicit Filler(const FillerParameter& param) : filler_param_(param) {}
+  explicit Filler(const FillerParameter* param) : filler_param_(param) {}
   virtual ~Filler() {}
   virtual void Fill(Tensor<Dtype>* Tensor) = 0;
 protected:
-  FillerParameter filler_param_;
+  const FillerParameter* filler_param_;
 };  // class Filler
 
 /// @brief Fills a Tensor with uniformly distributed values @f$ x\sim U(a, b) @f$.
 template <typename Dtype>
 class UniformFiller : public Filler<Dtype> {
  public:
-  explicit UniformFiller(const FillerParameter& param)
+  explicit UniformFiller(const FillerParameter* param)
       : Filler<Dtype>(param) {}
   virtual void Fill(Tensor<Dtype>* Tensor) {
     CHECK(Tensor->count());
-    mynet_rng_uniform<Dtype>(Tensor->count(), Dtype(this->filler_param_.min()),
-        Dtype(this->filler_param_.max()), Tensor->mutable_cpu_data());
+    mynet_rng_uniform<Dtype>(Tensor->count(), Dtype(this->filler_param_->min()),
+        Dtype(this->filler_param_->max()), Tensor->mutable_cpu_data());
     // CHECK_EQ(this->filler_param_.sparse(), -1)
     //      << "Sparsity not supported by this Filler.";
   }
@@ -45,13 +45,13 @@ class UniformFiller : public Filler<Dtype> {
  * this way for now.
  */
 template <typename Dtype>
-Filler<Dtype>* GetFiller(const FillerParameter& param) {
-  const std::string& type = param.type();
+Filler<Dtype>* GetFiller(const FillerParameter* param) {
+  const std::string& type = param->type();
 
   if (type == "uniform") {
     return new UniformFiller<Dtype>(param);
   } else {
-    CHECK(false) << "Unknown filler name: " << param.type();
+    CHECK(false) << "Unknown filler name: " << type;
   }
   return (Filler<Dtype>*)(NULL);
 }

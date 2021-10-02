@@ -42,7 +42,7 @@ cc_library(
         ":syncedmem",
         ":math_functions",
         "//core/protobuf:mynet_cc_proto",
-        "//core/protobuf:mynet_fbs"
+        "//core/schema:mynet_fbs"
     ]
 )
 
