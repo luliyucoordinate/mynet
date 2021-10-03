@@ -46,7 +46,7 @@ class Tensor {
    * propagate the new input shape to higher layers.
    */
   void Reshape(const std::vector<int>& shape);
-  void Reshape(const TensorShape* shape);
+  void Reshape(const TensorShapeT* shape);
   void ReshapeLike(const Tensor& other);
   inline std::string shape_string() const {
     std::ostringstream stream;
@@ -223,8 +223,8 @@ class Tensor {
   void Update();
   // void FromProto(const TensorProto& proto, bool reshape = true);
   // void ToProto(TensorProto* proto, bool write_diff = false) const;
-  void FromFlat(const TensorFlat* flat, bool reshape = true);
-  std::vector<char> ToFlat(bool write_diff = false) const;
+  void FromFlat(const TensorFlatT* flat, bool reshape = true);
+  flatbuffers::DetachedBuffer ToFlat(bool write_diff = false) const;
 
   /// @brief Compute the sum of absolute values (L1 norm) of the data.
   Dtype asum_data() const;
@@ -259,7 +259,7 @@ class Tensor {
    */
   void ShareDiff(const Tensor& other);
 
-  bool ShapeEquals(const TensorFlat* other);
+  bool ShapeEquals(const TensorFlatT* other);
 
  protected:
   std::shared_ptr<SyncedMemory> data_;

@@ -15,9 +15,9 @@ class UniformFillerTest : public ::testing::Test {
     auto fp = CreateFillerParameterDirect(flatbuffer_builder);
     flatbuffer_builder.Finish(fp);
 
-    filler_param_ = flatbuffers::GetMutableRoot<FillerParameter>(flatbuffer_builder.GetBufferPointer());
-    filler_param_->mutate_min(1.);
-    filler_param_->mutate_max(2.);
+    filler_param_ = flatbuffers::GetMutableRoot<FillerParameter>(flatbuffer_builder.GetBufferPointer())->UnPack();
+    filler_param_->min = 1.0;
+    filler_param_->max = 2.0;
     filler_.reset(new UniformFiller<Dtype>(filler_param_));
   }
 
@@ -28,14 +28,14 @@ class UniformFillerTest : public ::testing::Test {
     const int count = tensor_->count();
     const Dtype* data = tensor_->cpu_data();
     for (int i = 0; i < count; ++i) {
-      EXPECT_GE(data[i], filler_param_->min());
-      EXPECT_LE(data[i], filler_param_->max());
+      EXPECT_GE(data[i], filler_param_->min);
+      EXPECT_LE(data[i], filler_param_->max);
     }
   }
 
   virtual ~UniformFillerTest() { delete tensor_; }
   Tensor<Dtype>* const tensor_;
-  FillerParameter* filler_param_;
+  FillerParameterT* filler_param_;
   std::shared_ptr<UniformFiller<Dtype>> filler_;
 };
 
