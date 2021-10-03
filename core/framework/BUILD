@@ -53,6 +53,7 @@ cc_test(
         ":filler",
         ":common",
         ":mynet_test_main",
+        "//core/schema:mynet_fbs",
     ],
 )
 

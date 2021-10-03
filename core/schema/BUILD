@@ -11,6 +11,6 @@ flatbuffer_cc_library(
         "--reflect-names",
         "--cpp-ptr-type flatbuffers::unique_ptr",
         "--force-defaults",
-    ],
+    ], # or default is ok
     visibility = ["//visibility:public"],
 )
