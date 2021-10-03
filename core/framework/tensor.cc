@@ -45,8 +45,8 @@ void Tensor<Dtype>::Reshape(const std::vector<int>& shape) {
 }
 
 template <typename Dtype>
-void Tensor<Dtype>::Reshape(const TensorShape& shape) {
-  auto shape_dim = shape.dim();
+void Tensor<Dtype>::Reshape(const TensorShape* shape) {
+  auto shape_dim = shape->dim();
   CHECK_LE(shape_dim->size(), kMaxTensorAxes);
   std::vector<int> shape_vec(shape_dim->size());
   for (size_t i = 0; i < shape_dim->size(); ++i) {

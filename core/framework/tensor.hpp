@@ -46,7 +46,7 @@ class Tensor {
    * propagate the new input shape to higher layers.
    */
   void Reshape(const std::vector<int>& shape);
-  void Reshape(const TensorShape& shape);
+  void Reshape(const TensorShape* shape);
   void ReshapeLike(const Tensor& other);
   inline std::string shape_string() const {
     std::ostringstream stream;

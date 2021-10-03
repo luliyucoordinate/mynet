@@ -37,6 +37,19 @@ TYPED_TEST(TensorSimpleTest, TestReshape) {
   EXPECT_EQ(this->tensor_->height(), 4);
   EXPECT_EQ(this->tensor_->width(), 5);
   EXPECT_EQ(this->tensor_->count(), 120);
+
+  flatbuffers::FlatBufferBuilder flatbuffer_builder;
+  std::vector<int> shape = {5, 4, 3, 1};
+  auto ts = CreateTensorShapeDirect(flatbuffer_builder, &shape);
+  flatbuffer_builder.Finish(ts);
+  
+  auto tensor_shape = flatbuffers::GetRoot<TensorShape>(flatbuffer_builder.GetBufferPointer());
+  this->tensor_->Reshape(tensor_shape);
+  EXPECT_EQ(this->tensor_->num(), 5);
+  EXPECT_EQ(this->tensor_->channels(), 4);
+  EXPECT_EQ(this->tensor_->height(), 3);
+  EXPECT_EQ(this->tensor_->width(), 1);
+  EXPECT_EQ(this->tensor_->count(), 60);
 }
 
 TYPED_TEST(TensorSimpleTest, TestReshapeZero) {
