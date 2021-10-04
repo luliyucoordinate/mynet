@@ -17,7 +17,13 @@ table TensorFlat {
     double_diff: [double];
 }
 
-table ConvolutionParameter {
+enum Engine :byte {
+    DEFAULT = 0,
+    MYNET = 1,
+    CUDNN = 2,
+}
+
+table ConvParameter {
     num_output: uint;
     bias_term: bool;
 
@@ -34,8 +40,18 @@ table ConvolutionParameter {
     stride_w: uint;
 
     group: uint;
+
+    weight_filler: FillerParameter;
+    bias_filler: FillerParameter;
+    engine: Engine;
+
     axis: int;
     force_nd_im2col: bool;
+}
+
+enum Phase : byte {
+    TRAIN = 0,
+    TEST = 1
 }
 
 table OpsParameter {
@@ -43,9 +59,10 @@ table OpsParameter {
     type: string;
     bottom: [string];
     top: [string];
+    phase: Phase;
     loss_weight: [float];
     tensors: [TensorFlat];
-    convolution_param: ConvolutionParameter;
+    conv_param: ConvParameter;
 }
 
 table NetParameter {
