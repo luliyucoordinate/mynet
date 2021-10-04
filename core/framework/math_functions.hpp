@@ -10,42 +10,42 @@ namespace mynet {
 // Mynet gemm provides a simpler interface to the gemm functions, with the
 // limitation that the data has to be contiguous in memory.
 template <typename Dtype>
-void mynet_cpu_gemm(const CBLAS_TRANSPOSE TransA,
-    const CBLAS_TRANSPOSE TransB, const int M, const int N, const int K,
-    const Dtype alpha, const Dtype* A, const Dtype* B, const Dtype beta,
+void mynet_cpu_gemm(CBLAS_TRANSPOSE TransA,
+    CBLAS_TRANSPOSE TransB, size_t M, size_t N, size_t K,
+    Dtype alpha, const Dtype* A, const Dtype* B, Dtype beta,
     Dtype* C);
 
 template <typename Dtype>
-void mynet_cpu_gemv(const CBLAS_TRANSPOSE TransA, const int M, const int N,
-    const Dtype alpha, const Dtype* A, const Dtype* x, const Dtype beta,
+void mynet_cpu_gemv(CBLAS_TRANSPOSE TransA, size_t M, size_t N,
+    Dtype alpha, const Dtype* A, const Dtype* x, Dtype beta,
     Dtype* y);
 
 template <typename Dtype>
-void mynet_axpy(const int N, const Dtype alpha, const Dtype* X,
+void mynet_axpy(size_t N, Dtype alpha, const Dtype* X,
     Dtype* Y);
 
 template <typename Dtype>
-void mynet_copy(const int N, const Dtype *X, Dtype *Y);
+void mynet_copy(size_t N, const Dtype *X, Dtype *Y);
 
 // Returns the sum of the absolute values of the elements of vector x
 template <typename Dtype>
-Dtype mynet_cpu_asum(const int n, const Dtype* x);
+Dtype mynet_cpu_asum(size_t n, const Dtype* x);
 
 template <typename Dtype>
-Dtype mynet_cpu_dot(const int n, const Dtype* x, const Dtype* y);
+Dtype mynet_cpu_dot(size_t n, const Dtype* x, const Dtype* y);
 
 template <typename Dtype>
-Dtype mynet_cpu_strided_dot(const int n, const Dtype* x, const int incx,
-    const Dtype* y, const int incy);
+Dtype mynet_cpu_strided_dot(size_t n, const Dtype* x, size_t incx,
+    const Dtype* y, size_t incy);
 
 template <typename Dtype>
-void mynet_scal(const int N, const Dtype alpha, Dtype *X);
+void mynet_scal(size_t N, Dtype alpha, Dtype *X);
 
 template <typename Dtype>
-void mynet_cpu_scale(const int n, const Dtype alpha, const Dtype *x, Dtype* y);
+void mynet_cpu_scale(size_t n, Dtype alpha, const Dtype *x, Dtype* y);
 
 template <typename Dtype>
-void mynet_rng_uniform(const int n, const Dtype a, const Dtype b, Dtype* r);
+void mynet_rng_uniform(size_t n, Dtype a, Dtype b, Dtype* r);
 
 }  // namespace mynet
 
