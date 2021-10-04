@@ -2,6 +2,6 @@
 
 namespace mynet {
 
-INSTANTIATE_CLASS(ops);
+INSTANTIATE_CLASS(Ops);
 
 }  // namespace mynet
