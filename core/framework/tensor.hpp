@@ -6,7 +6,7 @@
 #include "core/schema/mynet_generated.h"
 #include "syncedmem.hpp"
 
-const int kMaxTensorAxes = 32;
+const size_t kMaxTensorAxes = 32;
 
 namespace mynet {
 
@@ -21,7 +21,7 @@ template <typename Dtype>
 class Tensor {
  public:
   Tensor()
-       : data_(), diff_(), count_(0), capacity_(0) {}
+       : data_(), diff_(), count_(0ul), capacity_(0ul) {}
 
   /// @brief Deprecated; use <code>Tensor(const std::vector<int>& shape)</code>.
   explicit Tensor(const int num, const int channels, const int height,
@@ -65,11 +65,11 @@ class Tensor {
    *        "canonicalized" using CanonicalAxisIndex.
    *        Dies on out of range index.
    */
-  inline size_t shape(int index) const {
+  inline int shape(int index) const {
     return shape_[CanonicalAxisIndex(index)];
   }
   inline size_t num_axes() const { return shape_.size(); }
-  inline int count() const { return count_; }
+  inline size_t count() const { return count_; }
 
   /**
    * @brief Compute the volume of a slice; i.e., the product of dimensions
@@ -79,13 +79,14 @@ class Tensor {
    *
    * @param end_axis The first axis to exclude from the slice.
    */
-  inline int count(int start_axis, int end_axis) const {
+  inline size_t count(int start_axis, int end_axis) const {
     CHECK_LE(start_axis, end_axis);
     CHECK_GE(start_axis, 0);
     CHECK_GE(end_axis, 0);
-    CHECK_LE(start_axis, num_axes());
-    CHECK_LE(end_axis, num_axes());
-    int count = 1;
+    int num_axes_t = static_cast<int>(num_axes());
+    CHECK_LE(start_axis, num_axes_t);
+    CHECK_LE(end_axis, num_axes_t);
+    size_t count = 1ul;
     for (int i = start_axis; i < end_axis; ++i) {
       count *= shape(i);
     }
@@ -97,7 +98,7 @@ class Tensor {
    *
    * @param start_axis The first axis to include in the slice.
    */
-  inline int count(int start_axis) const {
+  inline size_t count(int start_axis) const {
     return count(start_axis, num_axes());
   }
 
@@ -112,7 +113,7 @@ class Tensor {
    *        the second to last if index == -2, etc.
    *        Dies on out of range index.
    */
-  inline int CanonicalAxisIndex(int axis_index) const {
+  inline size_t CanonicalAxisIndex(int axis_index) const {
     int num_axes_t = static_cast<int>(num_axes());
     CHECK_GE(axis_index, -num_axes_t)
         << "axis " << axis_index << " out of range for " << num_axes_t
@@ -135,7 +136,7 @@ class Tensor {
   /// @brief Deprecated legacy shape accessor width: use shape(3) instead.
   inline int width() const { return LegacyShape(3); }
   inline int LegacyShape(int index) const {
-    CHECK_LE(num_axes(), 4)
+    CHECK_LE(num_axes(), 4ul)
         << "Cannot use legacy accessors on Tensors with > 4 axes.";
     CHECK_LT(index, 4);
     CHECK_GE(index, -4);
@@ -266,8 +267,8 @@ class Tensor {
   std::shared_ptr<SyncedMemory> diff_;
   std::shared_ptr<SyncedMemory> shape_data_;
   std::vector<int> shape_;
-  int count_;
-  int capacity_;
+  size_t count_; // [0, mat(shape_)]
+  size_t capacity_;
 
   DISABLE_COPY_AND_ASSIGN(Tensor);
 };  // class Tensor

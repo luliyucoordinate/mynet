@@ -9,6 +9,21 @@
 namespace mynet {
 
 template <typename Dtype>
+Tensor<Dtype>::Tensor(const int num, const int channels, const int height,
+    const int width)
+  // capacity_ must be initialized before calling Reshape
+  : capacity_(0ul) {
+  Reshape(num, channels, height, width);
+}
+
+template <typename Dtype>
+Tensor<Dtype>::Tensor(const std::vector<int>& shape)
+  // capacity_ must be initialized before calling Reshape
+  : capacity_(0ul) {
+  Reshape(shape);
+}
+
+template <typename Dtype>
 void Tensor<Dtype>::Reshape(const int num, const int channels, const int height,
     const int width) {
   std::vector<int> shape(4);
@@ -22,16 +37,17 @@ void Tensor<Dtype>::Reshape(const int num, const int channels, const int height,
 template <typename Dtype>
 void Tensor<Dtype>::Reshape(const std::vector<int>& shape) {
   CHECK_LE(shape.size(), kMaxTensorAxes);
-  count_ = 1;
+  count_ = 1ul;
   shape_.resize(shape.size());
   if (!shape_data_ || shape_data_->size() < shape.size() * sizeof(int)) {
     shape_data_.reset(new SyncedMemory(shape.size() * sizeof(int)));
   }
   int* shape_data = static_cast<int*>(shape_data_->mutable_cpu_data());
   for (size_t i = 0; i < shape.size(); ++i) {
-    CHECK_GE(shape[i], 0);
-    if (count_ != 0) {
-      CHECK_LE(shape[i], INT_MAX / count_) << "Tensor size exceeds INT_MAX";
+    // TODO: CHECK_GT ? Should be zero ?
+    CHECK_GE(shape[i], 0); 
+    if (count_ > 0) {
+      CHECK_LE(static_cast<size_t>(shape[i]), ULONG_MAX / count_) << "Tensor size exceeds ULONG_MAX";
     }
     count_ *= shape[i];
     shape_[i] = shape[i];
@@ -58,21 +74,6 @@ void Tensor<Dtype>::Reshape(const TensorShapeT* shape) {
 template <typename Dtype>
 void Tensor<Dtype>::ReshapeLike(const Tensor<Dtype>& other) {
   Reshape(other.shape());
-}
-
-template <typename Dtype>
-Tensor<Dtype>::Tensor(const int num, const int channels, const int height,
-    const int width)
-  // capacity_ must be initialized before calling Reshape
-  : capacity_(0) {
-  Reshape(num, channels, height, width);
-}
-
-template <typename Dtype>
-Tensor<Dtype>::Tensor(const std::vector<int>& shape)
-  // capacity_ must be initialized before calling Reshape
-  : capacity_(0) {
-  Reshape(shape);
 }
 
 template <typename Dtype>
@@ -386,12 +387,12 @@ void Tensor<Dtype>::FromFlat(const TensorFlatT* flat, bool reshape) {
   auto flat_data = flat->data;
   if (flat_double_data.size() > 0) {
     CHECK_EQ(count_, flat_double_data.size());
-    for (int i = 0; i < count_; ++i) {
+    for (size_t i = 0; i < count_; ++i) {
       data_vec[i] = flat_double_data[i];
     }
   } else {
     CHECK_EQ(count_, flat_data.size());
-    for (int i = 0; i < count_; ++i) {
+    for (size_t i = 0; i < count_; ++i) {
       data_vec[i] = flat_data[i];
     }
   }
@@ -401,13 +402,13 @@ void Tensor<Dtype>::FromFlat(const TensorFlatT* flat, bool reshape) {
   if (flat_double_diff.size() > 0) {
     CHECK_EQ(count_, flat_double_diff.size());
     Dtype* diff_vec = mutable_cpu_diff();
-    for (int i = 0; i < count_; ++i) {
+    for (size_t i = 0; i < count_; ++i) {
       diff_vec[i] = flat_double_diff[i];
     }
   } else if (flat_diff.size() > 0) {
     CHECK_EQ(count_, flat_diff.size());
     Dtype* diff_vec = mutable_cpu_diff();
-    for (int i = 0; i < count_; ++i) {
+    for (size_t i = 0; i < count_; ++i) {
       diff_vec[i] = flat_diff[i];
     }
   }
@@ -425,10 +426,9 @@ flatbuffers::DetachedBuffer Tensor<double>::ToFlat(bool write_diff) const {
 
   if (write_diff) {
     const double* diff_vec = cpu_diff();
-    std::vector<double> diff(diff_vec, diff_vec + count_);
-    diff_ptr = &diff;
+    diff_ptr = new std::vector<double>(diff_vec, diff_vec + count_);
   }
-  auto tensor_flat = CreateTensorFlatDirect(flatbuffer_builder, 0, 0, 0, 0, nullptr, nullptr, tensor_shape, data_ptr, diff_ptr);
+  auto tensor_flat = CreateTensorFlatDirect(flatbuffer_builder, num(), channels(), height(), width(), nullptr, nullptr, tensor_shape, data_ptr, diff_ptr);
   flatbuffer_builder.Finish(tensor_flat);
   return flatbuffer_builder.Release();
 }
@@ -445,10 +445,9 @@ flatbuffers::DetachedBuffer Tensor<float>::ToFlat(bool write_diff) const {
 
   if (write_diff) {
     const float* diff_vec = cpu_diff();
-    std::vector<float> diff(diff_vec, diff_vec + count_);
-    diff_ptr = &diff;
+    diff_ptr = new std::vector<float>(diff_vec, diff_vec + count_);
   }
-  auto tensor_flat = CreateTensorFlatDirect(flatbuffer_builder, 0, 0, 0, 0, data_ptr, diff_ptr, tensor_shape, nullptr, nullptr);
+  auto tensor_flat = CreateTensorFlatDirect(flatbuffer_builder, num(), channels(), height(), width(), data_ptr, diff_ptr, tensor_shape, nullptr, nullptr);
   flatbuffer_builder.Finish(tensor_flat);
   return flatbuffer_builder.Release();
 }

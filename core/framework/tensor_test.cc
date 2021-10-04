@@ -30,6 +30,15 @@ TYPED_TEST(TensorSimpleTest, TestInitialization) {
   EXPECT_EQ(this->tensor_->count(), 0);
 }
 
+TYPED_TEST(TensorSimpleTest, TestCopyFrom) {
+  this->tensor_->CopyFrom(*(this->tensor_preshaped_), true, true);
+  EXPECT_EQ(this->tensor_->num(), 2);
+  EXPECT_EQ(this->tensor_->channels(), 3);
+  EXPECT_EQ(this->tensor_->height(), 4);
+  EXPECT_EQ(this->tensor_->width(), 5);
+  EXPECT_EQ(this->tensor_->count(), 120);
+}
+
 TYPED_TEST(TensorSimpleTest, TestReshape) {
   this->tensor_->Reshape(2, 3, 4, 5);
   EXPECT_EQ(this->tensor_->num(), 2);
@@ -58,6 +67,17 @@ TYPED_TEST(TensorSimpleTest, TestReshapeZero) {
   shape[1] = 5;
   this->tensor_->Reshape(shape);
   EXPECT_EQ(this->tensor_->count(), 0);
+}
+
+TYPED_TEST(TensorSimpleTest, TestToFlat) {
+  std::vector<int> shape(2);
+  shape[0] = 3;
+  shape[1] = 2;
+  this->tensor_->Reshape(shape);
+  
+  auto tensor_flat = flatbuffers::GetRoot<TensorFlat>(this->tensor_->ToFlat(true).data())->UnPack();
+  EXPECT_EQ(tensor_flat->num, 3);
+  EXPECT_EQ(tensor_flat->channels, 2);
 }
 
 TYPED_TEST(TensorSimpleTest, TestLegacytensorFlatShapeEquals) {
@@ -147,7 +167,7 @@ TYPED_TEST(TensorMathTest, TestSumOfSquares) {
   filler.Fill(this->tensor_);
   Dtype expected_sumsq = 0;
   const Dtype* data = this->tensor_->cpu_data();
-  for (int i = 0; i < this->tensor_->count(); ++i) {
+  for (size_t i = 0; i < this->tensor_->count(); ++i) {
     expected_sumsq += data[i] * data[i];
   }
   // Do a mutable access on the current device,
@@ -198,7 +218,7 @@ TYPED_TEST(TensorMathTest, TestAsum) {
   filler.Fill(this->tensor_);
   Dtype expected_asum = 0;
   const Dtype* data = this->tensor_->cpu_data();
-  for (int i = 0; i < this->tensor_->count(); ++i) {
+  for (size_t i = 0; i < this->tensor_->count(); ++i) {
     expected_asum += std::fabs(data[i]);
   }
   // Do a mutable access on the current device,
