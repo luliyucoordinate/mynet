@@ -30,10 +30,10 @@ class UniformFiller : public Filler<Dtype> {
   explicit UniformFiller(const FillerParameterT* param)
       : Filler<Dtype>(param) {}
   virtual void Fill(Tensor<Dtype>* Tensor) {
-    CHECK(Tensor->count());
+    DCHECK(Tensor->count());
     mynet_rng_uniform<Dtype>(Tensor->count(), Dtype(this->filler_param_->min),
         Dtype(this->filler_param_->max), Tensor->mutable_cpu_data());
-    // CHECK_EQ(this->filler_param_.sparse(), -1)
+    // DCHECK_EQ(this->filler_param_.sparse(), -1)
     //      << "Sparsity not supported by this Filler.";
   }
 };
@@ -51,7 +51,7 @@ Filler<Dtype>* GetFiller(const FillerParameterT* param) {
   if (type == "uniform") {
     return new UniformFiller<Dtype>(param);
   } else {
-    CHECK(false) << "Unknown filler name: " << type;
+    DCHECK(false) << "Unknown filler name: " << type;
   }
   return (Filler<Dtype>*)(NULL);
 }

@@ -13,7 +13,7 @@ namespace mynet {
 // it improved stability for large models on many GPUs.
 inline void MynetMallocHost(void** ptr, uint32_t size) {
   *ptr = malloc(size);
-  CHECK(*ptr) << "host allocation of size " << size << " failed";
+  DCHECK(*ptr) << "host allocation of size " << size << " failed";
 }
 
 inline void MynetFreeHost(void* ptr) {

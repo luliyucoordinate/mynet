@@ -134,9 +134,9 @@ void mynet_cpu_scale<double>(uint32_t n, double alpha, const double *x,
 
 template <typename Dtype>
 void mynet_rng_uniform(uint32_t n, Dtype a, Dtype b, Dtype* r) {
-  CHECK_GE(n, 0ul);
-  CHECK(r);
-  CHECK_LE(a, b);
+  DCHECK_GE(n, 0ul);
+  DCHECK(r);
+  DCHECK_LE(a, b);
 
   std::random_device rd;
   std::mt19937 gen{rd()};

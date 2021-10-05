@@ -36,7 +36,7 @@ const void* SyncedMemory::cpu_data() {
 }
 
 void SyncedMemory::set_cpu_data(void* data) {
-  CHECK(data);
+  DCHECK(data);
   if (own_cpu_data_) {
     MynetFreeHost(cpu_ptr_);
   }

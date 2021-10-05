@@ -80,12 +80,12 @@ class Tensor {
    * @param end_axis The first axis to exclude from the slice.
    */
   inline uint32_t count(int32_t start_axis, int32_t end_axis) const {
-    CHECK_LE(start_axis, end_axis);
-    CHECK_GE(start_axis, 0);
-    CHECK_GE(end_axis, 0);
+    DCHECK_LE(start_axis, end_axis);
+    DCHECK_GE(start_axis, 0);
+    DCHECK_GE(end_axis, 0);
     int32_t num_axes_t = static_cast<int32_t>(num_axes());
-    CHECK_LE(start_axis, num_axes_t);
-    CHECK_LE(end_axis, num_axes_t);
+    DCHECK_LE(start_axis, num_axes_t);
+    DCHECK_LE(end_axis, num_axes_t);
     uint32_t count = 1ul;
     for (int32_t i = start_axis; i < end_axis; ++i) {
       count *= shape(i);
@@ -115,10 +115,10 @@ class Tensor {
    */
   inline uint32_t CanonicalAxisIndex(int32_t axis_index) const {
     int32_t num_axes_t = static_cast<int32_t>(num_axes());
-    CHECK_GE(axis_index, -num_axes_t)
+    DCHECK_GE(axis_index, -num_axes_t)
         << "axis " << axis_index << " out of range for " << num_axes_t
         << "-D Tensor with shape " << shape_string();
-    CHECK_LT(axis_index, num_axes_t)
+    DCHECK_LT(axis_index, num_axes_t)
         << "axis " << axis_index << " out of range for " << num_axes_t
         << "-D Tensor with shape " << shape_string();
     if (axis_index < 0) {
@@ -136,10 +136,10 @@ class Tensor {
   /// @brief Deprecated legacy shape accessor width: use shape(3) instead.
   inline uint32_t width() const { return LegacyShape(3); }
   inline uint32_t LegacyShape(int32_t index) const {
-    CHECK_LE(num_axes(), 4ul)
+    DCHECK_LE(num_axes(), 4ul)
         << "Cannot use legacy accessors on Tensors with > 4 axes.";
-    CHECK_LT(index, 4);
-    CHECK_GE(index, -4);
+    DCHECK_LT(index, 4);
+    DCHECK_GE(index, -4);
     int32_t num_axes_t = static_cast<int32_t>(num_axes());
     if (index >= num_axes_t || index < -num_axes_t) {
       // Axis is out of range, but still in [0, 3] (or [-4, -1] for reverse
@@ -152,20 +152,20 @@ class Tensor {
 
   inline uint32_t offset(uint32_t n, uint32_t c = 0, uint32_t h = 0,
       uint32_t w = 0) const {
-    CHECK_LE(n, num());
-    CHECK_LE(c, channels());
-    CHECK_LE(h, height());
-    CHECK_LE(w, width());
+    DCHECK_LE(n, num());
+    DCHECK_LE(c, channels());
+    DCHECK_LE(h, height());
+    DCHECK_LE(w, width());
     return ((n * channels() + c) * height() + h) * width() + w;
   }
 
   inline uint32_t offset(const std::vector<uint32_t>& indices) const {
-    CHECK_LE(indices.size(), num_axes());
+    DCHECK_LE(indices.size(), num_axes());
     uint32_t offset = 0;
     for (uint32_t i = 0; i < num_axes(); ++i) {
       offset *= shape(i);
       if (indices.size() > i) {
-        CHECK_LT(indices[i], shape(i));
+        DCHECK_LT(indices[i], shape(i));
         offset += indices[i];
       }
     }
@@ -202,12 +202,12 @@ class Tensor {
   }
 
   inline const std::shared_ptr<SyncedMemory>& data() const {
-    CHECK(data_);
+    DCHECK(data_);
     return data_;
   }
 
   inline const std::shared_ptr<SyncedMemory>& diff() const {
-    CHECK(diff_);
+    DCHECK(diff_);
     return diff_;
   }
 

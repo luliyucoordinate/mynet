@@ -34,7 +34,7 @@ void Tensor<Dtype>::Reshape(uint32_t num, uint32_t channels, uint32_t height,
 
 template <typename Dtype>
 void Tensor<Dtype>::Reshape(const std::vector<uint32_t>& shape) {
-  CHECK_LE(shape.size(), kMaxTensorAxes);
+  DCHECK_LE(shape.size(), kMaxTensorAxes);
   count_ = 1ul;
   shape_.resize(shape.size());
   if (!shape_data_ || shape_data_->size() < shape.size() * sizeof(uint32_t)) {
@@ -42,10 +42,10 @@ void Tensor<Dtype>::Reshape(const std::vector<uint32_t>& shape) {
   }
   uint32_t* shape_data = static_cast<uint32_t*>(shape_data_->mutable_cpu_data());
   for (uint32_t i = 0; i < shape.size(); ++i) {
-    // TODO: CHECK_GT ? Should be zero ?
-    // CHECK_GE(shape[i], 0); 
+    // TODO: DCHECK_GT ? Should be zero ?
+    // DCHECK_GE(shape[i], 0); 
     if (count_ > 0) {
-      CHECK_LE(shape[i], UINT32_MAX / count_) << "Tensor size exceeds UINT32_MAX";
+      DCHECK_LE(shape[i], UINT32_MAX / count_) << "Tensor size exceeds UINT32_MAX";
     }
     count_ *= shape[i];
     shape_[i] = shape[i];
@@ -61,7 +61,7 @@ void Tensor<Dtype>::Reshape(const std::vector<uint32_t>& shape) {
 template <typename Dtype>
 void Tensor<Dtype>::Reshape(const TensorShapeT* shape) {
   auto shape_dim = shape->dim;
-  CHECK_LE(shape_dim.size(), kMaxTensorAxes);
+  DCHECK_LE(shape_dim.size(), kMaxTensorAxes);
   std::vector<uint32_t> shape_vec(shape_dim.size());
   for (uint32_t i = 0; i < shape_dim.size(); ++i) {
     shape_vec[i] = shape_dim[i];
@@ -76,13 +76,13 @@ void Tensor<Dtype>::ReshapeLike(const Tensor<Dtype>& other) {
 
 template <typename Dtype>
 const Dtype* Tensor<Dtype>::cpu_data() const {
-  CHECK(data_);
+  DCHECK(data_);
   return (const Dtype*)data_->cpu_data();
 }
 
 template <typename Dtype>
 void Tensor<Dtype>::set_cpu_data(Dtype* data) {
-  CHECK(data);
+  DCHECK(data);
   // Make sure CPU and GPU sizes remain equal
   uint32_t size = count_ * sizeof(Dtype);
   if (data_->size() != size) {
@@ -94,31 +94,31 @@ void Tensor<Dtype>::set_cpu_data(Dtype* data) {
 
 template <typename Dtype>
 const Dtype* Tensor<Dtype>::cpu_diff() const {
-  CHECK(diff_);
+  DCHECK(diff_);
   return (const Dtype*)diff_->cpu_data();
 }
 
 template <typename Dtype>
 Dtype* Tensor<Dtype>::mutable_cpu_data() {
-  CHECK(data_);
+  DCHECK(data_);
   return static_cast<Dtype*>(data_->mutable_cpu_data());
 }
 
 template <typename Dtype>
 Dtype* Tensor<Dtype>::mutable_cpu_diff() {
-  CHECK(diff_);
+  DCHECK(diff_);
   return static_cast<Dtype*>(diff_->mutable_cpu_data());
 }
 
 template <typename Dtype>
 void Tensor<Dtype>::ShareData(const Tensor& other) {
-  CHECK_EQ(count_, other.count());
+  DCHECK_EQ(count_, other.count());
   data_ = other.data();
 }
 
 template <typename Dtype>
 void Tensor<Dtype>::ShareDiff(const Tensor& other) {
-  CHECK_EQ(count_, other.count());
+  DCHECK_EQ(count_, other.count());
   diff_ = other.diff();
 }
 
@@ -375,19 +375,19 @@ void Tensor<Dtype>::FromFlat(const TensorFlatT* flat, bool reshape) {
     }
     Reshape(shape);
   } else {
-    CHECK(ShapeEquals(flat)) << "shape mismatch (reshape not set)";
+    DCHECK(ShapeEquals(flat)) << "shape mismatch (reshape not set)";
   }
   // copy data
   Dtype* data_vec = mutable_cpu_data();
   auto flat_double_data = flat->double_data;
   auto flat_data = flat->data;
   if (flat_double_data.size() > 0) {
-    CHECK_EQ(count_, flat_double_data.size());
+    DCHECK_EQ(count_, flat_double_data.size());
     for (uint32_t i = 0; i < count_; ++i) {
       data_vec[i] = flat_double_data[i];
     }
   } else {
-    CHECK_EQ(count_, flat_data.size());
+    DCHECK_EQ(count_, flat_data.size());
     for (uint32_t i = 0; i < count_; ++i) {
       data_vec[i] = flat_data[i];
     }
@@ -396,13 +396,13 @@ void Tensor<Dtype>::FromFlat(const TensorFlatT* flat, bool reshape) {
   auto flat_double_diff = flat->double_diff;
   auto flat_diff = flat->diff;
   if (flat_double_diff.size() > 0) {
-    CHECK_EQ(count_, flat_double_diff.size());
+    DCHECK_EQ(count_, flat_double_diff.size());
     Dtype* diff_vec = mutable_cpu_diff();
     for (uint32_t i = 0; i < count_; ++i) {
       diff_vec[i] = flat_double_diff[i];
     }
   } else if (flat_diff.size() > 0) {
-    CHECK_EQ(count_, flat_diff.size());
+    DCHECK_EQ(count_, flat_diff.size());
     Dtype* diff_vec = mutable_cpu_diff();
     for (uint32_t i = 0; i < count_; ++i) {
       diff_vec[i] = flat_diff[i];
