@@ -5,7 +5,7 @@
 #include <glog/logging.h>
 #include <gtest/gtest.h>
 
-#include <climits>
+#include <cstdint>
 #include <cmath>
 #include <fstream>  
 #include <iostream> 
@@ -57,9 +57,15 @@ public:
   static Mynet& Get();
 
   inline static Mode mode() { return Get().mode_; }
+  inline static bool root_solver() { return Get().solver_rank_ == 0ul; }
 
 protected:
   Mode mode_;
+
+  // Parallel training
+  uint32_t solver_count_;
+  uint32_t solver_rank_;
+  bool multiprocess_;
 
 private:
   // The private constructor to avoid duplicate instantiation.

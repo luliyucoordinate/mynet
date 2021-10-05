@@ -1,5 +1,3 @@
-#include <climits>
-
 #include "tensor.hpp"
 #include "common.hpp"
 #include "syncedmem.hpp"
@@ -47,7 +45,7 @@ void Tensor<Dtype>::Reshape(const std::vector<uint32_t>& shape) {
     // TODO: CHECK_GT ? Should be zero ?
     // CHECK_GE(shape[i], 0); 
     if (count_ > 0) {
-      CHECK_LE(shape[i], ULONG_MAX / count_) << "Tensor size exceeds ULONG_MAX";
+      CHECK_LE(shape[i], UINT32_MAX / count_) << "Tensor size exceeds UINT32_MAX";
     }
     count_ *= shape[i];
     shape_[i] = shape[i];

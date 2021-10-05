@@ -1,14 +1,14 @@
 namespace mynet;
 
 table TensorShape {
-    dim: [int];
+    dim: [uint];
 }
 
 table TensorFlat {
-    num: int;
-    channels: int;
-    height: int;
-    width: int;
+    num: uint;
+    channels: uint;
+    height: uint;
+    width: uint;
 
     data: [float];
     diff: [float];
