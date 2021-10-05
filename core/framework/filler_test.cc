@@ -21,13 +21,13 @@ class UniformFillerTest : public ::testing::Test {
     filler_.reset(new UniformFiller<Dtype>(filler_param_));
   }
 
-  virtual void test_params(const std::vector<int>& shape) {
+  virtual void test_params(const std::vector<uint32_t>& shape) {
     EXPECT_TRUE(tensor_);
     tensor_->Reshape(shape);
     filler_->Fill(tensor_);
-    const int count = tensor_->count();
+    const uint32_t count = tensor_->count();
     const Dtype* data = tensor_->cpu_data();
-    for (int i = 0; i < count; ++i) {
+    for (uint32_t i = 0; i < count; ++i) {
       EXPECT_GE(data[i], filler_param_->min);
       EXPECT_LE(data[i], filler_param_->max);
     }
@@ -42,22 +42,22 @@ class UniformFillerTest : public ::testing::Test {
 TYPED_TEST_CASE(UniformFillerTest, TestDtypes);
 
 TYPED_TEST(UniformFillerTest, TestFill) {
-  std::vector<int> tensor_shape = {2, 3, 4, 5};
+  std::vector<uint32_t> tensor_shape = {2ul, 3ul, 4ul, 5ul};
   this->test_params(tensor_shape);
 }
 
 TYPED_TEST(UniformFillerTest, TestFill1D) {
-  std::vector<int> tensor_shape(1, 15);
+  std::vector<uint32_t> tensor_shape(1ul, 15ul);
   this->test_params(tensor_shape);
 }
 
 TYPED_TEST(UniformFillerTest, TestFill2D) {
-  std::vector<int> tensor_shape = {8, 3};
+  std::vector<uint32_t> tensor_shape = {8ul, 3ul};
   this->test_params(tensor_shape);
 }
 
 TYPED_TEST(UniformFillerTest, TestFill5D) {
-  std::vector<int> tensor_shape = {2, 3, 4, 5, 2};
+  std::vector<uint32_t> tensor_shape = {2ul, 3ul, 4ul, 5ul, 2ul};
   this->test_params(tensor_shape);
 }
 
