@@ -11,7 +11,7 @@ namespace mynet {
 // The improvement in performance seems negligible in the single GPU case,
 // but might be more significant for parallel training. Most importantly,
 // it improved stability for large models on many GPUs.
-inline void MynetMallocHost(void** ptr, size_t size) {
+inline void MynetMallocHost(void** ptr, uint32_t size) {
   *ptr = malloc(size);
   CHECK(*ptr) << "host allocation of size " << size << " failed";
 }
@@ -30,7 +30,7 @@ inline void MynetFreeHost(void* ptr) {
 class SyncedMemory {
  public:
   SyncedMemory();
-  explicit SyncedMemory(size_t size);
+  explicit SyncedMemory(uint32_t size);
   ~SyncedMemory();
   const void* cpu_data();
   void set_cpu_data(void* data);
@@ -39,13 +39,13 @@ class SyncedMemory {
   void* mutable_gpu_data();
   enum SyncedHead { UNINITIALIZED, HEAD_AT_CPU, SYNCED };
   SyncedHead head() const { return head_; }
-  size_t size() const { return size_; }
+  uint32_t size() const { return size_; }
 
  private:
 
   void to_cpu();
   void* cpu_ptr_;
-  size_t size_;
+  uint32_t size_;
   SyncedHead head_;
   bool own_cpu_data_;
 

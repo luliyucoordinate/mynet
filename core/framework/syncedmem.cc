@@ -6,7 +6,7 @@ SyncedMemory::SyncedMemory()
   : cpu_ptr_(NULL), size_(0), head_(UNINITIALIZED),
     own_cpu_data_(false) {}
 
-SyncedMemory::SyncedMemory(size_t size)
+SyncedMemory::SyncedMemory(uint32_t size)
   : cpu_ptr_(NULL), size_(size), head_(UNINITIALIZED),
     own_cpu_data_(false) {}
 

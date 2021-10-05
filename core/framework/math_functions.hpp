@@ -27,8 +27,9 @@ void mynet_axpy(uint32_t N, Dtype alpha, const Dtype* X,
 template <typename Dtype>
 void mynet_copy(Dtype* Y, const Dtype* X, uint32_t N);
 
+// no imply for void Y
 template <typename Dtype>
-void mynet_set(Dtype* Y, Dtype alpha, uint32_t N);
+void mynet_set(Dtype* Y, Dtype alpha, uint32_t N); 
 
 // Returns the sum of the absolute values of the elements of vector x
 template <typename Dtype>

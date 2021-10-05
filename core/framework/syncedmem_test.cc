@@ -27,14 +27,14 @@ TEST_F(SyncedMemoryTest, TestCPUWrite) {
   void* cpu_data = mem.mutable_cpu_data();
   EXPECT_EQ(mem.head(), SyncedMemory::HEAD_AT_CPU);
   std::memset(cpu_data, 1, mem.size());
-  for (size_t i = 0; i < mem.size(); ++i) {
+  for (uint32_t i = 0; i < mem.size(); ++i) {
     EXPECT_EQ((static_cast<char*>(cpu_data))[i], 1);
   }
   // do another round
   cpu_data = mem.mutable_cpu_data();
   EXPECT_EQ(mem.head(), SyncedMemory::HEAD_AT_CPU);
   std::memset(cpu_data, 2, mem.size());
-  for (size_t i = 0; i < mem.size(); ++i) {
+  for (uint32_t i = 0; i < mem.size(); ++i) {
     EXPECT_EQ((static_cast<char*>(cpu_data))[i], 2);
   }
 }
