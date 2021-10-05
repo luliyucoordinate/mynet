@@ -48,7 +48,7 @@ TYPED_TEST(TensorSimpleTest, TestReshape) {
   EXPECT_EQ(this->tensor_->count(), 120);
 
   flatbuffers::FlatBufferBuilder flatbuffer_builder;
-  std::vector<int> shape = {5, 4, 3, 1};
+  std::vector<uint32_t> shape = {5, 4, 3, 1};
   auto ts = CreateTensorShapeDirect(flatbuffer_builder, &shape);
   flatbuffer_builder.Finish(ts);
   
@@ -62,7 +62,7 @@ TYPED_TEST(TensorSimpleTest, TestReshape) {
 }
 
 TYPED_TEST(TensorSimpleTest, TestReshapeZero) {
-  std::vector<int> shape(2);
+  std::vector<uint32_t> shape(2);
   shape[0] = 0;
   shape[1] = 5;
   this->tensor_->Reshape(shape);
@@ -70,7 +70,7 @@ TYPED_TEST(TensorSimpleTest, TestReshapeZero) {
 }
 
 TYPED_TEST(TensorSimpleTest, TestToFlat) {
-  std::vector<int> shape(2);
+  std::vector<uint32_t> shape(2);
   shape[0] = 3;
   shape[1] = 2;
   this->tensor_->Reshape(shape);
@@ -88,7 +88,7 @@ TYPED_TEST(TensorSimpleTest, TestLegacytensorFlatShapeEquals) {
   
   auto tensor_flat = flatbuffers::GetMutableRoot<TensorFlat>(flatbuffer_builder.GetBufferPointer())->UnPack();
   // Reshape to (3 x 2).
-  std::vector<int> shape(2);
+  std::vector<uint32_t> shape(2);
   shape[0] = 3;
   shape[1] = 2;
   this->tensor_->Reshape(shape);

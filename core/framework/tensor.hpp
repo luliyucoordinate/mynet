@@ -6,7 +6,7 @@
 #include "core/schema/mynet_generated.h"
 #include "syncedmem.hpp"
 
-const size_t kMaxTensorAxes = 32;
+const uint32_t kMaxTensorAxes = 32;
 
 namespace mynet {
 
@@ -23,14 +23,14 @@ class Tensor {
   Tensor()
        : data_(), diff_(), count_(0ul), capacity_(0ul) {}
 
-  /// @brief Deprecated; use <code>Tensor(const std::vector<int>& shape)</code>.
-  explicit Tensor(const int num, const int channels, const int height,
-      const int width);
-  explicit Tensor(const std::vector<int>& shape);
+  /// @brief Deprecated; use <code>Tensor(const std::vector<int32_t>& shape)</code>.
+  explicit Tensor(uint32_t num, uint32_t channels, uint32_t height,
+      uint32_t width);
+  explicit Tensor(const std::vector<uint32_t>& shape);
 
-  /// @brief Deprecated; use <code>Reshape(const std::vector<int>& shape)</code>.
-  void Reshape(const int num, const int channels, const int height,
-      const int width);
+  /// @brief Deprecated; use <code>Reshape(const std::vector<int32_t>& shape)</code>.
+  void Reshape(uint32_t num, uint32_t channels, uint32_t height,
+      uint32_t width);
   /**
    * @brief Change the dimensions of the Tensor, allocating new memory if
    *        necessary.
@@ -45,18 +45,18 @@ class Tensor {
    * an error; either Net::Forward or Net::Reshape need to be called to
    * propagate the new input shape to higher layers.
    */
-  void Reshape(const std::vector<int>& shape);
+  void Reshape(const std::vector<uint32_t>& shape);
   void Reshape(const TensorShapeT* shape);
   void ReshapeLike(const Tensor& other);
   inline std::string shape_string() const {
     std::ostringstream stream;
-    for (size_t i = 0; i < shape_.size(); ++i) {
+    for (uint32_t i = 0; i < shape_.size(); ++i) {
       stream << shape_[i] << " ";
     }
     stream << "(" << count_ << ")";
     return stream.str();
   }
-  inline const std::vector<int>& shape() const { return shape_; }
+  inline const std::vector<uint32_t>& shape() const { return shape_; }
   /**
    * @brief Returns the dimension of the index-th axis (or the negative index-th
    *        axis from the end, if index is negative).
@@ -65,11 +65,11 @@ class Tensor {
    *        "canonicalized" using CanonicalAxisIndex.
    *        Dies on out of range index.
    */
-  inline int shape(int index) const {
+  inline uint32_t shape(int32_t index) const {
     return shape_[CanonicalAxisIndex(index)];
   }
-  inline size_t num_axes() const { return shape_.size(); }
-  inline size_t count() const { return count_; }
+  inline uint32_t num_axes() const { return shape_.size(); }
+  inline uint32_t count() const { return count_; }
 
   /**
    * @brief Compute the volume of a slice; i.e., the product of dimensions
@@ -79,15 +79,15 @@ class Tensor {
    *
    * @param end_axis The first axis to exclude from the slice.
    */
-  inline size_t count(int start_axis, int end_axis) const {
+  inline uint32_t count(int32_t start_axis, int32_t end_axis) const {
     CHECK_LE(start_axis, end_axis);
     CHECK_GE(start_axis, 0);
     CHECK_GE(end_axis, 0);
-    int num_axes_t = static_cast<int>(num_axes());
+    int32_t num_axes_t = static_cast<int32_t>(num_axes());
     CHECK_LE(start_axis, num_axes_t);
     CHECK_LE(end_axis, num_axes_t);
-    size_t count = 1ul;
-    for (int i = start_axis; i < end_axis; ++i) {
+    uint32_t count = 1ul;
+    for (int32_t i = start_axis; i < end_axis; ++i) {
       count *= shape(i);
     }
     return count;
@@ -98,7 +98,7 @@ class Tensor {
    *
    * @param start_axis The first axis to include in the slice.
    */
-  inline size_t count(int start_axis) const {
+  inline uint32_t count(int32_t start_axis) const {
     return count(start_axis, num_axes());
   }
 
@@ -113,8 +113,8 @@ class Tensor {
    *        the second to last if index == -2, etc.
    *        Dies on out of range index.
    */
-  inline size_t CanonicalAxisIndex(int axis_index) const {
-    int num_axes_t = static_cast<int>(num_axes());
+  inline uint32_t CanonicalAxisIndex(int32_t axis_index) const {
+    int32_t num_axes_t = static_cast<int32_t>(num_axes());
     CHECK_GE(axis_index, -num_axes_t)
         << "axis " << axis_index << " out of range for " << num_axes_t
         << "-D Tensor with shape " << shape_string();
@@ -128,19 +128,19 @@ class Tensor {
   }
 
   /// @brief Deprecated legacy shape accessor num: use shape(0) instead.
-  inline int num() const { return LegacyShape(0); }
+  inline uint32_t num() const { return LegacyShape(0); }
   /// @brief Deprecated legacy shape accessor channels: use shape(1) instead.
-  inline int channels() const { return LegacyShape(1); }
+  inline uint32_t channels() const { return LegacyShape(1); }
   /// @brief Deprecated legacy shape accessor height: use shape(2) instead.
-  inline int height() const { return LegacyShape(2); }
+  inline uint32_t height() const { return LegacyShape(2); }
   /// @brief Deprecated legacy shape accessor width: use shape(3) instead.
-  inline int width() const { return LegacyShape(3); }
-  inline int LegacyShape(int index) const {
+  inline uint32_t width() const { return LegacyShape(3); }
+  inline uint32_t LegacyShape(int32_t index) const {
     CHECK_LE(num_axes(), 4ul)
         << "Cannot use legacy accessors on Tensors with > 4 axes.";
     CHECK_LT(index, 4);
     CHECK_GE(index, -4);
-    int num_axes_t = static_cast<int>(num_axes());
+    int32_t num_axes_t = static_cast<int32_t>(num_axes());
     if (index >= num_axes_t || index < -num_axes_t) {
       // Axis is out of range, but still in [0, 3] (or [-4, -1] for reverse
       // indexing) -- this special case simulates the one-padding used to fill
@@ -150,26 +150,21 @@ class Tensor {
     return shape(index);
   }
 
-  inline int offset(const int n, const int c = 0, const int h = 0,
-      const int w = 0) const {
-    CHECK_GE(n, 0);
+  inline uint32_t offset(uint32_t n, uint32_t c = 0, uint32_t h = 0,
+      uint32_t w = 0) const {
     CHECK_LE(n, num());
-    CHECK_GE(channels(), 0);
     CHECK_LE(c, channels());
-    CHECK_GE(height(), 0);
     CHECK_LE(h, height());
-    CHECK_GE(width(), 0);
     CHECK_LE(w, width());
     return ((n * channels() + c) * height() + h) * width() + w;
   }
 
-  inline int offset(const std::vector<int>& indices) const {
+  inline uint32_t offset(const std::vector<uint32_t>& indices) const {
     CHECK_LE(indices.size(), num_axes());
-    int offset = 0;
-    for (size_t i = 0; i < num_axes(); ++i) {
+    uint32_t offset = 0;
+    for (uint32_t i = 0; i < num_axes(); ++i) {
       offset *= shape(i);
       if (indices.size() > i) {
-        CHECK_GE(indices[i], 0);
         CHECK_LT(indices[i], shape(i));
         offset += indices[i];
       }
@@ -188,21 +183,21 @@ class Tensor {
   void CopyFrom(const Tensor<Dtype>& source, bool copy_diff = false,
       bool reshape = false);
 
-  inline Dtype data_at(const int n, const int c, const int h,
-      const int w) const {
+  inline Dtype data_at(uint32_t n, uint32_t c, uint32_t h,
+      uint32_t w) const {
     return cpu_data()[offset(n, c, h, w)];
   }
 
-  inline Dtype diff_at(const int n, const int c, const int h,
-      const int w) const {
+  inline Dtype diff_at(uint32_t n, uint32_t c, uint32_t h,
+      uint32_t w) const {
     return cpu_diff()[offset(n, c, h, w)];
   }
 
-  inline Dtype data_at(const std::vector<int>& index) const {
+  inline Dtype data_at(const std::vector<uint32_t>& index) const {
     return cpu_data()[offset(index)];
   }
 
-  inline Dtype diff_at(const std::vector<int>& index) const {
+  inline Dtype diff_at(const std::vector<uint32_t>& index) const {
     return cpu_diff()[offset(index)];
   }
 
@@ -266,9 +261,9 @@ class Tensor {
   std::shared_ptr<SyncedMemory> data_;
   std::shared_ptr<SyncedMemory> diff_;
   std::shared_ptr<SyncedMemory> shape_data_;
-  std::vector<int> shape_;
-  size_t count_; // [0, mat(shape_)]
-  size_t capacity_;
+  std::vector<uint32_t> shape_;
+  uint32_t count_; // [0, mat(shape_)]
+  uint32_t capacity_;
 
   DISABLE_COPY_AND_ASSIGN(Tensor);
 };  // class Tensor

@@ -9,24 +9,24 @@
 namespace mynet {
 
 template <typename Dtype>
-Tensor<Dtype>::Tensor(const int num, const int channels, const int height,
-    const int width)
+Tensor<Dtype>::Tensor(uint32_t num, uint32_t channels, uint32_t height,
+    uint32_t width)
   // capacity_ must be initialized before calling Reshape
   : capacity_(0ul) {
   Reshape(num, channels, height, width);
 }
 
 template <typename Dtype>
-Tensor<Dtype>::Tensor(const std::vector<int>& shape)
+Tensor<Dtype>::Tensor(const std::vector<uint32_t>& shape)
   // capacity_ must be initialized before calling Reshape
   : capacity_(0ul) {
   Reshape(shape);
 }
 
 template <typename Dtype>
-void Tensor<Dtype>::Reshape(const int num, const int channels, const int height,
-    const int width) {
-  std::vector<int> shape(4);
+void Tensor<Dtype>::Reshape(uint32_t num, uint32_t channels, uint32_t height,
+    uint32_t width) {
+  std::vector<uint32_t> shape(4);
   shape[0] = num;
   shape[1] = channels;
   shape[2] = height;
@@ -35,19 +35,19 @@ void Tensor<Dtype>::Reshape(const int num, const int channels, const int height,
 }
 
 template <typename Dtype>
-void Tensor<Dtype>::Reshape(const std::vector<int>& shape) {
+void Tensor<Dtype>::Reshape(const std::vector<uint32_t>& shape) {
   CHECK_LE(shape.size(), kMaxTensorAxes);
   count_ = 1ul;
   shape_.resize(shape.size());
-  if (!shape_data_ || shape_data_->size() < shape.size() * sizeof(int)) {
-    shape_data_.reset(new SyncedMemory(shape.size() * sizeof(int)));
+  if (!shape_data_ || shape_data_->size() < shape.size() * sizeof(uint32_t)) {
+    shape_data_.reset(new SyncedMemory(shape.size() * sizeof(uint32_t)));
   }
-  int* shape_data = static_cast<int*>(shape_data_->mutable_cpu_data());
-  for (size_t i = 0; i < shape.size(); ++i) {
+  uint32_t* shape_data = static_cast<uint32_t*>(shape_data_->mutable_cpu_data());
+  for (uint32_t i = 0; i < shape.size(); ++i) {
     // TODO: CHECK_GT ? Should be zero ?
-    CHECK_GE(shape[i], 0); 
+    // CHECK_GE(shape[i], 0); 
     if (count_ > 0) {
-      CHECK_LE(static_cast<size_t>(shape[i]), ULONG_MAX / count_) << "Tensor size exceeds ULONG_MAX";
+      CHECK_LE(shape[i], ULONG_MAX / count_) << "Tensor size exceeds ULONG_MAX";
     }
     count_ *= shape[i];
     shape_[i] = shape[i];
@@ -64,8 +64,8 @@ template <typename Dtype>
 void Tensor<Dtype>::Reshape(const TensorShapeT* shape) {
   auto shape_dim = shape->dim;
   CHECK_LE(shape_dim.size(), kMaxTensorAxes);
-  std::vector<int> shape_vec(shape_dim.size());
-  for (size_t i = 0; i < shape_dim.size(); ++i) {
+  std::vector<uint32_t> shape_vec(shape_dim.size());
+  for (uint32_t i = 0; i < shape_dim.size(); ++i) {
     shape_vec[i] = shape_dim[i];
   }
   Reshape(shape_vec);
@@ -86,7 +86,7 @@ template <typename Dtype>
 void Tensor<Dtype>::set_cpu_data(Dtype* data) {
   CHECK(data);
   // Make sure CPU and GPU sizes remain equal
-  size_t size = count_ * sizeof(Dtype);
+  uint32_t size = count_ * sizeof(Dtype);
   if (data_->size() != size) {
     data_.reset(new SyncedMemory(size));
     diff_.reset(new SyncedMemory(size));
@@ -126,9 +126,9 @@ void Tensor<Dtype>::ShareDiff(const Tensor& other) {
 
 // The "update" method is used for parameter tensors in a Net, which are stored
 // as Tensor<float> or Tensor<double> -- hence we do not define it for
-// Tensor<int> or Tensor<unsigned int>.
-template <> void Tensor<unsigned int>::Update() { NOT_IMPLEMENTED; }
-template <> void Tensor<int>::Update() { NOT_IMPLEMENTED; }
+// Tensor<int32_t> or Tensor<uint32_t>.
+template <> void Tensor<uint32_t>::Update() { NOT_IMPLEMENTED; }
+template <> void Tensor<int32_t>::Update() { NOT_IMPLEMENTED; }
 
 template <typename Dtype>
 void Tensor<Dtype>::Update() {
@@ -147,12 +147,12 @@ void Tensor<Dtype>::Update() {
   }
 }
 
-template <> unsigned int Tensor<unsigned int>::asum_data() const {
+template <> uint32_t Tensor<uint32_t>::asum_data() const {
   NOT_IMPLEMENTED;
   return 0;
 }
 
-template <> int Tensor<int>::asum_data() const {
+template <> int32_t Tensor<int32_t>::asum_data() const {
   NOT_IMPLEMENTED;
   return 0;
 }
@@ -172,12 +172,12 @@ Dtype Tensor<Dtype>::asum_data() const {
   return 0;
 }
 
-template <> unsigned int Tensor<unsigned int>::asum_diff() const {
+template <> uint32_t Tensor<uint32_t>::asum_diff() const {
   NOT_IMPLEMENTED;
   return 0;
 }
 
-template <> int Tensor<int>::asum_diff() const {
+template <> int32_t Tensor<int32_t>::asum_diff() const {
   NOT_IMPLEMENTED;
   return 0;
 }
@@ -197,12 +197,12 @@ Dtype Tensor<Dtype>::asum_diff() const {
   return 0;
 }
 
-template <> unsigned int Tensor<unsigned int>::sumsq_data() const {
+template <> uint32_t Tensor<uint32_t>::sumsq_data() const {
   NOT_IMPLEMENTED;
   return 0;
 }
 
-template <> int Tensor<int>::sumsq_data() const {
+template <> int32_t Tensor<int32_t>::sumsq_data() const {
   NOT_IMPLEMENTED;
   return 0;
 }
@@ -227,12 +227,12 @@ Dtype Tensor<Dtype>::sumsq_data() const {
   return sumsq;
 }
 
-template <> unsigned int Tensor<unsigned int>::sumsq_diff() const {
+template <> uint32_t Tensor<uint32_t>::sumsq_diff() const {
   NOT_IMPLEMENTED;
   return 0;
 }
 
-template <> int Tensor<int>::sumsq_diff() const {
+template <> int32_t Tensor<int32_t>::sumsq_diff() const {
   NOT_IMPLEMENTED;
   return 0;
 }
@@ -256,11 +256,11 @@ Dtype Tensor<Dtype>::sumsq_diff() const {
   return sumsq;
 }
 
-template <> void Tensor<unsigned int>::scale_data(unsigned int scale_factor) {
+template <> void Tensor<uint32_t>::scale_data(uint32_t scale_factor) {
   NOT_IMPLEMENTED;
 }
 
-template <> void Tensor<int>::scale_data(int scale_factor) {
+template <> void Tensor<int32_t>::scale_data(int32_t scale_factor) {
   NOT_IMPLEMENTED;
 }
 
@@ -281,11 +281,11 @@ void Tensor<Dtype>::scale_data(Dtype scale_factor) {
   }
 }
 
-template <> void Tensor<unsigned int>::scale_diff(unsigned int scale_factor) {
+template <> void Tensor<uint32_t>::scale_diff(uint32_t scale_factor) {
   NOT_IMPLEMENTED;
 }
 
-template <> void Tensor<int>::scale_diff(int scale_factor) {
+template <> void Tensor<int32_t>::scale_diff(int32_t scale_factor) {
   NOT_IMPLEMENTED;
 }
 
@@ -326,8 +326,8 @@ bool Tensor<Dtype>::ShapeEquals(const TensorFlatT* other) {
 
   auto other_shape_dim = other->shape->dim;
 
-  std::vector<int> other_shape(other_shape_dim.size());
-  for (size_t i = 0; i < other_shape_dim.size(); ++i) {
+  std::vector<uint32_t> other_shape(other_shape_dim.size());
+  for (uint32_t i = 0; i < other_shape_dim.size(); ++i) {
     other_shape[i] = other_shape_dim[i];
   }
   return shape_ == other_shape;
@@ -345,11 +345,9 @@ void Tensor<Dtype>::CopyFrom(const Tensor& source, bool copy_diff, bool reshape)
   switch (Mynet::mode()) {
   case Mynet::CPU:
     if (copy_diff) {
-      mynet_copy(count_, source.cpu_diff(),
-          static_cast<Dtype*>(diff_->mutable_cpu_data()));
+      mynet_copy(static_cast<Dtype*>(diff_->mutable_cpu_data()), source.cpu_diff(), count_);
     } else {
-      mynet_copy(count_, source.cpu_data(),
-          static_cast<Dtype*>(data_->mutable_cpu_data()));
+      mynet_copy(static_cast<Dtype*>(data_->mutable_cpu_data()), source.cpu_data(), count_);
     }
     break;
   default:
@@ -360,7 +358,7 @@ void Tensor<Dtype>::CopyFrom(const Tensor& source, bool copy_diff, bool reshape)
 template <typename Dtype>
 void Tensor<Dtype>::FromFlat(const TensorFlatT* flat, bool reshape) {
   if (reshape) {
-    std::vector<int> shape;
+    std::vector<uint32_t> shape;
     if (flat->num || flat->channels ||
         flat->height || flat->width) {
       // Using deprecated 4D Tensor dimensions --
@@ -373,7 +371,7 @@ void Tensor<Dtype>::FromFlat(const TensorFlatT* flat, bool reshape) {
     } else {
       auto flat_shape_dim = flat->shape->dim;
       shape.resize(flat_shape_dim.size());
-      for (size_t i = 0; i < flat_shape_dim.size(); ++i) {
+      for (uint32_t i = 0; i < flat_shape_dim.size(); ++i) {
         shape[i] = flat_shape_dim[i];
       }
     }
@@ -387,12 +385,12 @@ void Tensor<Dtype>::FromFlat(const TensorFlatT* flat, bool reshape) {
   auto flat_data = flat->data;
   if (flat_double_data.size() > 0) {
     CHECK_EQ(count_, flat_double_data.size());
-    for (size_t i = 0; i < count_; ++i) {
+    for (uint32_t i = 0; i < count_; ++i) {
       data_vec[i] = flat_double_data[i];
     }
   } else {
     CHECK_EQ(count_, flat_data.size());
-    for (size_t i = 0; i < count_; ++i) {
+    for (uint32_t i = 0; i < count_; ++i) {
       data_vec[i] = flat_data[i];
     }
   }
@@ -402,13 +400,13 @@ void Tensor<Dtype>::FromFlat(const TensorFlatT* flat, bool reshape) {
   if (flat_double_diff.size() > 0) {
     CHECK_EQ(count_, flat_double_diff.size());
     Dtype* diff_vec = mutable_cpu_diff();
-    for (size_t i = 0; i < count_; ++i) {
+    for (uint32_t i = 0; i < count_; ++i) {
       diff_vec[i] = flat_double_diff[i];
     }
   } else if (flat_diff.size() > 0) {
     CHECK_EQ(count_, flat_diff.size());
     Dtype* diff_vec = mutable_cpu_diff();
-    for (size_t i = 0; i < count_; ++i) {
+    for (uint32_t i = 0; i < count_; ++i) {
       diff_vec[i] = flat_diff[i];
     }
   }
@@ -453,8 +451,8 @@ flatbuffers::DetachedBuffer Tensor<float>::ToFlat(bool write_diff) const {
 }
 
 INSTANTIATE_CLASS(Tensor);
-template class Tensor<int>;
-template class Tensor<unsigned int>;
+template class Tensor<int32_t>;
+template class Tensor<uint32_t>;
 
 }  // namespace mynet
 
