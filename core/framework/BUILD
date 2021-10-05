@@ -1,4 +1,48 @@
 cc_test(
+    name = "ops_factory_test",
+    srcs = ["ops_factory_test.cc"],
+    deps = [
+        "//core/schema:mynet_fbs",
+        ":ops_factory",
+        ":mynet_test_main",
+    ],
+    copts = [
+        "-std=c++17",
+    ],
+)
+
+cc_library(
+    name = "ops_factory",
+    srcs = [
+        "ops_factory.cc",
+    ],
+    hdrs = ["ops_factory.hpp"],
+    deps = [
+        ":common",
+        ":ops",
+        "//core/kernels:conv_ops"
+    ],
+    copts = [
+        "-std=c++17",
+    ],
+)
+
+cc_library(
+    name = "ops",
+    srcs = [
+        "ops.cc",
+    ],
+    hdrs = ["ops.hpp"],
+    deps = [
+        ":common",
+        ":tensor",
+        ":math_functions",
+        "//core/schema:mynet_fbs",
+    ],
+    visibility = ["//visibility:public"],
+)
+
+cc_test(
     name = "tensor_test",
     srcs = ["tensor_test.cc"],
     deps = [
@@ -17,7 +61,8 @@ cc_library(
     deps = [
         ":common",
         "//:openblas",
-    ]
+    ],
+    visibility = ["//visibility:public"],
 )
 
 cc_library(
@@ -28,7 +73,8 @@ cc_library(
     hdrs = ["mynet_test_main.hpp"],
     deps = [
         ":common",
-    ]
+    ],
+    visibility = ["//visibility:public"],
 )
 
 cc_library(
@@ -41,9 +87,9 @@ cc_library(
         ":common",
         ":syncedmem",
         ":math_functions",
-        "//core/protobuf:mynet_cc_proto",
-        "//core/schema:mynet_fbs"
-    ]
+        "//core/schema:mynet_fbs",
+    ],
+    visibility = ["//visibility:public"],
 )
 
 cc_test(
@@ -63,14 +109,15 @@ cc_library(
     deps = [
         ":tensor",
         ":math_functions",
-    ]
+    ],
+    visibility = ["//visibility:public"],
 )
 
 cc_test(
     name = "syncedmem_test",
     srcs = ["syncedmem_test.cc"],
     deps = [
-        ":syncedmem"
+        ":syncedmem",
     ],
 )
 
@@ -94,5 +141,6 @@ cc_library(
         "@com_google_googletest//:gtest_main",
         "@com_github_gflags_gflags//:gflags",
         "@com_github_google_glog//:glog",
-    ]
+    ],
+    visibility = ["//visibility:public"],
 )

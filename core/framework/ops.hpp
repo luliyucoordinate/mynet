@@ -36,7 +36,7 @@ class Ops {
       
       if (opst.size() > 0) {
         tensors_.resize(opst.size());
-        for (size_t i = 0; i < opst.size(); ++i) {
+        for (uint32_t i = 0; i < opst.size(); ++i) {
           tensors_[i].reset(new Tensor<Dtype>());
           tensors_[i]->FromFlat(opst[i].get());
         }
@@ -164,14 +164,14 @@ class Ops {
   /**
    * @brief Returns the scalar loss associated with a top tensor at a given index.
    */
-  inline Dtype loss(size_t top_index) const {
+  inline Dtype loss(uint32_t top_index) const {
     return (loss_.size() > top_index) ? loss_[top_index] : Dtype(0);
   }
 
   /**
    * @brief Sets the loss associated with a top tensor at a given index.
    */
-  inline void set_loss(size_t top_index, const Dtype value) {
+  inline void set_loss(uint32_t top_index, const Dtype value) {
     if (loss_.size() <= top_index) {
       loss_.resize(top_index + 1, Dtype(0));
     }
@@ -190,7 +190,7 @@ class Ops {
    * This method should be overridden to return a non-negative value if your
    * ops expects some exact number of bottom tensors.
    */
-  virtual inline int ExactNumBottomTensors() const { return -1; }
+  virtual inline uint32_t ExactNumBottomTensors() const { return 0; }
   /**
    * @brief Returns the minimum number of bottom tensors required by the ops,
    *        or -1 if no minimum number is required.
@@ -198,7 +198,7 @@ class Ops {
    * This method should be overridden to return a non-negative value if your
    * ops expects some minimum number of bottom tensors.
    */
-  virtual inline int MinBottomTensors() const { return -1; }
+  virtual inline uint32_t MinBottomTensors() const { return 0; }
   /**
    * @brief Returns the maximum number of bottom tensors required by the ops,
    *        or -1 if no maximum number is required.
@@ -206,7 +206,7 @@ class Ops {
    * This method should be overridden to return a non-negative value if your
    * ops expects some maximum number of bottom tensors.
    */
-  virtual inline int MaxBottomTensors() const { return -1; }
+  virtual inline uint32_t MaxBottomTensors() const { return 0; }
   /**
    * @brief Returns the exact number of top tensors required by the ops,
    *        or -1 if no exact number is required.
@@ -214,7 +214,7 @@ class Ops {
    * This method should be overridden to return a non-negative value if your
    * ops expects some exact number of top tensors.
    */
-  virtual inline int ExactNumTopTensors() const { return -1; }
+  virtual inline uint32_t ExactNumTopTensors() const { return 0; }
   /**
    * @brief Returns the minimum number of top tensors required by the ops,
    *        or -1 if no minimum number is required.
@@ -222,7 +222,7 @@ class Ops {
    * This method should be overridden to return a non-negative value if your
    * ops expects some minimum number of top tensors.
    */
-  virtual inline int MinTopTensors() const { return -1; }
+  virtual inline uint32_t MinTopTensors() const { return 0; }
   /**
    * @brief Returns the maximum number of top tensors required by the ops,
    *        or -1 if no maximum number is required.
@@ -230,7 +230,7 @@ class Ops {
    * This method should be overridden to return a non-negative value if your
    * ops expects some maximum number of top tensors.
    */
-  virtual inline int MaxTopTensors() const { return -1; }
+  virtual inline uint32_t MaxTopTensors() const { return 0; }
   /**
    * @brief Returns true if the ops requires an equal number of bottom and
    *        top tensors.
@@ -258,7 +258,7 @@ class Ops {
    * setting and backpropagate to tensor i only if it needs gradient information
    * (as is done when force_backward == false).
    */
-  virtual inline bool AllowForceBackward(size_t bottom_index) const {
+  virtual inline bool AllowForceBackward(uint32_t bottom_index) const {
     return true;
   }
 
@@ -269,7 +269,7 @@ class Ops {
    * You can safely ignore false values and always compute gradients
    * for all parameters, but possibly with wasteful computation.
    */
-  inline bool param_propagate_down(size_t param_id) {
+  inline bool param_propagate_down(uint32_t param_id) {
     return (param_propagate_down_.size() > param_id) ?
         param_propagate_down_[param_id] : false;
   }
@@ -277,7 +277,7 @@ class Ops {
    * @brief Sets whether the ops should compute gradients w.r.t. a
    *        parameter at a particular index given by param_id.
    */
-  inline void set_param_propagate_down(size_t param_id, const bool value) {
+  inline void set_param_propagate_down(uint32_t param_id, const bool value) {
     if (param_propagate_down_.size() <= param_id) {
       param_propagate_down_.resize(param_id + 1, true);
     }
@@ -318,41 +318,34 @@ class Ops {
    */
   virtual void CheckTensorCounts(const std::vector<Tensor<Dtype>*>& bottom,
                                const std::vector<Tensor<Dtype>*>& top) {
-    if (ExactNumBottomTensors() >= 0) {
-      CHECK_EQ(ExactNumBottomTensors(), bottom.size())
-          << type() << " ops takes " << ExactNumBottomTensors()
-          << " bottom tensor(s) as input.";
-    }
-    if (MinBottomTensors() >= 0) {
-      CHECK_LE(MinBottomTensors(), bottom.size())
-          << type() << " ops takes at least " << MinBottomTensors()
-          << " bottom tensor(s) as input.";
-    }
-    if (MaxBottomTensors() >= 0) {
-      CHECK_GE(MaxBottomTensors(), bottom.size())
-          << type() << " ops takes at most " << MaxBottomTensors()
-          << " bottom tensor(s) as input.";
-    }
-    if (ExactNumTopTensors() >= 0) {
-      CHECK_EQ(ExactNumTopTensors(), top.size())
-          << type() << " ops produces " << ExactNumTopTensors()
-          << " top tensor(s) as output.";
-    }
-    if (MinTopTensors() >= 0) {
-      CHECK_LE(MinTopTensors(), top.size())
-          << type() << " ops produces at least " << MinTopTensors()
-          << " top tensor(s) as output.";
-    }
-    if (MaxTopTensors() >= 0) {
-      CHECK_GE(MaxTopTensors(), top.size())
-          << type() << " ops produces at most " << MaxTopTensors()
-          << " top tensor(s) as output.";
-    }
-    if (EqualNumBottomTopTensors()) {
-      CHECK_EQ(bottom.size(), top.size())
-          << type() << " ops produces one top tensor as output for each "
-          << "bottom tensor input.";
-    }
+    DCHECK_EQ(ExactNumBottomTensors(), bottom.size())
+        << type() << " ops takes " << ExactNumBottomTensors()
+        << " bottom tensor(s) as input.";
+
+    DCHECK_LE(MinBottomTensors(), bottom.size())
+        << type() << " ops takes at least " << MinBottomTensors()
+        << " bottom tensor(s) as input.";
+    
+    DCHECK_GE(MaxBottomTensors(), bottom.size())
+        << type() << " ops takes at most " << MaxBottomTensors()
+        << " bottom tensor(s) as input.";
+
+    DCHECK_EQ(ExactNumTopTensors(), top.size())
+        << type() << " ops produces " << ExactNumTopTensors()
+        << " top tensor(s) as output.";
+    
+    DCHECK_LE(MinTopTensors(), top.size())
+        << type() << " ops produces at least " << MinTopTensors()
+        << " top tensor(s) as output.";
+
+    DCHECK_GE(MaxTopTensors(), top.size())
+        << type() << " ops produces at most " << MaxTopTensors()
+        << " top tensor(s) as output.";
+
+    DCHECK_EQ(bottom.size(), top.size())
+        << type() << " ops produces one top tensor as output for each "
+        << "bottom tensor input.";
+    
   }
 
   /**
@@ -360,21 +353,21 @@ class Ops {
    * the loss function. Store non-zero loss weights in the diff tensor.
    */
   inline void SetLossWeights(const std::vector<Tensor<Dtype>*>& top) {
-    size_t num_loss_weights = ops_param_->loss_weight.size();
+    uint32_t num_loss_weights = ops_param_->loss_weight.size();
     if (num_loss_weights) {
-      CHECK_EQ(top.size(), num_loss_weights) << "loss_weight must be "
+      DCHECK_EQ(top.size(), num_loss_weights) << "loss_weight must be "
           "unspecified or specified once per top tensor.";
-      for (size_t top_id = 0; top_id < top.size(); ++top_id) {
+      for (uint32_t top_id = 0; top_id < top.size(); ++top_id) {
         const Dtype loss_weight = ops_param_->loss_weight[top_id];
         if (loss_weight == Dtype(0)) { 
           continue; 
         }
 
         this->set_loss(top_id, loss_weight);
-        size_t count = top[top_id]->count();
+        uint32_t count = top[top_id]->count();
         Dtype* loss_multiplier = top[top_id]->mutable_cpu_diff();
 
-        for (size_t i = 0; i < count; i++) {
+        for (uint32_t i = 0; i < count; i++) {
           loss_multiplier[i] = loss_weight;
         }
       }
@@ -396,9 +389,9 @@ inline Dtype Ops<Dtype>::Forward(const std::vector<Tensor<Dtype>*>& bottom,
   switch (Mynet::mode()) {
   case Mynet::CPU:
     ForwardCpu(bottom, top);
-    for (size_t top_id = 0; top_id < top.size(); ++top_id) {
+    for (uint32_t top_id = 0; top_id < top.size(); ++top_id) {
       if (!this->loss(top_id)) { continue; }
-      size_t count = top[top_id]->count();
+      uint32_t count = top[top_id]->count();
       const Dtype* data = top[top_id]->cpu_data();
       const Dtype* loss_weights = top[top_id]->cpu_diff();
       loss += mynet_cpu_dot(count, data, loss_weights);
@@ -428,7 +421,7 @@ template <typename Dtype>
 flatbuffers::DetachedBuffer Ops<Dtype>::ToFlat(bool write_diff) {
   flatbuffers::FlatBufferBuilder flatbuffer_builder;
   // auto param = CreateOpsParameter(flatbuffer_builder, ops_param_);
-  for (size_t i = 0; i < tensors_.size(); ++i) {
+  for (uint32_t i = 0; i < tensors_.size(); ++i) {
     flatbuffers::unique_ptr<mynet::TensorFlatT> tensor(flatbuffers::GetMutableRoot<TensorFlat>(tensors_[i]->ToFlat(write_diff).data())->UnPack());
     ops_param_->tensors.push_back(std::move(tensor));
     // ops_param_->tensors.push_back(flatbuffers::unique_ptr<mynet::TensorFlatT>(tensors_[i]->ToFlat(write_diff).template GetRoot<TensorFlat>()));

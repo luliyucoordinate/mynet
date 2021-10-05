@@ -1,6 +1,6 @@
 /**
  * @brief A Ops factory that allows one to register Opss.
- * During runtime, registered Opss can be called by passing a OpsParameter
+ * During runtime, registered Opss can be called by passing a OpsParameterT*
  * protobuffer to the CreateOps function:
  *
  *     OpsRegistry<Dtype>::CreateOps(param);
@@ -24,7 +24,7 @@
  * format of:
  *
  *    template <typename Dtype>
- *    Ops<Dtype*> GetMyAwesomeOps(const OpsParameter& param) {
+ *    Ops<Dtype*> GetMyAwesomeOps(OpsParameterT* param) {
  *      // your implementation
  *    }
  *
@@ -41,7 +41,7 @@
 
 #include "common.hpp"
 #include "ops.hpp"
-#include "core/protobuf/mynet.pb.h"
+#include "core/schema/mynet_generated.h"
 
 namespace mynet {
 
@@ -51,7 +51,7 @@ class Ops;
 template <typename Dtype>
 class OpsRegistry {
  public:
-  typedef std::shared_ptr<Ops<Dtype> > (*Creator)(const OpsParameter&);
+  typedef std::shared_ptr<Ops<Dtype>> (*Creator)(OpsParameterT*);
   typedef std::map<std::string, Creator> CreatorRegistry;
 
   static CreatorRegistry& Registry() {
@@ -60,21 +60,21 @@ class OpsRegistry {
   }
 
   // Adds a creator.
-  static void AddCreator(const string& type, Creator creator) {
+  static void AddCreator(const std::string& type, Creator creator) {
     CreatorRegistry& registry = Registry();
-    CHECK_EQ(registry.count(type), 0)
+    DCHECK_EQ(registry.count(type), 0ul)
         << "Ops type " << type << " already registered.";
     registry[type] = creator;
   }
 
-  // Get a Ops using a OpsParameter.
-  static std::shared_ptr<Ops<Dtype> > CreateOps(const OpsParameter& param) {
-    if (mynet::root_solver()) {
-      LOG(INFO) << "Creating Ops " << param.name();
+  // Get a Ops using a OpsParameterT*.
+  static std::shared_ptr<Ops<Dtype>> CreateOps(OpsParameterT* param) {
+    if (Mynet::root_solver()) {
+      LOG(INFO) << "Creating Ops " << param->name;
     }
-    const string& type = param.type();
+    auto type = param->type;
     CreatorRegistry& registry = Registry();
-    CHECK_EQ(registry.count(type), 1) << "Unknown Ops type: " << type
+    DCHECK_EQ(registry.count(type), 1ul) << "Unknown Ops type: " << type
         << " (known types: " << OpsTypeListString() << ")";
     return registry[type](param);
   }
@@ -82,9 +82,8 @@ class OpsRegistry {
   static std::vector<std::string> OpsTypeList() {
     CreatorRegistry& registry = Registry();
     std::vector<std::string> Ops_types;
-    for (typename CreatorRegistry::iterator iter = registry.begin();
-         iter != registry.end(); ++iter) {
-      Ops_types.push_back(iter->first);
+    for (const auto& [k, v] : registry) {
+      Ops_types.push_back(k);
     }
     return Ops_types;
   }
@@ -94,11 +93,10 @@ class OpsRegistry {
   // static variables.
   OpsRegistry() {}
 
-  static string OpsTypeListString() {
+  static std::string OpsTypeListString() {
     std::vector<std::string> Ops_types = OpsTypeList();
-    string Ops_types_str;
-    for (std::vector<std::string>::iterator iter = Ops_types.begin();
-         iter != Ops_types.end(); ++iter) {
+    std::string Ops_types_str;
+    for (auto iter = Ops_types.begin(); iter != Ops_types.end(); ++iter) {
       if (iter != Ops_types.begin()) {
         Ops_types_str += ", ";
       }
@@ -112,8 +110,8 @@ class OpsRegistry {
 template <typename Dtype>
 class OpsRegisterer {
  public:
-  OpsRegisterer(const string& type,
-                  std::shared_ptr<Ops<Dtype>> (*creator)(const OpsParameter&)) {
+  OpsRegisterer(const std::string& type,
+                  std::shared_ptr<Ops<Dtype>> (*creator)(OpsParameterT*)) {
     OpsRegistry<Dtype>::AddCreator(type, creator);
   }
 };
@@ -125,7 +123,7 @@ class OpsRegisterer {
 
 #define REGISTER_OPS_CLASS(type)                                             \
   template <typename Dtype>                                                  \
-  std::shared_ptr<Ops<Dtype>> Creator_##type##Ops(const OpsParameter& param) \
+  std::shared_ptr<Ops<Dtype>> Creator_##type##Ops(OpsParameterT* param) \
   {                                                                          \
     return std::shared_ptr<Ops<Dtype>>(new type##Ops<Dtype>(param));        \
   }                                                                          \
