@@ -60,6 +60,7 @@ void Tensor<Dtype>::Reshape(const std::vector<uint32_t>& shape) {
 
 template <typename Dtype>
 void Tensor<Dtype>::Reshape(const TensorShapeT* shape) {
+  DCHECK(shape);
   auto shape_dim = shape->dim;
   DCHECK_LE(shape_dim.size(), kMaxTensorAxes);
   std::vector<uint32_t> shape_vec(shape_dim.size());
@@ -412,39 +413,55 @@ void Tensor<Dtype>::FromFlat(const TensorFlatT* flat, bool reshape) {
 
 template <>
 flatbuffers::DetachedBuffer Tensor<double>::ToFlat(bool write_diff) const {
-  flatbuffers::FlatBufferBuilder flatbuffer_builder;
-  auto tensor_shape = CreateTensorShapeDirect(flatbuffer_builder, &shape_);
+  // auto tensor_shape = CreateTensorShapeDirect(flatbuffer_builder, &shape_);
+  TensorShapeT tensor_shape;
+  tensor_shape.dim = shape_;
 
   const double* data_vec = cpu_data();
   std::vector<double> data(data_vec, data_vec + count_);
-  const std::vector<double>* data_ptr = &data;
-  const std::vector<double>* diff_ptr = nullptr;
+  std::vector<double> diff;
 
   if (write_diff) {
     const double* diff_vec = cpu_diff();
-    diff_ptr = new std::vector<double>(diff_vec, diff_vec + count_);
+    diff = std::vector<double>(diff_vec, diff_vec + count_);
   }
-  auto tensor_flat = CreateTensorFlatDirect(flatbuffer_builder, num(), channels(), height(), width(), nullptr, nullptr, tensor_shape, data_ptr, diff_ptr);
-  flatbuffer_builder.Finish(tensor_flat);
+  TensorFlatT tensor_flat;
+  tensor_flat.num = num();
+  tensor_flat.channels = channels();
+  tensor_flat.height = height();
+  tensor_flat.width = width();
+  tensor_flat.shape = std::make_unique<TensorShapeT>(tensor_shape);
+  tensor_flat.double_data = data;
+  tensor_flat.double_diff = diff;
+  // auto tensor_flat = CreateTensorFlatDirect(flatbuffer_builder, num(), channels(), height(), width(), nullptr, nullptr, tensor_shape, data_ptr, diff_ptr);
+  flatbuffers::FlatBufferBuilder flatbuffer_builder;
+  flatbuffer_builder.Finish(TensorFlat::Pack(flatbuffer_builder, &tensor_flat));
   return flatbuffer_builder.Release();
 }
 
 template <>
 flatbuffers::DetachedBuffer Tensor<float>::ToFlat(bool write_diff) const {
-  flatbuffers::FlatBufferBuilder flatbuffer_builder;
-  auto tensor_shape = CreateTensorShapeDirect(flatbuffer_builder, &shape_);
+  TensorShapeT tensor_shape;
+  tensor_shape.dim = shape_;
 
   const float* data_vec = cpu_data();
   std::vector<float> data(data_vec, data_vec + count_);
-  const std::vector<float>* data_ptr = &data;
-  const std::vector<float>* diff_ptr = nullptr;
+  std::vector<float> diff;
 
   if (write_diff) {
     const float* diff_vec = cpu_diff();
-    diff_ptr = new std::vector<float>(diff_vec, diff_vec + count_);
+    diff = std::vector<float>(diff_vec, diff_vec + count_);
   }
-  auto tensor_flat = CreateTensorFlatDirect(flatbuffer_builder, num(), channels(), height(), width(), data_ptr, diff_ptr, tensor_shape, nullptr, nullptr);
-  flatbuffer_builder.Finish(tensor_flat);
+  TensorFlatT tensor_flat;
+  tensor_flat.num = num();
+  tensor_flat.channels = channels();
+  tensor_flat.height = height();
+  tensor_flat.width = width();
+  tensor_flat.shape = std::make_unique<TensorShapeT>(tensor_shape);
+  tensor_flat.data = data;
+  tensor_flat.diff = diff;
+  flatbuffers::FlatBufferBuilder flatbuffer_builder;
+  flatbuffer_builder.Finish(TensorFlat::Pack(flatbuffer_builder, &tensor_flat));
   return flatbuffer_builder.Release();
 }
 
