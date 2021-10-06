@@ -11,9 +11,8 @@ TEST_F(SyncedMemoryTest, TestInitialization) {
   SyncedMemory mem(10);
   EXPECT_EQ(mem.head(), SyncedMemory::UNINITIALIZED);
   EXPECT_EQ(mem.size(), 10);
-  SyncedMemory* p_mem = new SyncedMemory(10 * sizeof(float));
+  auto p_mem = std::make_shared<SyncedMemory>(10 * sizeof(float));
   EXPECT_EQ(p_mem->size(), 10 * sizeof(float));
-  delete p_mem;
 }
 
 TEST_F(SyncedMemoryTest, TestAllocationCPU) {
