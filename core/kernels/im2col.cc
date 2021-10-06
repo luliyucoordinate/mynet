@@ -13,12 +13,13 @@ void im2col_cpu(const Dtype* data_im, uint32_t channels,
     uint32_t stride_h, uint32_t stride_w,
     uint32_t dilation_h, uint32_t dilation_w,
     Dtype* data_col) {
+  DCHECK(data_im);
   uint32_t output_h = (height + 2 * pad_h -
     (dilation_h * (kernel_h - 1) + 1)) / stride_h + 1;
   uint32_t output_w = (width + 2 * pad_w -
     (dilation_w * (kernel_w - 1) + 1)) / stride_w + 1;
   uint32_t channel_size = height * width;
-  for (uint32_t channel = 0; channel < channels; data_im += channel_size) {
+  for (uint32_t channel = 0; channel < channels; data_im += channel_size, channel++) {
     for (uint32_t kernel_row = 0; kernel_row < kernel_h; kernel_row++) {
       for (uint32_t kernel_col = 0; kernel_col < kernel_w; kernel_col++) {
         uint32_t input_row = -pad_h + kernel_row * dilation_h; // will be neg
