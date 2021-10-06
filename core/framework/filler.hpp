@@ -66,17 +66,17 @@ class UniformFiller : public Filler<Dtype> {
  * this way for now.
  */
 template <typename Dtype>
-Filler<Dtype>* GetFiller(const FillerParameterT* param) {
+std::shared_ptr<Filler<Dtype>> GetFiller(const FillerParameterT* param) {
   DCHECK(param);
   const std::string& type = param->type;
   if (type == "constant") {
-    return new ConstantFiller<Dtype>(param);
+    return std::make_shared<ConstantFiller<Dtype>>(param);
   } else if (type == "uniform") {
-    return new UniformFiller<Dtype>(param);
+    return std::make_shared<UniformFiller<Dtype>>(param);
   } else {
     DCHECK(false) << "Unknown filler name: " << type;
   }
-  return (Filler<Dtype>*)(NULL);
+  return nullptr;
 }
 
 }  // namespace mynet
