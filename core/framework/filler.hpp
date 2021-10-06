@@ -23,16 +23,37 @@ protected:
   const FillerParameterT* filler_param_;
 };  // class Filler
 
+/// @brief Fills a Blob with constant values @f$ x = 0 @f$.
+template <typename Dtype>
+class ConstantFiller : public Filler<Dtype> {
+ public:
+  explicit ConstantFiller(const FillerParameterT* param)
+      : Filler<Dtype>(param) {}
+  virtual void Fill(Tensor<Dtype>* tensor) {
+    DCHECK(tensor);
+    Dtype* data = tensor->mutable_cpu_data();
+    const uint32_t count = tensor->count();
+    const Dtype value = this->filler_param_->value;
+    DCHECK(count);
+    for (uint32_t i = 0; i < count; ++i) {
+      data[i] = value;
+    }
+    DCHECK_EQ(this->filler_param_->sparse, -1)
+         << "Sparsity not supported by this Filler.";
+  }
+};
+
 /// @brief Fills a Tensor with uniformly distributed values @f$ x\sim U(a, b) @f$.
 template <typename Dtype>
 class UniformFiller : public Filler<Dtype> {
  public:
   explicit UniformFiller(const FillerParameterT* param)
       : Filler<Dtype>(param) {}
-  virtual void Fill(Tensor<Dtype>* Tensor) {
-    DCHECK(Tensor->count());
-    mynet_rng_uniform<Dtype>(Tensor->count(), Dtype(this->filler_param_->min),
-        Dtype(this->filler_param_->max), Tensor->mutable_cpu_data());
+  virtual void Fill(Tensor<Dtype>* tensor) {
+    DCHECK(tensor);
+    DCHECK(tensor->count());
+    mynet_rng_uniform<Dtype>(tensor->count(), Dtype(this->filler_param_->min),
+        Dtype(this->filler_param_->max), tensor->mutable_cpu_data());
     // DCHECK_EQ(this->filler_param_.sparse(), -1)
     //      << "Sparsity not supported by this Filler.";
   }
@@ -46,9 +67,11 @@ class UniformFiller : public Filler<Dtype> {
  */
 template <typename Dtype>
 Filler<Dtype>* GetFiller(const FillerParameterT* param) {
+  DCHECK(param);
   const std::string& type = param->type;
-
-  if (type == "uniform") {
+  if (type == "constant") {
+    return new ConstantFiller<Dtype>(param);
+  } else if (type == "uniform") {
     return new UniformFiller<Dtype>(param);
   } else {
     DCHECK(false) << "Unknown filler name: " << type;
