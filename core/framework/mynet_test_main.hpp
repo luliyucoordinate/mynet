@@ -1,7 +1,7 @@
 // The main caffe test code. Your test cpp code should include this hpp
 // to allow a main function to be compiled into the binary.
-#ifndef MYNET_CC_TEST_MYNET_MAIN_HPP_
-#define MYNET_CC_TEST_MYNET_MAIN_HPP_
+#ifndef MYNET_CORE_FRAMEWORK_MYNET_MAIN_HPP_
+#define MYNET_CORE_FRAMEWORK_MYNET_MAIN_HPP_
 
 #include "common.hpp"
 
@@ -32,4 +32,4 @@ typedef ::testing::Types<CPUDevice<float>,
                          CPUDevice<double>> TestDtypesAndDevices;
 } 
 
-#endif  // MYNET_CC_TEST_MYNET_MAIN_HPP_
+#endif  // MYNET_CORE_FRAMEWORK_MYNET_MAIN_HPP_
