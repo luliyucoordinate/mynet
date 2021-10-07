@@ -1,5 +1,8 @@
-#ifndef MYNET_KERNELS_IM2COL_HPP_
-#define MYNET_KERNELS_IM2COL_HPP_
+// Copyright 2021 coordinate
+// Author: coordinate
+
+#ifndef CORE_KERNELS_IM2COL_HPP_
+#define CORE_KERNELS_IM2COL_HPP_
 
 #include <cstdint>
 
@@ -33,4 +36,4 @@ void col2im_cpu(const Dtype* data_col, uint32_t channels,
 
 }  // namespace mynet
 
-#endif  // MYNET_KERNELS_IM2COL_HPP_
+#endif  // CORE_KERNELS_IM2COL_HPP_

@@ -1,23 +1,24 @@
-#ifndef MYNET_CC_COMMON_HPP_
-#define MYNET_CC_COMMON_HPP_
+// Copyright 2021 coordinate
+// Author: coordinate
+
+#ifndef CORE_FRAMEWORK_COMMON_HPP_
+#define CORE_FRAMEWORK_COMMON_HPP_
 
 #include <gflags/gflags.h>
 #include <glog/logging.h>
 #include <gtest/gtest.h>
 
-#include <cstdint>
 #include <cmath>
-#include <fstream>  
-#include <iostream> 
+#include <cstdint>
+#include <cstring>  // memset
+#include <fstream>
+#include <iostream>
 #include <map>
 #include <set>
 #include <sstream>
 #include <string>
-#include <cstring>  // memset
 #include <utility>  // pair
 #include <vector>
-#include <thread>
-
 
 #ifndef GFLAGS_GFLAGS_H_
 namespace gflags = google;
@@ -25,13 +26,13 @@ namespace gflags = google;
 
 // Disable the copy and assignment operator for a class.
 #define DISABLE_COPY_AND_ASSIGN(classname) \
-private:\
-  classname(const classname&);\
+ private:                                  \
+  classname(const classname&);             \
   classname& operator=(const classname&)
 
 // Instantiate a class with float and double specifications.
 #define INSTANTIATE_CLASS(classname) \
-  template class classname<float>; \
+  template class classname<float>;   \
   template class classname<double>
 
 // A simple macro to mark codes that are not implemented, so that when the code
@@ -42,11 +43,10 @@ namespace mynet {
 
 void GlobalInit(int* pargc, char*** pargv);
 
-
 // A singleton class to hold common mynet stuff, such as the handler that
 // mynet is going to use for cublas, curand, etc.
 class Mynet {
-public:
+ public:
   ~Mynet();
 
   enum Mode { CPU, GPU };
@@ -59,7 +59,7 @@ public:
   inline static Mode mode() { return Get().mode_; }
   inline static bool root_solver() { return Get().solver_rank_ == 0ul; }
 
-protected:
+ protected:
   Mode mode_;
 
   // Parallel training
@@ -67,13 +67,13 @@ protected:
   uint32_t solver_rank_;
   bool multiprocess_;
 
-private:
+ private:
   // The private constructor to avoid duplicate instantiation.
   Mynet();
 
   DISABLE_COPY_AND_ASSIGN(Mynet);
 };
 
-} // namespace mynet
+}  // namespace mynet
 
-#endif  // MYNET_CC_COMMON_HPP_
+#endif  // CORE_FRAMEWORK_COMMON_HPP_

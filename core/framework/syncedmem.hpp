@@ -1,7 +1,11 @@
-#ifndef MYNET_CC_SYNCEDMEM_HPP_
-#define MYNET_CC_SYNCEDMEM_HPP_
+// Copyright 2021 coordinate
+// Author: coordinate
+
+#ifndef CORE_FRAMEWORK_SYNCEDMEM_HPP_
+#define CORE_FRAMEWORK_SYNCEDMEM_HPP_
 
 #include <cstdlib>
+
 #include "common.hpp"
 
 namespace mynet {
@@ -16,10 +20,7 @@ inline void MynetMallocHost(void** ptr, uint32_t size) {
   DCHECK(*ptr) << "host allocation of size " << size << " failed";
 }
 
-inline void MynetFreeHost(void* ptr) {
-  free(ptr);
-}
-
+inline void MynetFreeHost(void* ptr) { free(ptr); }
 
 /**
  * @brief Manages memory allocation and synchronization between the host (CPU)
@@ -42,7 +43,6 @@ class SyncedMemory {
   uint32_t size() const { return size_; }
 
  private:
-
   void to_cpu();
   void* cpu_ptr_;
   uint32_t size_;
@@ -54,4 +54,4 @@ class SyncedMemory {
 
 }  // namespace mynet
 
-#endif  // MYNET_CC_SYNCEDMEM_HPP_
+#endif  // CORE_FRAMEWORK_SYNCEDMEM_HPP_

@@ -1,3 +1,6 @@
+// Copyright 2021 coordinate
+// Author: coordinate
+
 #include "mynet_test_main.hpp"
 
 int main(int argc, char** argv) {

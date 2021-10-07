@@ -1,11 +1,17 @@
-#ifndef MYNET_OPS_H_
-#define MYNET_OPS_H_
+// Copyright 2021 coordinate
+// Author: coordinate
 
+#ifndef CORE_FRAMEWORK_OPS_HPP_
+#define CORE_FRAMEWORK_OPS_HPP_
 
-#include "tensor.hpp"
+#include <memory>
+#include <vector>
+#include <utility>
+
 #include "common.hpp"
 #include "core/schema/mynet_generated.h"
 #include "math_functions.hpp"
+#include "tensor.hpp"
 
 namespace mynet {
 
@@ -16,8 +22,8 @@ namespace mynet {
  * Ops%s must implement a Forward function, in which they take their input
  * (bottom) tensor%s (if any) and compute their output tensor%s (if any).
  * They may also implement a Backward function, in which they compute the error
- * gradients with respect to their input tensor%s, given the error gradients with
- * their output tensor%s.
+ * gradients with respect to their input tensor%s, given the error gradients
+ * with their output tensor%s.
  */
 template <typename Dtype>
 class Ops {
@@ -27,21 +33,19 @@ class Ops {
    * to SetUp(), where the dimensions of the bottom tensors are provided to the
    * ops.
    */
-  explicit Ops(OpsParameterT* param)
-    : ops_param_(param),
-      phase_(param->phase) {
-      // Set phase and copy tensors (if there are any).
-      // Because unique_ptr can not copy, so use move.
-      auto& opst = ops_param_->tensors; 
-      
-      if (opst.size() > 0) {
-        tensors_.resize(opst.size());
-        for (uint32_t i = 0; i < opst.size(); ++i) {
-          tensors_[i].reset(new Tensor<Dtype>());
-          tensors_[i]->FromFlat(opst[i].get());
-        }
+  explicit Ops(OpsParameterT* param) : ops_param_(param), phase_(param->phase) {
+    // Set phase and copy tensors (if there are any).
+    // Because unique_ptr can not copy, so use move.
+    auto& opst = ops_param_->tensors;
+
+    if (opst.size() > 0) {
+      tensors_.resize(opst.size());
+      for (uint32_t i = 0; i < opst.size(); ++i) {
+        tensors_[i].reset(new Tensor<Dtype>());
+        tensors_[i]->FromFlat(opst[i].get());
       }
     }
+  }
   virtual ~Ops() {}
 
   /**
@@ -58,7 +62,7 @@ class Ops {
    * This method may not be overridden.
    */
   void SetUp(const std::vector<Tensor<Dtype>*>& bottom,
-      const std::vector<Tensor<Dtype>*>& top) {
+             const std::vector<Tensor<Dtype>*>& top) {
     CheckTensorCounts(bottom, top);
     OpsSetUp(bottom, top);
     Reshape(bottom, top);
@@ -82,7 +86,7 @@ class Ops {
    * adjust the top tensor sizes.
    */
   virtual void OpsSetUp(const std::vector<Tensor<Dtype>*>& bottom,
-      const std::vector<Tensor<Dtype>*>& top) {}
+                        const std::vector<Tensor<Dtype>*>& top) {}
 
   /**
    * @brief Adjust the shapes of top tensors and internal buffers to accommodate
@@ -97,7 +101,7 @@ class Ops {
    * accommodate the bottom tensors.
    */
   virtual void Reshape(const std::vector<Tensor<Dtype>*>& bottom,
-      const std::vector<Tensor<Dtype>*>& top) = 0;
+                       const std::vector<Tensor<Dtype>*>& top) = 0;
 
   /**
    * @brief Given the bottom tensors, compute the top tensors and the loss.
@@ -117,11 +121,11 @@ class Ops {
    * Your ops should implement ForwardCpu and (optionally) ForwardGpu.
    */
   inline Dtype Forward(const std::vector<Tensor<Dtype>*>& bottom,
-      const std::vector<Tensor<Dtype>*>& top);
+                       const std::vector<Tensor<Dtype>*>& top);
 
   /**
-   * @brief Given the top tensor error gradients, compute the bottom tensor error
-   *        gradients.
+   * @brief Given the top tensor error gradients, compute the bottom tensor
+   * error gradients.
    *
    * @param top
    *     the output tensors, whose diff fields store the gradient of the error
@@ -131,8 +135,8 @@ class Ops {
    *     whether to propagate the error gradients down to the bottom tensor at
    *     the corresponding index
    * @param bottom
-   *     the input tensors, whose diff fields will store the gradient of the error
-   *     with respect to themselves after Backward is run
+   *     the input tensors, whose diff fields will store the gradient of the
+   * error with respect to themselves after Backward is run
    *
    * The Backward wrapper calls the relevant device wrapper function
    * (Backward_cpu or Backward_gpu) to compute the bottom tensor diffs given the
@@ -141,15 +145,13 @@ class Ops {
    * Your ops should implement Backward_cpu and (optionally) Backward_gpu.
    */
   inline void Backward(const std::vector<Tensor<Dtype>*>& top,
-      const std::vector<bool>& propagate_down,
-      const std::vector<Tensor<Dtype>*>& bottom);
+                       const std::vector<bool>& propagate_down,
+                       const std::vector<Tensor<Dtype>*>& bottom);
 
   /**
    * @brief Returns the std::vector of learnable parameter tensors.
    */
-  std::vector<std::shared_ptr<Tensor<Dtype>>>& tensors() {
-    return tensors_;
-  }
+  std::vector<std::shared_ptr<Tensor<Dtype>>>& tensors() { return tensors_; }
 
   /**
    * @brief Returns the ops parameter.
@@ -162,7 +164,8 @@ class Ops {
   virtual flatbuffers::DetachedBuffer ToFlat(bool write_diff = false);
 
   /**
-   * @brief Returns the scalar loss associated with a top tensor at a given index.
+   * @brief Returns the scalar loss associated with a top tensor at a given
+   * index.
    */
   inline Dtype loss(uint32_t top_index) const {
     return (loss_.size() > top_index) ? loss_[top_index] : Dtype(0);
@@ -270,8 +273,9 @@ class Ops {
    * for all parameters, but possibly with wasteful computation.
    */
   inline bool param_propagate_down(uint32_t param_id) {
-    return (param_propagate_down_.size() > param_id) ?
-        param_propagate_down_[param_id] : false;
+    return (param_propagate_down_.size() > param_id)
+               ? param_propagate_down_[param_id]
+               : false;
   }
   /**
    * @brief Sets whether the ops should compute gradients w.r.t. a
@@ -284,32 +288,33 @@ class Ops {
     param_propagate_down_[param_id] = value;
   }
 
-
  protected:
   /** The flatbuffer that stores the ops parameters */
   OpsParameterT* ops_param_;
   /** The phase: TRAIN or TEST */
   const Phase phase_;
-  /** The std::vector that stores the learnable parameters as a set of tensors. */
+  /** The std::vector that stores the learnable parameters as a set of tensors.
+   */
   std::vector<std::shared_ptr<Tensor<Dtype>>> tensors_;
-  /** std::vector indicating whether to compute the diff of each param tensor. */
+  /** std::vector indicating whether to compute the diff of each param tensor.
+   */
   std::vector<bool> param_propagate_down_;
 
-  /** The std::vector that indicates whether each top tensor has a non-zero weight in
-   *  the objective function. */
+  /** The std::vector that indicates whether each top tensor has a non-zero
+   * weight in the objective function. */
   std::vector<Dtype> loss_;
 
   /** @brief Using the CPU device, compute the ops output. */
   virtual void ForwardCpu(const std::vector<Tensor<Dtype>*>& bottom,
-      const std::vector<Tensor<Dtype>*>& top) = 0;
+                          const std::vector<Tensor<Dtype>*>& top) = 0;
 
   /**
    * @brief Using the CPU device, compute the gradients for any parameters and
    *        for the bottom tensors if propagate_down is true.
    */
   virtual void BackwardCpu(const std::vector<Tensor<Dtype>*>& top,
-      const std::vector<bool>& propagate_down,
-      const std::vector<Tensor<Dtype>*>& bottom) = 0;
+                           const std::vector<bool>& propagate_down,
+                           const std::vector<Tensor<Dtype>*>& bottom) = 0;
 
   /**
    * Called by the parent ops's SetUp to check that the number of bottom
@@ -317,7 +322,7 @@ class Ops {
    * the {ExactNum,Min,Max}{Bottom,Top}tensors() functions.
    */
   virtual void CheckTensorCounts(const std::vector<Tensor<Dtype>*>& bottom,
-                               const std::vector<Tensor<Dtype>*>& top) {
+                                 const std::vector<Tensor<Dtype>*>& top) {
     if (ExactNumBottomTensors() > 0ul) {
       DCHECK_EQ(ExactNumBottomTensors(), bottom.size())
           << type() << " ops takes " << ExactNumBottomTensors()
@@ -329,7 +334,7 @@ class Ops {
           << type() << " ops takes at least " << MinBottomTensors()
           << " bottom tensor(s) as input.";
     }
-    
+
     if (MaxBottomTensors() > 0ul) {
       DCHECK_GE(MaxBottomTensors(), bottom.size())
           << type() << " ops takes at most " << MaxBottomTensors()
@@ -341,7 +346,7 @@ class Ops {
           << type() << " ops produces " << ExactNumTopTensors()
           << " top tensor(s) as output.";
     }
-    
+
     if (MinTopTensors() > 0ul) {
       DCHECK_LE(MinTopTensors(), top.size())
           << type() << " ops produces at least " << MinTopTensors()
@@ -362,18 +367,19 @@ class Ops {
   }
 
   /**
-   * Called by SetUp to initialize the weights associated with any top tensors in
-   * the loss function. Store non-zero loss weights in the diff tensor.
+   * Called by SetUp to initialize the weights associated with any top tensors
+   * in the loss function. Store non-zero loss weights in the diff tensor.
    */
   inline void SetLossWeights(const std::vector<Tensor<Dtype>*>& top) {
     uint32_t num_loss_weights = ops_param_->loss_weight.size();
     if (num_loss_weights) {
-      DCHECK_EQ(top.size(), num_loss_weights) << "loss_weight must be "
-          "unspecified or specified once per top tensor.";
+      DCHECK_EQ(top.size(), num_loss_weights)
+          << "loss_weight must be "
+             "unspecified or specified once per top tensor.";
       for (uint32_t top_id = 0; top_id < top.size(); ++top_id) {
         const Dtype loss_weight = ops_param_->loss_weight[top_id];
-        if (loss_weight == Dtype(0)) { 
-          continue; 
+        if (loss_weight == Dtype(0)) {
+          continue;
         }
 
         this->set_loss(top_id, loss_weight);
@@ -396,36 +402,38 @@ class Ops {
 // functions.
 template <typename Dtype>
 inline Dtype Ops<Dtype>::Forward(const std::vector<Tensor<Dtype>*>& bottom,
-    const std::vector<Tensor<Dtype>*>& top) {
+                                 const std::vector<Tensor<Dtype>*>& top) {
   Dtype loss = 0;
   Reshape(bottom, top);
   switch (Mynet::mode()) {
-  case Mynet::CPU:
-    ForwardCpu(bottom, top);
-    for (uint32_t top_id = 0; top_id < top.size(); ++top_id) {
-      if (!this->loss(top_id)) { continue; }
-      uint32_t count = top[top_id]->count();
-      const Dtype* data = top[top_id]->cpu_data();
-      const Dtype* loss_weights = top[top_id]->cpu_diff();
-      loss += mynet_cpu_dot(count, data, loss_weights);
-    }
-    break;
-  default:
-    LOG(FATAL) << "Unknown mynet mode.";
+    case Mynet::CPU:
+      ForwardCpu(bottom, top);
+      for (uint32_t top_id = 0; top_id < top.size(); ++top_id) {
+        if (!this->loss(top_id)) {
+          continue;
+        }
+        uint32_t count = top[top_id]->count();
+        const Dtype* data = top[top_id]->cpu_data();
+        const Dtype* loss_weights = top[top_id]->cpu_diff();
+        loss += mynet_cpu_dot(count, data, loss_weights);
+      }
+      break;
+    default:
+      LOG(FATAL) << "Unknown mynet mode.";
   }
   return loss;
 }
 
 template <typename Dtype>
 inline void Ops<Dtype>::Backward(const std::vector<Tensor<Dtype>*>& top,
-    const std::vector<bool>& propagate_down,
-    const std::vector<Tensor<Dtype>*>& bottom) {
+                                 const std::vector<bool>& propagate_down,
+                                 const std::vector<Tensor<Dtype>*>& bottom) {
   switch (Mynet::mode()) {
-  case Mynet::CPU:
-    BackwardCpu(top, propagate_down, bottom);
-    break;
-  default:
-    LOG(FATAL) << "Unknown mynet mode.";
+    case Mynet::CPU:
+      BackwardCpu(top, propagate_down, bottom);
+      break;
+    default:
+      LOG(FATAL) << "Unknown mynet mode.";
   }
 }
 
@@ -434,7 +442,10 @@ template <typename Dtype>
 flatbuffers::DetachedBuffer Ops<Dtype>::ToFlat(bool write_diff) {
   flatbuffers::FlatBufferBuilder flatbuffer_builder;
   for (uint32_t i = 0; i < tensors_.size(); ++i) {
-    flatbuffers::unique_ptr<mynet::TensorFlatT> tensor(flatbuffers::GetMutableRoot<TensorFlat>(tensors_[i]->ToFlat(write_diff).data())->UnPack());
+    flatbuffers::unique_ptr<mynet::TensorFlatT> tensor(
+        flatbuffers::GetMutableRoot<TensorFlat>(
+            tensors_[i]->ToFlat(write_diff).data())
+            ->UnPack());
     ops_param_->tensors.push_back(std::move(tensor));
   }
   flatbuffer_builder.Finish(OpsParameter::Pack(flatbuffer_builder, ops_param_));
@@ -443,4 +454,4 @@ flatbuffers::DetachedBuffer Ops<Dtype>::ToFlat(bool write_diff) {
 
 }  // namespace mynet
 
-#endif  // MYNET_OPS_H_
+#endif  // CORE_FRAMEWORK_OPS_HPP_

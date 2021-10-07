@@ -1,7 +1,8 @@
-// The main caffe test code. Your test cpp code should include this hpp
-// to allow a main function to be compiled into the binary.
-#ifndef MYNET_CORE_FRAMEWORK_MYNET_MAIN_HPP_
-#define MYNET_CORE_FRAMEWORK_MYNET_MAIN_HPP_
+// Copyright 2021 coordinate
+// Author: coordinate
+
+#ifndef CORE_FRAMEWORK_MYNET_TEST_MAIN_HPP_
+#define CORE_FRAMEWORK_MYNET_TEST_MAIN_HPP_
 
 #include "common.hpp"
 
@@ -11,9 +12,10 @@ namespace mynet {
 
 template <typename TypeParam>
 class MultiDeviceTest : public ::testing::Test {
-public:
+ public:
   typedef typename TypeParam::Dtype Dtype;
-protected:
+
+ protected:
   MultiDeviceTest() {
     // Mynet::set_mode(TypeParam::device);
   }
@@ -28,8 +30,8 @@ struct CPUDevice {
   static const Mynet::Mode device = Mynet::CPU;
 };
 
-typedef ::testing::Types<CPUDevice<float>,
-                         CPUDevice<double>> TestDtypesAndDevices;
-} 
+typedef ::testing::Types<CPUDevice<float>, CPUDevice<double>>
+    TestDtypesAndDevices;
+}  // namespace mynet
 
-#endif  // MYNET_CORE_FRAMEWORK_MYNET_MAIN_HPP_
+#endif  // CORE_FRAMEWORK_MYNET_TEST_MAIN_HPP_

@@ -1,7 +1,12 @@
+// Copyright 2021 coordinate
+// Author: coordinate
+
+#include "syncedmem.hpp"
+
+#include <memory>
 #include <vector>
 
 #include "common.hpp"
-#include "syncedmem.hpp"
 
 namespace mynet {
 

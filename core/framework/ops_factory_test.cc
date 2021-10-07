@@ -1,9 +1,14 @@
-#include <map>
-#include <string>
+// Copyright 2021 coordinate
+// Author: coordinate
 
 #include "ops_factory.hpp"
-#include "mynet_test_main.hpp"
+
+#include <map>
+#include <memory>
+#include <string>
+
 #include "flatbuffers/flatbuffers.h"
+#include "mynet_test_main.hpp"
 
 namespace mynet {
 
@@ -23,7 +28,7 @@ TYPED_TEST(OpsFactoryTest, TestCreateOps) {
     if (k == "Data") {
       continue;
     }
-    
+
     ops_param.type = k;
     ops_param.conv_param = std::make_unique<ConvParameterT>();
     ops = OpsRegistry<Dtype>::CreateOps(&ops_param);

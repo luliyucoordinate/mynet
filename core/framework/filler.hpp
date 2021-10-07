@@ -1,25 +1,26 @@
-// Fillers are random number generators that fills a Tensor using the specified
-// algorithm. The expectation is that they are only going to be used during
-// initialization time and will not involve any GPUs.
+// Copyright 2021 coordinate
+// Author: coordinate
 
-#ifndef MYNET_CC_FILLER_HPP_
-#define MYNET_CC_FILLER_HPP_
+#ifndef CORE_FRAMEWORK_FILLER_HPP_
+#define CORE_FRAMEWORK_FILLER_HPP_
 
 #include <string>
+#include <memory>
 
-#include "tensor.hpp"
 #include "math_functions.hpp"
+#include "tensor.hpp"
 
 namespace mynet {
 
 /// @brief Fills a Tensor with constant or randomly-generated data.
 template <typename Dtype>
 class Filler {
-public:
+ public:
   explicit Filler(const FillerParameterT* param) : filler_param_(param) {}
   virtual ~Filler() {}
   virtual void Fill(Tensor<Dtype>* Tensor) = 0;
-protected:
+
+ protected:
   const FillerParameterT* filler_param_;
 };  // class Filler
 
@@ -39,11 +40,12 @@ class ConstantFiller : public Filler<Dtype> {
       data[i] = value;
     }
     DCHECK_EQ(this->filler_param_->sparse, -1)
-         << "Sparsity not supported by this Filler.";
+        << "Sparsity not supported by this Filler.";
   }
 };
 
-/// @brief Fills a Tensor with uniformly distributed values @f$ x\sim U(a, b) @f$.
+/// @brief Fills a Tensor with uniformly distributed values @f$ x\sim U(a, b)
+/// @f$.
 template <typename Dtype>
 class UniformFiller : public Filler<Dtype> {
  public:
@@ -53,7 +55,8 @@ class UniformFiller : public Filler<Dtype> {
     DCHECK(tensor);
     DCHECK(tensor->count());
     mynet_rng_uniform<Dtype>(tensor->count(), Dtype(this->filler_param_->min),
-        Dtype(this->filler_param_->max), tensor->mutable_cpu_data());
+                             Dtype(this->filler_param_->max),
+                             tensor->mutable_cpu_data());
     // DCHECK_EQ(this->filler_param_.sparse(), -1)
     //      << "Sparsity not supported by this Filler.";
   }
@@ -81,4 +84,4 @@ std::shared_ptr<Filler<Dtype>> GetFiller(const FillerParameterT* param) {
 
 }  // namespace mynet
 
-#endif  // MYNET_CC_FILLER_HPP_
+#endif  // CORE_FRAMEWORK_FILLER_HPP_

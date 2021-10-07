@@ -1,15 +1,21 @@
-#include "common.hpp"
+// Copyright 2021 coordinate
+// Author: coordinate
+
 #include "filler.hpp"
-#include "mynet_test_main.hpp"
+
+#include <memory>
+#include <vector>
+
+#include "common.hpp"
 #include "core/schema/mynet_generated.h"
+#include "mynet_test_main.hpp"
 
 namespace mynet {
 
 template <typename Dtype>
 class ConstantFillerTest : public ::testing::Test {
  protected:
-  ConstantFillerTest()
-      : tensor_(new Tensor<Dtype>()) {
+  ConstantFillerTest() : tensor_(new Tensor<Dtype>()) {
     filler_param_.reset(new FillerParameterT());
     filler_param_->value = 10.0f;
     filler_.reset(new ConstantFiller<Dtype>(filler_param_.get()));
@@ -55,8 +61,7 @@ TYPED_TEST(ConstantFillerTest, TestFill5D) {
 template <typename Dtype>
 class UniformFillerTest : public ::testing::Test {
  protected:
-  UniformFillerTest()
-      : tensor_(new Tensor<Dtype>()) {
+  UniformFillerTest() : tensor_(new Tensor<Dtype>()) {
     filler_param_.reset(new FillerParameterT());
     filler_param_->min = 1.0;
     filler_param_->max = 2.0;

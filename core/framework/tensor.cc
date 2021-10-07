@@ -1,29 +1,36 @@
+// Copyright 2021 coordinate
+// Author: coordinate
+
 #include "tensor.hpp"
+
+#include <memory>
+#include <vector>
+
 #include "common.hpp"
-#include "syncedmem.hpp"
-#include "math_functions.hpp"
 #include "flatbuffers/flatbuffers.h"
+#include "math_functions.hpp"
+#include "syncedmem.hpp"
 
 namespace mynet {
 
 template <typename Dtype>
 Tensor<Dtype>::Tensor(uint32_t num, uint32_t channels, uint32_t height,
-    uint32_t width)
-  // capacity_ must be initialized before calling Reshape
-  : capacity_(0ul) {
+                      uint32_t width)
+    // capacity_ must be initialized before calling Reshape
+    : capacity_(0ul) {
   Reshape(num, channels, height, width);
 }
 
 template <typename Dtype>
 Tensor<Dtype>::Tensor(const std::vector<uint32_t>& shape)
-  // capacity_ must be initialized before calling Reshape
-  : capacity_(0ul) {
+    // capacity_ must be initialized before calling Reshape
+    : capacity_(0ul) {
   Reshape(shape);
 }
 
 template <typename Dtype>
 void Tensor<Dtype>::Reshape(uint32_t num, uint32_t channels, uint32_t height,
-    uint32_t width) {
+                            uint32_t width) {
   std::vector<uint32_t> shape(4);
   shape[0] = num;
   shape[1] = channels;
@@ -40,12 +47,14 @@ void Tensor<Dtype>::Reshape(const std::vector<uint32_t>& shape) {
   if (!shape_data_ || shape_data_->size() < shape.size() * sizeof(uint32_t)) {
     shape_data_.reset(new SyncedMemory(shape.size() * sizeof(uint32_t)));
   }
-  uint32_t* shape_data = static_cast<uint32_t*>(shape_data_->mutable_cpu_data());
+  uint32_t* shape_data =
+      static_cast<uint32_t*>(shape_data_->mutable_cpu_data());
   for (uint32_t i = 0; i < shape.size(); ++i) {
-    // TODO: DCHECK_GT ? Should be zero ?
-    // DCHECK_GE(shape[i], 0); 
+    // TODO(coordinate): DCHECK_GT ? Should be zero ?
+    // DCHECK_GE(shape[i], 0);
     if (count_ > 0) {
-      DCHECK_LE(shape[i], UINT32_MAX / count_) << "Tensor size exceeds UINT32_MAX";
+      DCHECK_LE(shape[i], UINT32_MAX / count_)
+          << "Tensor size exceeds UINT32_MAX";
     }
     count_ *= shape[i];
     shape_[i] = shape[i];
@@ -126,82 +135,98 @@ void Tensor<Dtype>::ShareDiff(const Tensor& other) {
 // The "update" method is used for parameter tensors in a Net, which are stored
 // as Tensor<float> or Tensor<double> -- hence we do not define it for
 // Tensor<int32_t> or Tensor<uint32_t>.
-template <> void Tensor<uint32_t>::Update() { NOT_IMPLEMENTED; }
-template <> void Tensor<int32_t>::Update() { NOT_IMPLEMENTED; }
+template <>
+void Tensor<uint32_t>::Update() {
+  NOT_IMPLEMENTED;
+}
+template <>
+void Tensor<int32_t>::Update() {
+  NOT_IMPLEMENTED;
+}
 
 template <typename Dtype>
 void Tensor<Dtype>::Update() {
   // We will perform update based on where the data is located.
   switch (data_->head()) {
-  case SyncedMemory::HEAD_AT_CPU:
-    // perform computation on CPU
-    mynet_axpy<Dtype>(count_, Dtype(-1),
-        static_cast<const Dtype*>(diff_->cpu_data()),
-        static_cast<Dtype*>(data_->mutable_cpu_data()));
-    break;
-  case SyncedMemory::SYNCED:
-    break;
-  default:
-    LOG(FATAL) << "Syncedmem not initialized.";
+    case SyncedMemory::HEAD_AT_CPU:
+      // perform computation on CPU
+      mynet_axpy<Dtype>(count_, Dtype(-1),
+                        static_cast<const Dtype*>(diff_->cpu_data()),
+                        static_cast<Dtype*>(data_->mutable_cpu_data()));
+      break;
+    case SyncedMemory::SYNCED:
+      break;
+    default:
+      LOG(FATAL) << "Syncedmem not initialized.";
   }
 }
 
-template <> uint32_t Tensor<uint32_t>::asum_data() const {
+template <>
+uint32_t Tensor<uint32_t>::asum_data() const {
   NOT_IMPLEMENTED;
   return 0;
 }
 
-template <> int32_t Tensor<int32_t>::asum_data() const {
+template <>
+int32_t Tensor<int32_t>::asum_data() const {
   NOT_IMPLEMENTED;
   return 0;
 }
 
 template <typename Dtype>
 Dtype Tensor<Dtype>::asum_data() const {
-  if (!data_) { return 0; }
-  switch (data_->head()) {
-  case SyncedMemory::HEAD_AT_CPU:
-    return mynet_cpu_asum(count_, cpu_data());
-  case SyncedMemory::SYNCED:
-  case SyncedMemory::UNINITIALIZED:
+  if (!data_) {
     return 0;
-  default:
-    LOG(FATAL) << "Unknown SyncedMemory head state: " << data_->head();
+  }
+  switch (data_->head()) {
+    case SyncedMemory::HEAD_AT_CPU:
+      return mynet_cpu_asum(count_, cpu_data());
+    case SyncedMemory::SYNCED:
+    case SyncedMemory::UNINITIALIZED:
+      return 0;
+    default:
+      LOG(FATAL) << "Unknown SyncedMemory head state: " << data_->head();
   }
   return 0;
 }
 
-template <> uint32_t Tensor<uint32_t>::asum_diff() const {
+template <>
+uint32_t Tensor<uint32_t>::asum_diff() const {
   NOT_IMPLEMENTED;
   return 0;
 }
 
-template <> int32_t Tensor<int32_t>::asum_diff() const {
+template <>
+int32_t Tensor<int32_t>::asum_diff() const {
   NOT_IMPLEMENTED;
   return 0;
 }
 
 template <typename Dtype>
 Dtype Tensor<Dtype>::asum_diff() const {
-  if (!diff_) { return 0; }
-  switch (diff_->head()) {
-  case SyncedMemory::HEAD_AT_CPU:
-    return mynet_cpu_asum(count_, cpu_diff());
-  case SyncedMemory::SYNCED:
-  case SyncedMemory::UNINITIALIZED:
+  if (!diff_) {
     return 0;
-  default:
-    LOG(FATAL) << "Unknown SyncedMemory head state: " << diff_->head();
+  }
+  switch (diff_->head()) {
+    case SyncedMemory::HEAD_AT_CPU:
+      return mynet_cpu_asum(count_, cpu_diff());
+    case SyncedMemory::SYNCED:
+    case SyncedMemory::UNINITIALIZED:
+      return 0;
+    default:
+      LOG(FATAL) << "Unknown SyncedMemory head state: " << diff_->head();
   }
   return 0;
 }
 
-template <> uint32_t Tensor<uint32_t>::sumsq_data() const {
+template <>
+uint32_t Tensor<uint32_t>::sumsq_data() const {
   NOT_IMPLEMENTED;
   return 0;
 }
 
-template <> int32_t Tensor<int32_t>::sumsq_data() const {
+template <>
+int32_t Tensor<int32_t>::sumsq_data() const {
   NOT_IMPLEMENTED;
   return 0;
 }
@@ -210,28 +235,32 @@ template <typename Dtype>
 Dtype Tensor<Dtype>::sumsq_data() const {
   Dtype sumsq;
   const Dtype* data;
-  if (!data_) { return 0; }
-  switch (data_->head()) {
-  case SyncedMemory::HEAD_AT_CPU:
-    data = cpu_data();
-    sumsq = mynet_cpu_dot(count_, data, data);
-    break;
-  case SyncedMemory::SYNCED:
-    break;
-  case SyncedMemory::UNINITIALIZED:
+  if (!data_) {
     return 0;
-  default:
-    LOG(FATAL) << "Unknown SyncedMemory head state: " << data_->head();
+  }
+  switch (data_->head()) {
+    case SyncedMemory::HEAD_AT_CPU:
+      data = cpu_data();
+      sumsq = mynet_cpu_dot(count_, data, data);
+      break;
+    case SyncedMemory::SYNCED:
+      break;
+    case SyncedMemory::UNINITIALIZED:
+      return 0;
+    default:
+      LOG(FATAL) << "Unknown SyncedMemory head state: " << data_->head();
   }
   return sumsq;
 }
 
-template <> uint32_t Tensor<uint32_t>::sumsq_diff() const {
+template <>
+uint32_t Tensor<uint32_t>::sumsq_diff() const {
   NOT_IMPLEMENTED;
   return 0;
 }
 
-template <> int32_t Tensor<int32_t>::sumsq_diff() const {
+template <>
+int32_t Tensor<int32_t>::sumsq_diff() const {
   NOT_IMPLEMENTED;
   return 0;
 }
@@ -240,87 +269,95 @@ template <typename Dtype>
 Dtype Tensor<Dtype>::sumsq_diff() const {
   Dtype sumsq;
   const Dtype* diff;
-  if (!diff_) { return 0; }
-  switch (diff_->head()) {
-  case SyncedMemory::HEAD_AT_CPU:
-    diff = cpu_diff();
-    sumsq = mynet_cpu_dot(count_, diff, diff);
-    break;
-  case SyncedMemory::SYNCED:
-  case SyncedMemory::UNINITIALIZED:
+  if (!diff_) {
     return 0;
-  default:
-    LOG(FATAL) << "Unknown SyncedMemory head state: " << data_->head();
+  }
+  switch (diff_->head()) {
+    case SyncedMemory::HEAD_AT_CPU:
+      diff = cpu_diff();
+      sumsq = mynet_cpu_dot(count_, diff, diff);
+      break;
+    case SyncedMemory::SYNCED:
+    case SyncedMemory::UNINITIALIZED:
+      return 0;
+    default:
+      LOG(FATAL) << "Unknown SyncedMemory head state: " << data_->head();
   }
   return sumsq;
 }
 
-template <> void Tensor<uint32_t>::scale_data(uint32_t scale_factor) {
+template <>
+void Tensor<uint32_t>::scale_data(uint32_t scale_factor) {
   NOT_IMPLEMENTED;
 }
 
-template <> void Tensor<int32_t>::scale_data(int32_t scale_factor) {
+template <>
+void Tensor<int32_t>::scale_data(int32_t scale_factor) {
   NOT_IMPLEMENTED;
 }
 
 template <typename Dtype>
 void Tensor<Dtype>::scale_data(Dtype scale_factor) {
   Dtype* data;
-  if (!data_) { return; }
+  if (!data_) {
+    return;
+  }
   switch (data_->head()) {
-  case SyncedMemory::HEAD_AT_CPU:
-    data = mutable_cpu_data();
-    mynet_scal(count_, scale_factor, data);
-    return;
-  case SyncedMemory::SYNCED:
-  case SyncedMemory::UNINITIALIZED:
-    return;
-  default:
-    LOG(FATAL) << "Unknown SyncedMemory head state: " << data_->head();
+    case SyncedMemory::HEAD_AT_CPU:
+      data = mutable_cpu_data();
+      mynet_scal(count_, scale_factor, data);
+      return;
+    case SyncedMemory::SYNCED:
+    case SyncedMemory::UNINITIALIZED:
+      return;
+    default:
+      LOG(FATAL) << "Unknown SyncedMemory head state: " << data_->head();
   }
 }
 
-template <> void Tensor<uint32_t>::scale_diff(uint32_t scale_factor) {
+template <>
+void Tensor<uint32_t>::scale_diff(uint32_t scale_factor) {
   NOT_IMPLEMENTED;
 }
 
-template <> void Tensor<int32_t>::scale_diff(int32_t scale_factor) {
+template <>
+void Tensor<int32_t>::scale_diff(int32_t scale_factor) {
   NOT_IMPLEMENTED;
 }
 
 template <typename Dtype>
 void Tensor<Dtype>::scale_diff(Dtype scale_factor) {
   Dtype* diff;
-  if (!diff_) { return; }
+  if (!diff_) {
+    return;
+  }
   switch (diff_->head()) {
-  case SyncedMemory::HEAD_AT_CPU:
-    diff = mutable_cpu_diff();
-    mynet_scal(count_, scale_factor, diff);
-    return;
-  case SyncedMemory::SYNCED:
-  case SyncedMemory::UNINITIALIZED:
-    return;
-  default:
-    LOG(FATAL) << "Unknown SyncedMemory head state: " << diff_->head();
+    case SyncedMemory::HEAD_AT_CPU:
+      diff = mutable_cpu_diff();
+      mynet_scal(count_, scale_factor, diff);
+      return;
+    case SyncedMemory::SYNCED:
+    case SyncedMemory::UNINITIALIZED:
+      return;
+    default:
+      LOG(FATAL) << "Unknown SyncedMemory head state: " << diff_->head();
   }
 }
 
 template <typename Dtype>
 bool Tensor<Dtype>::ShapeEquals(const TensorFlatT* other) {
-  if (other->num || other->channels ||
-      other->height || other->width) {
+  if (other->num || other->channels || other->height || other->width) {
     // Using deprecated 4D Tensor dimensions --
     // shape is (num, channels, height, width).
     // Note: we do not use the normal Tensor::num(), Tensor::channels(), etc.
-    // methods as these index from the beginning of the Tensor shape, where legacy
-    // parameter Tensors were indexed from the end of the Tensor shape (e.g., bias
-    // Tensor shape (1 x 1 x 1 x N), IP layer weight Tensor shape (1 x 1 x M x N)).
+    // methods as these index from the beginning of the Tensor shape, where
+    // legacy parameter Tensors were indexed from the end of the Tensor shape
+    // (e.g., bias Tensor shape (1 x 1 x 1 x N), IP layer weight Tensor shape (1
+    // x 1 x M x N)).
 
-    return shape_.size() <= 4 &&
-           LegacyShape(-4) == other->num &&
+    return shape_.size() <= 4 && LegacyShape(-4) == other->num &&
            LegacyShape(-3) == other->channels &&
-           LegacyShape(-2) == other->height &&
-           LegacyShape(-1) == other->width;
+           LegacyShape(-2) == other->height && LegacyShape(-1) == other->width;
   }
 
   auto other_shape_dim = other->shape->dim;
@@ -333,7 +370,8 @@ bool Tensor<Dtype>::ShapeEquals(const TensorFlatT* other) {
 }
 
 template <typename Dtype>
-void Tensor<Dtype>::CopyFrom(const Tensor& source, bool copy_diff, bool reshape) {
+void Tensor<Dtype>::CopyFrom(const Tensor& source, bool copy_diff,
+                             bool reshape) {
   if (source.count() != count_ || source.shape() != shape_) {
     if (reshape) {
       ReshapeLike(source);
@@ -342,15 +380,17 @@ void Tensor<Dtype>::CopyFrom(const Tensor& source, bool copy_diff, bool reshape)
     }
   }
   switch (Mynet::mode()) {
-  case Mynet::CPU:
-    if (copy_diff) {
-      mynet_copy(static_cast<Dtype*>(diff_->mutable_cpu_data()), source.cpu_diff(), count_);
-    } else {
-      mynet_copy(static_cast<Dtype*>(data_->mutable_cpu_data()), source.cpu_data(), count_);
-    }
-    break;
-  default:
-    LOG(FATAL) << "Unknown mynet mode.";
+    case Mynet::CPU:
+      if (copy_diff) {
+        mynet_copy(static_cast<Dtype*>(diff_->mutable_cpu_data()),
+                   source.cpu_diff(), count_);
+      } else {
+        mynet_copy(static_cast<Dtype*>(data_->mutable_cpu_data()),
+                   source.cpu_data(), count_);
+      }
+      break;
+    default:
+      LOG(FATAL) << "Unknown mynet mode.";
   }
 }
 
@@ -358,8 +398,7 @@ template <typename Dtype>
 void Tensor<Dtype>::FromFlat(const TensorFlatT* flat, bool reshape) {
   if (reshape) {
     std::vector<uint32_t> shape;
-    if (flat->num || flat->channels ||
-        flat->height || flat->width) {
+    if (flat->num || flat->channels || flat->height || flat->width) {
       // Using deprecated 4D Tensor dimensions --
       // shape is (num, channels, height, width).
       shape.resize(4);
@@ -433,7 +472,9 @@ flatbuffers::DetachedBuffer Tensor<double>::ToFlat(bool write_diff) const {
   tensor_flat.shape = std::make_unique<TensorShapeT>(tensor_shape);
   tensor_flat.double_data = data;
   tensor_flat.double_diff = diff;
-  // auto tensor_flat = CreateTensorFlatDirect(flatbuffer_builder, num(), channels(), height(), width(), nullptr, nullptr, tensor_shape, data_ptr, diff_ptr);
+  // auto tensor_flat = CreateTensorFlatDirect(flatbuffer_builder, num(),
+  // channels(), height(), width(), nullptr, nullptr, tensor_shape, data_ptr,
+  // diff_ptr);
   flatbuffers::FlatBufferBuilder flatbuffer_builder;
   flatbuffer_builder.Finish(TensorFlat::Pack(flatbuffer_builder, &tensor_flat));
   return flatbuffer_builder.Release();
@@ -470,4 +511,3 @@ template class Tensor<int32_t>;
 template class Tensor<uint32_t>;
 
 }  // namespace mynet
-

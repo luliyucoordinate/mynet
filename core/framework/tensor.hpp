@@ -1,8 +1,13 @@
-#ifndef MYNET_CC_TENSOR_HPP_
-#define MYNET_CC_TENSOR_HPP_
+// Copyright 2021 coordinate
+// Author: coordinate
+
+#ifndef CORE_FRAMEWORK_TENSOR_HPP_
+#define CORE_FRAMEWORK_TENSOR_HPP_
+
+#include <string>
+#include <vector>
 
 #include "common.hpp"
-// #include "core/protobuf/mynet.pb.h"
 #include "core/schema/mynet_generated.h"
 #include "syncedmem.hpp"
 
@@ -20,29 +25,30 @@ namespace mynet {
 template <typename Dtype>
 class Tensor {
  public:
-  Tensor()
-       : data_(), diff_(), count_(0ul), capacity_(0ul) {}
+  Tensor() : data_(), diff_(), count_(0ul), capacity_(0ul) {}
 
-  /// @brief Deprecated; use <code>Tensor(const std::vector<int32_t>& shape)</code>.
+  /// @brief Deprecated; use <code>Tensor(const std::vector<int32_t>&
+  /// shape)</code>.
   explicit Tensor(uint32_t num, uint32_t channels, uint32_t height,
-      uint32_t width);
+                  uint32_t width);
   explicit Tensor(const std::vector<uint32_t>& shape);
 
-  /// @brief Deprecated; use <code>Reshape(const std::vector<int32_t>& shape)</code>.
+  /// @brief Deprecated; use <code>Reshape(const std::vector<int32_t>&
+  /// shape)</code>.
   void Reshape(uint32_t num, uint32_t channels, uint32_t height,
-      uint32_t width);
+               uint32_t width);
   /**
    * @brief Change the dimensions of the Tensor, allocating new memory if
    *        necessary.
    *
    * This function can be called both to create an initial allocation
-   * of memory, and to adjust the dimensions of a top Tensor during Layer::Reshape
-   * or Layer::Forward. When changing the size of Tensor, memory will only be
-   * reallocated if sufficient memory does not already exist, and excess memory
-   * will never be freed.
+   * of memory, and to adjust the dimensions of a top Tensor during
+   * Layer::Reshape or Layer::Forward. When changing the size of Tensor, memory
+   * will only be reallocated if sufficient memory does not already exist, and
+   * excess memory will never be freed.
    *
-   * Note that reshaping an input Tensor and immediately calling Net::Backward is
-   * an error; either Net::Forward or Net::Reshape need to be called to
+   * Note that reshaping an input Tensor and immediately calling Net::Backward
+   * is an error; either Net::Forward or Net::Reshape need to be called to
    * propagate the new input shape to higher layers.
    */
   void Reshape(const std::vector<uint32_t>& shape);
@@ -151,7 +157,7 @@ class Tensor {
   }
 
   inline uint32_t offset(uint32_t n, uint32_t c = 0, uint32_t h = 0,
-      uint32_t w = 0) const {
+                         uint32_t w = 0) const {
     DCHECK_LE(n, num());
     DCHECK_LE(c, channels());
     DCHECK_LE(h, height());
@@ -177,19 +183,17 @@ class Tensor {
    * @param source the Tensor to copy from
    * @param copy_diff if false, copy the data; if true, copy the diff
    * @param reshape if false, require this Tensor to be pre-shaped to the shape
-   *        of other (and die otherwise); if true, Reshape this Tensor to other's
-   *        shape if necessary
+   *        of other (and die otherwise); if true, Reshape this Tensor to
+   * other's shape if necessary
    */
   void CopyFrom(const Tensor<Dtype>& source, bool copy_diff = false,
-      bool reshape = false);
+                bool reshape = false);
 
-  inline Dtype data_at(uint32_t n, uint32_t c, uint32_t h,
-      uint32_t w) const {
+  inline Dtype data_at(uint32_t n, uint32_t c, uint32_t h, uint32_t w) const {
     return cpu_data()[offset(n, c, h, w)];
   }
 
-  inline Dtype diff_at(uint32_t n, uint32_t c, uint32_t h,
-      uint32_t w) const {
+  inline Dtype diff_at(uint32_t n, uint32_t c, uint32_t h, uint32_t w) const {
     return cpu_diff()[offset(n, c, h, w)];
   }
 
@@ -237,8 +241,8 @@ class Tensor {
   void scale_diff(Dtype scale_factor);
 
   /**
-   * @brief Set the data_ std::shared_ptr to point to the SyncedMemory holding the
-   *        data_ of Tensor other -- useful in Layer%s which simply perform a copy
+   * @brief Set the data_ std::shared_ptr to point to the SyncedMemory holding
+   * the data_ of Tensor other -- useful in Layer%s which simply perform a copy
    *        in their Forward pass.
    *
    * This deallocates the SyncedMemory holding this Tensor's data_, as
@@ -246,8 +250,8 @@ class Tensor {
    */
   void ShareData(const Tensor& other);
   /**
-   * @brief Set the diff_ std::shared_ptr to point to the SyncedMemory holding the
-   *        diff_ of Tensor other -- useful in Layer%s which simply perform a copy
+   * @brief Set the diff_ std::shared_ptr to point to the SyncedMemory holding
+   * the diff_ of Tensor other -- useful in Layer%s which simply perform a copy
    *        in their Forward pass.
    *
    * This deallocates the SyncedMemory holding this Tensor's diff_, as
@@ -262,7 +266,7 @@ class Tensor {
   std::shared_ptr<SyncedMemory> diff_;
   std::shared_ptr<SyncedMemory> shape_data_;
   std::vector<uint32_t> shape_;
-  uint32_t count_; // [0, mat(shape_)]
+  uint32_t count_;  // [0, mat(shape_)]
   uint32_t capacity_;
 
   DISABLE_COPY_AND_ASSIGN(Tensor);
@@ -270,4 +274,4 @@ class Tensor {
 
 }  // namespace mynet
 
-#endif  // MYNET_CC_TENSOR_HPP_
+#endif  // CORE_FRAMEWORK_TENSOR_HPP_

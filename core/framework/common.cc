@@ -1,4 +1,9 @@
+// Copyright 2021 coordinate
+// Author: coordinate
+
 #include "common.hpp"
+
+#include <memory>
 
 namespace mynet {
 
@@ -20,9 +25,8 @@ Mynet& Mynet::Get() {
   return *(thread_instance_.get());
 }
 
-Mynet::Mynet()
-    : mode_(Mynet::CPU) { }
+Mynet::Mynet() : mode_(Mynet::CPU) {}
 
-Mynet::~Mynet() { }
+Mynet::~Mynet() {}
 
 }  // namespace mynet

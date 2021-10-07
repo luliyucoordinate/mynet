@@ -1,7 +1,13 @@
+// Copyright 2021 coordinate
+// Author: coordinate
+
 #include "tensor.hpp"
+
+#include <vector>
+
 #include "common.hpp"
-#include "mynet_test_main.hpp"
 #include "filler.hpp"
+#include "mynet_test_main.hpp"
 
 namespace mynet {
 
@@ -11,7 +17,10 @@ class TensorSimpleTest : public ::testing::Test {
   TensorSimpleTest()
       : tensor_(new Tensor<Dtype>()),
         tensor_preshaped_(new Tensor<Dtype>(2ul, 3ul, 4ul, 5ul)) {}
-  virtual ~TensorSimpleTest() { delete tensor_; delete tensor_preshaped_; }
+  virtual ~TensorSimpleTest() {
+    delete tensor_;
+    delete tensor_preshaped_;
+  }
   Tensor<Dtype>* const tensor_;
   Tensor<Dtype>* const tensor_preshaped_;
 };
@@ -67,8 +76,10 @@ TYPED_TEST(TensorSimpleTest, TestReshapeZero) {
 TYPED_TEST(TensorSimpleTest, TestToFlat) {
   std::vector<uint32_t> shape = {3ul, 2ul};
   this->tensor_->Reshape(shape);
-  
-  auto tensor_flat = flatbuffers::GetRoot<TensorFlat>(this->tensor_->ToFlat(true).data())->UnPack();
+
+  auto tensor_flat =
+      flatbuffers::GetRoot<TensorFlat>(this->tensor_->ToFlat(true).data())
+          ->UnPack();
   EXPECT_EQ(tensor_flat->num, 3ul);
   EXPECT_EQ(tensor_flat->channels, 2ul);
 }
@@ -126,10 +137,10 @@ TYPED_TEST(TensorSimpleTest, TestLegacytensorFlatShapeEquals) {
 template <typename TypeParam>
 class TensorMathTest : public MultiDeviceTest<TypeParam> {
   typedef typename TypeParam::Dtype Dtype;
-protected:
+
+ protected:
   TensorMathTest()
-      : tensor_(new Tensor<Dtype>(2ul, 3ul, 4ul, 5ul)),
-        epsilon_(1e-6) {}
+      : tensor_(new Tensor<Dtype>(2ul, 3ul, 4ul, 5ul)), epsilon_(1e-6) {}
 
   virtual ~TensorMathTest() { delete tensor_; }
   Tensor<Dtype>* const tensor_;
@@ -146,8 +157,8 @@ TYPED_TEST(TensorMathTest, TestSumOfSquares) {
   EXPECT_EQ(0, this->tensor_->sumsq_diff());
   FillerParameterT filler_param;
   filler_param.min = -3.0f;
-  filler_param.max =  3.0f;
-  
+  filler_param.max = 3.0f;
+
   UniformFiller<Dtype> filler(&filler_param);
   filler.Fill(this->tensor_);
   Dtype expected_sumsq = 0;
@@ -159,11 +170,11 @@ TYPED_TEST(TensorMathTest, TestSumOfSquares) {
   // so that the sumsq computation is done on that device.
   // (Otherwise, this would only check the CPU sumsq implementation.)
   switch (TypeParam::device) {
-  case Mynet::CPU:
-    this->tensor_->mutable_cpu_data();
-    break;
-  default:
-    LOG(FATAL) << "Unknown device: " << TypeParam::device;
+    case Mynet::CPU:
+      this->tensor_->mutable_cpu_data();
+      break;
+    default:
+      LOG(FATAL) << "Unknown device: " << TypeParam::device;
   }
   EXPECT_NEAR(expected_sumsq, this->tensor_->sumsq_data(),
               this->epsilon_ * expected_sumsq);
@@ -174,11 +185,11 @@ TYPED_TEST(TensorMathTest, TestSumOfSquares) {
   mynet_cpu_scale(this->tensor_->count(), kDiffScaleFactor, data,
                   this->tensor_->mutable_cpu_diff());
   switch (TypeParam::device) {
-  case Mynet::CPU:
-    this->tensor_->mutable_cpu_diff();
-    break;
-  default:
-    LOG(FATAL) << "Unknown device: " << TypeParam::device;
+    case Mynet::CPU:
+      this->tensor_->mutable_cpu_diff();
+      break;
+    default:
+      LOG(FATAL) << "Unknown device: " << TypeParam::device;
   }
   EXPECT_NEAR(expected_sumsq, this->tensor_->sumsq_data(),
               this->epsilon_ * expected_sumsq);
@@ -196,8 +207,8 @@ TYPED_TEST(TensorMathTest, TestAsum) {
   EXPECT_EQ(0, this->tensor_->asum_diff());
   FillerParameterT filler_param;
   filler_param.min = -3.0f;
-  filler_param.max =  3.0f;
-  
+  filler_param.max = 3.0f;
+
   UniformFiller<Dtype> filler(&filler_param);
   filler.Fill(this->tensor_);
   Dtype expected_asum = 0;
@@ -209,11 +220,11 @@ TYPED_TEST(TensorMathTest, TestAsum) {
   // so that the asum computation is done on that device.
   // (Otherwise, this would only check the CPU asum implementation.)
   switch (TypeParam::device) {
-  case Mynet::CPU:
-    this->tensor_->mutable_cpu_data();
-    break;
-  default:
-    LOG(FATAL) << "Unknown device: " << TypeParam::device;
+    case Mynet::CPU:
+      this->tensor_->mutable_cpu_data();
+      break;
+    default:
+      LOG(FATAL) << "Unknown device: " << TypeParam::device;
   }
   EXPECT_NEAR(expected_asum, this->tensor_->asum_data(),
               this->epsilon_ * expected_asum);
@@ -224,11 +235,11 @@ TYPED_TEST(TensorMathTest, TestAsum) {
   mynet_cpu_scale(this->tensor_->count(), kDiffScaleFactor, data,
                   this->tensor_->mutable_cpu_diff());
   switch (TypeParam::device) {
-  case Mynet::CPU:
-    this->tensor_->mutable_cpu_diff();
-    break;
-  default:
-    LOG(FATAL) << "Unknown device: " << TypeParam::device;
+    case Mynet::CPU:
+      this->tensor_->mutable_cpu_diff();
+      break;
+    default:
+      LOG(FATAL) << "Unknown device: " << TypeParam::device;
   }
   EXPECT_NEAR(expected_asum, this->tensor_->asum_data(),
               this->epsilon_ * expected_asum);
@@ -244,8 +255,8 @@ TYPED_TEST(TensorMathTest, TestScaleData) {
   EXPECT_EQ(0, this->tensor_->asum_diff());
   FillerParameterT filler_param;
   filler_param.min = -3.0f;
-  filler_param.max =  3.0f;
-  
+  filler_param.max = 3.0f;
+
   UniformFiller<Dtype> filler(&filler_param);
   filler.Fill(this->tensor_);
   const Dtype asum_before_scale = this->tensor_->asum_data();
@@ -253,11 +264,11 @@ TYPED_TEST(TensorMathTest, TestScaleData) {
   // so that the asum computation is done on that device.
   // (Otherwise, this would only check the CPU asum implementation.)
   switch (TypeParam::device) {
-  case Mynet::CPU:
-    this->tensor_->mutable_cpu_data();
-    break;
-  default:
-    LOG(FATAL) << "Unknown device: " << TypeParam::device;
+    case Mynet::CPU:
+      this->tensor_->mutable_cpu_data();
+      break;
+    default:
+      LOG(FATAL) << "Unknown device: " << TypeParam::device;
   }
   const Dtype kDataScaleFactor = 3;
   this->tensor_->scale_data(kDataScaleFactor);
@@ -278,11 +289,11 @@ TYPED_TEST(TensorMathTest, TestScaleData) {
   EXPECT_NEAR(expected_diff_asum_before_scale, this->tensor_->asum_diff(),
               this->epsilon_ * expected_diff_asum_before_scale);
   switch (TypeParam::device) {
-  case Mynet::CPU:
-    this->tensor_->mutable_cpu_diff();
-    break;
-  default:
-    LOG(FATAL) << "Unknown device: " << TypeParam::device;
+    case Mynet::CPU:
+      this->tensor_->mutable_cpu_diff();
+      break;
+    default:
+      LOG(FATAL) << "Unknown device: " << TypeParam::device;
   }
   const Dtype kDiffScaleFactor = 3;
   this->tensor_->scale_diff(kDiffScaleFactor);

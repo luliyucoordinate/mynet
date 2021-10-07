@@ -1,6 +1,12 @@
-#include "ops.hpp"
+// Copyright 2021 coordinate
+// Author: coordinate
+
 #include "ops_factory.hpp"
+
+#include <memory>
+
 #include "core/kernels/conv_ops.hpp"
+#include "ops.hpp"
 
 namespace mynet {
 

@@ -1,11 +1,15 @@
-#include <vector>
+// Copyright 2021 coordinate
+// Author: coordinate
 
 #include "conv_ops.hpp"
-#include "core/framework/tensor.hpp"
+
+#include <vector>
+#include <memory>
+
 #include "core/framework/common.hpp"
 #include "core/framework/filler.hpp"
 #include "core/framework/mynet_test_main.hpp"
-
+#include "core/framework/tensor.hpp"
 
 namespace mynet {
 
@@ -13,11 +17,13 @@ namespace mynet {
 // accumulate through explicit loops over input, output, and filters.
 template <typename Dtype>
 void mynet_conv(const Tensor<Dtype>* in, ConvParameterT* conv_param,
-    const std::vector<std::shared_ptr<Tensor<Dtype>>>& weights,
-    Tensor<Dtype>* out) {
+                const std::vector<std::shared_ptr<Tensor<Dtype>>>& weights,
+                Tensor<Dtype>* out) {
   DCHECK(conv_param);
   const bool has_depth = (out->num_axes() == 5ul);
-  if (!has_depth) { DCHECK_EQ(4ul, out->num_axes()); }
+  if (!has_depth) {
+    DCHECK_EQ(4ul, out->num_axes());
+  }
   // Kernel size, stride, and pad
   uint32_t kernel_h, kernel_w;
   if (conv_param->kernel_h || conv_param->kernel_w) {
@@ -39,11 +45,12 @@ void mynet_conv(const Tensor<Dtype>* in, ConvParameterT* conv_param,
     stride_h = conv_param->stride_h;
     stride_w = conv_param->stride_w;
   } else {
-    stride_h = stride_w = conv_param->stride.size() ? conv_param->stride[0] : 1ul;
+    stride_h = stride_w =
+        conv_param->stride.size() ? conv_param->stride[0] : 1ul;
   }
   uint32_t dilation_h, dilation_w;
-  dilation_h = dilation_w = conv_param->dilation.size() ?
-                            conv_param->dilation[0] : 1ul;
+  dilation_h = dilation_w =
+      conv_param->dilation.size() ? conv_param->dilation[0] : 1ul;
   uint32_t kernel_d, pad_d, stride_d, dilation_d;
   if (has_depth) {
     kernel_d = kernel_h;
@@ -79,27 +86,33 @@ void mynet_conv(const Tensor<Dtype>* in, ConvParameterT* conv_param,
                       uint32_t in_z = z * stride_d - pad_d + r * dilation_d;
                       uint32_t in_y = y * stride_h - pad_h + p * dilation_h;
                       uint32_t in_x = x * stride_w - pad_w + q * dilation_w;
-                      if (in_z >= 0 && in_z < (has_depth ? in->shape(2) : 1)
-                          && in_y >= 0 && in_y < in->shape(2 + has_depth)
-                          && in_x >= 0 && in_x < in->shape(3 + has_depth)) {
+                      if (in_z >= 0 && in_z < (has_depth ? in->shape(2) : 1) &&
+                          in_y >= 0 && in_y < in->shape(2 + has_depth) &&
+                          in_x >= 0 && in_x < in->shape(3 + has_depth)) {
                         weight_offset[0] = o + o_head;
                         weight_offset[1] = k;
-                        if (has_depth) { weight_offset[2] = r; }
+                        if (has_depth) {
+                          weight_offset[2] = r;
+                        }
                         weight_offset[2 + has_depth] = p;
                         weight_offset[3 + has_depth] = q;
                         in_offset[0] = n;
                         in_offset[1] = k + k_head;
-                        if (has_depth) { in_offset[2] = in_z; }
+                        if (has_depth) {
+                          in_offset[2] = in_z;
+                        }
                         in_offset[2 + has_depth] = in_y;
                         in_offset[3 + has_depth] = in_x;
                         out_offset[0] = n;
                         out_offset[1] = o + o_head;
-                        if (has_depth) { out_offset[2] = z; }
+                        if (has_depth) {
+                          out_offset[2] = z;
+                        }
                         out_offset[2 + has_depth] = y;
                         out_offset[3 + has_depth] = x;
                         out_data[out->offset(out_offset)] +=
-                            in->data_at(in_offset)
-                            * weights[0]->data_at(weight_offset);
+                            in->data_at(in_offset) *
+                            weights[0]->data_at(weight_offset);
                       }
                     }
                   }
@@ -121,7 +134,9 @@ void mynet_conv(const Tensor<Dtype>* in, ConvParameterT* conv_param,
             for (uint32_t x = 0; x < out->shape(3 + has_depth); x++) {
               out_offset[0] = n;
               out_offset[1] = o;
-              if (has_depth) { out_offset[2] = z; }
+              if (has_depth) {
+                out_offset[2] = z;
+              }
               out_offset[2 + has_depth] = y;
               out_offset[3 + has_depth] = x;
               out_data[out->offset(out_offset)] += bias_data[o];
@@ -133,13 +148,13 @@ void mynet_conv(const Tensor<Dtype>* in, ConvParameterT* conv_param,
   }
 }
 
-template void mynet_conv(const Tensor<float>* in,
-    ConvParameterT* conv_param,
-    const std::vector<std::shared_ptr<Tensor<float> > >& weights,
+template void mynet_conv(
+    const Tensor<float>* in, ConvParameterT* conv_param,
+    const std::vector<std::shared_ptr<Tensor<float>>>& weights,
     Tensor<float>* out);
-template void mynet_conv(const Tensor<double>* in,
-    ConvParameterT* conv_param,
-    const std::vector<std::shared_ptr<Tensor<double> > >& weights,
+template void mynet_conv(
+    const Tensor<double>* in, ConvParameterT* conv_param,
+    const std::vector<std::shared_ptr<Tensor<double>>>& weights,
     Tensor<double>* out);
 
 template <typename TypeParam>
@@ -200,7 +215,8 @@ TYPED_TEST(ConvOpsTest, TestConvSetup) {
   ops_param.conv_param->num_output = 4ul;
   this->tensor_bottom_vec_.push_back(this->tensor_bottom_2_);
   this->tensor_top_vec_.push_back(this->tensor_top_2_);
-  std::shared_ptr<Ops<Dtype>> ops = std::make_shared<ConvOps<Dtype>>(&ops_param);
+  std::shared_ptr<Ops<Dtype>> ops =
+      std::make_shared<ConvOps<Dtype>>(&ops_param);
   ops->SetUp(this->tensor_bottom_vec_, this->tensor_top_vec_);
   EXPECT_EQ(this->tensor_top_->num(), 2ul);
   EXPECT_EQ(this->tensor_top_->channels(), 4ul);
@@ -239,21 +255,22 @@ TYPED_TEST(ConvOpsTest, TestSimpleConv) {
   ops_param.conv_param->weight_filler->type = "uniform";
   ops_param.conv_param->bias_filler->type = "constant";
   ops_param.conv_param->bias_filler->value = 0.1f;
-  std::shared_ptr<Ops<Dtype>> ops = std::make_shared<ConvOps<Dtype>>(&ops_param);
+  std::shared_ptr<Ops<Dtype>> ops =
+      std::make_shared<ConvOps<Dtype>>(&ops_param);
   ops->SetUp(this->tensor_bottom_vec_, this->tensor_top_vec_);
   ops->Forward(this->tensor_bottom_vec_, this->tensor_top_vec_);
   // Check against reference conv.
   const Dtype* top_data;
   const Dtype* ref_top_data;
   mynet_conv(this->tensor_bottom_, ops_param.conv_param.get(), ops->tensors(),
-      this->MakeReferenceTop(this->tensor_top_));
+             this->MakeReferenceTop(this->tensor_top_));
   top_data = this->tensor_top_->cpu_data();
   ref_top_data = this->ref_tensor_top_->cpu_data();
   for (uint32_t i = 0; i < this->tensor_top_->count(); ++i) {
     EXPECT_NEAR(top_data[i], ref_top_data[i], 1e-4);
   }
   mynet_conv(this->tensor_bottom_2_, ops_param.conv_param.get(), ops->tensors(),
-      this->MakeReferenceTop(this->tensor_top_2_));
+             this->MakeReferenceTop(this->tensor_top_2_));
   top_data = this->tensor_top_2_->cpu_data();
   ref_top_data = this->ref_tensor_top_->cpu_data();
   for (uint32_t i = 0; i < this->tensor_top_->count(); ++i) {
@@ -279,7 +296,8 @@ TYPED_TEST(ConvOpsTest, TestDilatedConv) {
   ops_param.conv_param->weight_filler->type = "uniform";
   ops_param.conv_param->bias_filler->type = "constant";
   ops_param.conv_param->bias_filler->value = 0.1f;
-  std::shared_ptr<Ops<Dtype>> ops = std::make_shared<ConvOps<Dtype>>(&ops_param);
+  std::shared_ptr<Ops<Dtype>> ops =
+      std::make_shared<ConvOps<Dtype>>(&ops_param);
   ops->SetUp(this->tensor_bottom_vec_, this->tensor_top_vec_);
   ops->Forward(this->tensor_bottom_vec_, this->tensor_top_vec_);
   // Check against reference conv.
@@ -313,7 +331,8 @@ TYPED_TEST(ConvOpsTest, Test0DConv) {
   ops_param.conv_param->axis = 3;
   ops_param.conv_param->weight_filler->type = "uniform";
   ops_param.conv_param->bias_filler->type = "uniform";
-  std::shared_ptr<Ops<Dtype>> ops = std::make_shared<ConvOps<Dtype>>(&ops_param);
+  std::shared_ptr<Ops<Dtype>> ops =
+      std::make_shared<ConvOps<Dtype>>(&ops_param);
   std::vector<uint32_t> top_shape = this->tensor_bottom_->shape();
   top_shape[3] = kNumOutput;
   ops->SetUp(this->tensor_bottom_vec_, this->tensor_top_vec_);
@@ -365,21 +384,22 @@ TYPED_TEST(ConvOpsTest, TestSimple3DConv) {
   ops_param.conv_param->num_output = 4ul;
   ops_param.conv_param->weight_filler->type = "uniform";
   ops_param.conv_param->bias_filler->type = "uniform";
-  std::shared_ptr<Ops<Dtype>> ops = std::make_shared<ConvOps<Dtype>>(&ops_param);
+  std::shared_ptr<Ops<Dtype>> ops =
+      std::make_shared<ConvOps<Dtype>>(&ops_param);
   ops->SetUp(this->tensor_bottom_vec_, this->tensor_top_vec_);
   ops->Forward(this->tensor_bottom_vec_, this->tensor_top_vec_);
   // Check against reference conv.
   const Dtype* top_data;
   const Dtype* ref_top_data;
   mynet_conv(this->tensor_bottom_, ops_param.conv_param.get(), ops->tensors(),
-      this->MakeReferenceTop(this->tensor_top_));
+             this->MakeReferenceTop(this->tensor_top_));
   top_data = this->tensor_top_->cpu_data();
   ref_top_data = this->ref_tensor_top_->cpu_data();
   for (uint32_t i = 0; i < this->tensor_top_->count(); ++i) {
     EXPECT_NEAR(top_data[i], ref_top_data[i], 1e-4);
   }
   mynet_conv(this->tensor_bottom_2_, ops_param.conv_param.get(), ops->tensors(),
-      this->MakeReferenceTop(this->tensor_top_2_));
+             this->MakeReferenceTop(this->tensor_top_2_));
   top_data = this->tensor_top_2_->cpu_data();
   ref_top_data = this->ref_tensor_top_->cpu_data();
   for (uint32_t i = 0; i < this->tensor_top_->count(); ++i) {
@@ -412,7 +432,8 @@ TYPED_TEST(ConvOpsTest, TestDilated3DConv) {
   ops_param.conv_param->num_output = 4ul;
   ops_param.conv_param->weight_filler->type = "uniform";
   ops_param.conv_param->bias_filler->type = "uniform";
-  std::shared_ptr<Ops<Dtype>> ops = std::make_shared<ConvOps<Dtype>>(&ops_param);
+  std::shared_ptr<Ops<Dtype>> ops =
+      std::make_shared<ConvOps<Dtype>>(&ops_param);
   ops->SetUp(this->tensor_bottom_vec_, this->tensor_top_vec_);
   ops->Forward(this->tensor_bottom_vec_, this->tensor_top_vec_);
   // Check against reference conv.
@@ -446,14 +467,15 @@ TYPED_TEST(ConvOpsTest, Test1x1Conv) {
   ops_param.conv_param->weight_filler->type = "uniform";
   ops_param.conv_param->bias_filler->type = "constant";
   ops_param.conv_param->bias_filler->value = 0.1f;
-  std::shared_ptr<Ops<Dtype>> ops = std::make_shared<ConvOps<Dtype>>(&ops_param);
+  std::shared_ptr<Ops<Dtype>> ops =
+      std::make_shared<ConvOps<Dtype>>(&ops_param);
   ops->SetUp(this->tensor_bottom_vec_, this->tensor_top_vec_);
   ops->Forward(this->tensor_bottom_vec_, this->tensor_top_vec_);
   // Check against reference conv.
   const Dtype* top_data;
   const Dtype* ref_top_data;
   mynet_conv(this->tensor_bottom_, ops_param.conv_param.get(), ops->tensors(),
-      this->MakeReferenceTop(this->tensor_top_));
+             this->MakeReferenceTop(this->tensor_top_));
   top_data = this->tensor_top_->cpu_data();
   ref_top_data = this->ref_tensor_top_->cpu_data();
   for (uint32_t i = 0; i < this->tensor_top_->count(); ++i) {
@@ -474,14 +496,15 @@ TYPED_TEST(ConvOpsTest, TestSimpleConvGroup) {
   ops_param.conv_param->weight_filler->type = "uniform";
   ops_param.conv_param->bias_filler->type = "constant";
   ops_param.conv_param->bias_filler->value = 0.1f;
-  std::shared_ptr<Ops<Dtype>> ops = std::make_shared<ConvOps<Dtype>>(&ops_param);
+  std::shared_ptr<Ops<Dtype>> ops =
+      std::make_shared<ConvOps<Dtype>>(&ops_param);
   ops->SetUp(this->tensor_bottom_vec_, this->tensor_top_vec_);
   ops->Forward(this->tensor_bottom_vec_, this->tensor_top_vec_);
   // Check against reference conv.
   const Dtype* top_data;
   const Dtype* ref_top_data;
   mynet_conv(this->tensor_bottom_, ops_param.conv_param.get(), ops->tensors(),
-      this->MakeReferenceTop(this->tensor_top_));
+             this->MakeReferenceTop(this->tensor_top_));
   top_data = this->tensor_top_->cpu_data();
   ref_top_data = this->ref_tensor_top_->cpu_data();
   for (uint32_t i = 0; i < this->tensor_top_->count(); ++i) {
@@ -511,21 +534,22 @@ TYPED_TEST(ConvOpsTest, TestSobelConv) {
   ops_param.conv_param->stride.push_back(2ul);
   ops_param.conv_param->num_output = 1ul;
   ops_param.conv_param->bias_term = false;
-  std::shared_ptr<Ops<Dtype>> ops = std::make_shared<ConvOps<Dtype>>(&ops_param);
+  std::shared_ptr<Ops<Dtype>> ops =
+      std::make_shared<ConvOps<Dtype>>(&ops_param);
   ops->tensors().resize(1);
   ops->tensors()[0].reset(new Tensor<Dtype>(1ul, 3ul, 3ul, 3ul));
   Dtype* weights = ops->tensors()[0]->mutable_cpu_data();
   for (uint32_t c = 0; c < 3; ++c) {
     uint32_t i = c * 9;  // 3 x 3 filter
-    weights[i +  0] = -1;
-    weights[i +  1] =  0;
-    weights[i +  2] =  1;
-    weights[i +  3] = -2;
-    weights[i +  4] =  0;
-    weights[i +  5] =  2;
-    weights[i +  6] = -1;
-    weights[i +  7] =  0;
-    weights[i +  8] =  1;
+    weights[i + 0] = -1;
+    weights[i + 1] = 0;
+    weights[i + 2] = 1;
+    weights[i + 3] = -2;
+    weights[i + 4] = 0;
+    weights[i + 5] = 2;
+    weights[i + 6] = -1;
+    weights[i + 7] = 0;
+    weights[i + 8] = 1;
   }
   ops->SetUp(this->tensor_bottom_vec_, this->tensor_top_vec_);
   ops->Forward(this->tensor_bottom_vec_, this->tensor_top_vec_);
@@ -550,9 +574,9 @@ TYPED_TEST(ConvOpsTest, TestSobelConv) {
   Dtype* weights_1 = ops->tensors()[0]->mutable_cpu_data();
   for (uint32_t c = 0; c < 3; ++c) {
     uint32_t i = c * 3;  // 3 x 1 filter
-    weights_1[i +  0] = 1;
-    weights_1[i +  1] = 2;
-    weights_1[i +  2] = 1;
+    weights_1[i + 0] = 1;
+    weights_1[i + 1] = 2;
+    weights_1[i + 2] = 1;
   }
   ops->SetUp(sep_tensor_bottom_vec, sep_tensor_top_vec);
   ops->Forward(sep_tensor_bottom_vec, sep_tensor_top_vec);
@@ -571,8 +595,8 @@ TYPED_TEST(ConvOpsTest, TestSobelConv) {
   ops->tensors()[0].reset(new Tensor<Dtype>(1ul, 1ul, 1ul, 3ul));
   Dtype* weights_2 = ops->tensors()[0]->mutable_cpu_data();
   weights_2[0] = -1;
-  weights_2[1] =  0;
-  weights_2[2] =  1;
+  weights_2[1] = 0;
+  weights_2[2] = 1;
   ops->SetUp(sep_tensor_bottom_vec, sep_tensor_top_vec);
   ops->Forward(sep_tensor_bottom_vec, sep_tensor_top_vec);
   // Test equivalence of full and separable filters.
@@ -620,7 +644,8 @@ TYPED_TEST(ConvOpsTest, TestNDAgainst2D) {
     top_diff.ReshapeLike(*this->tensor_top_);
     filler.Fill(&top_diff);
     ASSERT_EQ(1, ops.tensors().size());
-    copy_diff = false; reshape = true;
+    copy_diff = false;
+    reshape = true;
     weights.CopyFrom(*ops.tensors()[0], copy_diff, reshape);
   }
   std::vector<bool> propagate_down(1, true);
@@ -639,10 +664,12 @@ TYPED_TEST(ConvOpsTest, TestNDAgainst2D) {
     ConvOps<Dtype> conv_2d(&ops_param);
     conv_2d.SetUp(this->tensor_bottom_vec_, this->tensor_top_vec_);
     ASSERT_EQ(1ul, conv_2d.tensors().size());
-    copy_diff = false; reshape = false;
+    copy_diff = false;
+    reshape = false;
     conv_2d.tensors()[0]->CopyFrom(weights, copy_diff, reshape);
     conv_2d.Forward(this->tensor_bottom_vec_, this->tensor_top_vec_);
-    copy_diff = false; reshape = true;
+    copy_diff = false;
+    reshape = true;
     result_2d.CopyFrom(*this->tensor_top_, copy_diff, reshape);
     // Copy pre-generated top diff into actual top diff;
     // do Backward and save result in backward_result_2d.
@@ -650,8 +677,9 @@ TYPED_TEST(ConvOpsTest, TestNDAgainst2D) {
     mynet_copy(this->tensor_top_->mutable_cpu_diff(), top_diff.cpu_data(),
                top_diff.count());
     conv_2d.Backward(this->tensor_top_vec_, propagate_down,
-                      this->tensor_bottom_vec_);
-    copy_diff = true; reshape = true;
+                     this->tensor_bottom_vec_);
+    copy_diff = true;
+    reshape = true;
     backward_result_2d.CopyFrom(*this->tensor_bottom_, copy_diff, reshape);
     backward_weight_result_2d.CopyFrom(weights, copy_diff, reshape);
   }
@@ -670,10 +698,12 @@ TYPED_TEST(ConvOpsTest, TestNDAgainst2D) {
     ConvOps<Dtype> conv_nd(&ops_param);
     conv_nd.SetUp(this->tensor_bottom_vec_, this->tensor_top_vec_);
     ASSERT_EQ(1ul, conv_nd.tensors().size());
-    copy_diff = false; reshape = false;
+    copy_diff = false;
+    reshape = false;
     conv_nd.tensors()[0]->CopyFrom(weights, copy_diff, reshape);
     conv_nd.Forward(this->tensor_bottom_vec_, this->tensor_top_vec_);
-    copy_diff = false; reshape = true;
+    copy_diff = false;
+    reshape = true;
     result_nd.CopyFrom(*this->tensor_top_, copy_diff, reshape);
     // Copy pre-generated top diff into actual top diff;
     // do Backward and save result in backward_result_nd.
@@ -681,19 +711,20 @@ TYPED_TEST(ConvOpsTest, TestNDAgainst2D) {
     mynet_copy(this->tensor_top_->mutable_cpu_diff(), top_diff.cpu_data(),
                top_diff.count());
     conv_nd.Backward(this->tensor_top_vec_, propagate_down,
-                      this->tensor_bottom_vec_);
-    copy_diff = true; reshape = true;
+                     this->tensor_bottom_vec_);
+    copy_diff = true;
+    reshape = true;
     backward_result_nd.CopyFrom(*this->tensor_bottom_, copy_diff, reshape);
     backward_weight_result_nd.CopyFrom(weights, copy_diff, reshape);
   }
   ASSERT_EQ(result_nd.count(), result_2d.count());
-  for (uint32_t i = 0; i < result_2d.count(); ++i)  {
+  for (uint32_t i = 0; i < result_2d.count(); ++i) {
     EXPECT_EQ(result_2d.cpu_data()[i], result_nd.cpu_data()[i]);
   }
   ASSERT_EQ(backward_result_nd.count(), backward_result_2d.count());
   for (uint32_t i = 0; i < backward_result_2d.count(); ++i) {
     EXPECT_FLOAT_EQ(backward_result_2d.cpu_diff()[i],
-              backward_result_nd.cpu_diff()[i]);
+                    backward_result_nd.cpu_diff()[i]);
   }
   ASSERT_EQ(backward_weight_result_nd.count(),
             backward_weight_result_2d.count());
@@ -701,7 +732,7 @@ TYPED_TEST(ConvOpsTest, TestNDAgainst2D) {
     EXPECT_EQ(backward_weight_result_2d.cpu_diff()[i],
               backward_weight_result_nd.cpu_diff()[i]);
   }
-} 
+}
 
 // TYPED_TEST(ConvOpsTest, TestGradient) {
 //   typedef typename TypeParam::Dtype Dtype;
@@ -822,7 +853,8 @@ TYPED_TEST(ConvOpsTest, TestDeConvSetup) {
   ops_param.conv_param->num_output = 4ul;
   this->tensor_bottom_vec_.push_back(this->tensor_bottom_2_);
   this->tensor_top_vec_.push_back(this->tensor_top_2_);
-  std::shared_ptr<Ops<Dtype>> ops = std::make_shared<ConvOps<Dtype>>(&ops_param);
+  std::shared_ptr<Ops<Dtype>> ops =
+      std::make_shared<ConvOps<Dtype>>(&ops_param);
   ops->SetUp(this->tensor_bottom_vec_, this->tensor_top_vec_);
   EXPECT_EQ(this->tensor_top_->num(), 2ul);
   EXPECT_EQ(this->tensor_top_->channels(), 4ul);
@@ -863,7 +895,8 @@ TYPED_TEST(ConvOpsTest, TestSimpleDeconv) {
   ops_param.conv_param->bias_filler->type = "constant";
   ops_param.conv_param->bias_filler->value = 0.1f;
   ops_param.conv_param->transpose = true;
-  std::shared_ptr<Ops<Dtype>> ops = std::make_shared<ConvOps<Dtype>>(&ops_param);
+  std::shared_ptr<Ops<Dtype>> ops =
+      std::make_shared<ConvOps<Dtype>>(&ops_param);
   ops->SetUp(this->tensor_bottom_vec_, this->tensor_top_vec_);
   // constant-fill the bottom tensors
   FillerParameterT filler_param;
@@ -879,17 +912,17 @@ TYPED_TEST(ConvOpsTest, TestSimpleDeconv) {
       for (uint32_t h = 0; h < this->tensor_top_->height(); ++h) {
         for (uint32_t w = 0; w < this->tensor_top_->width(); ++w) {
           Dtype expected = 3.1;
-          bool h_overlap = h % 2 == 0 && h > 0
-            && h < this->tensor_top_->height() - 1;
-          bool w_overlap = w % 2 == 0 && w > 0
-            && w < this->tensor_top_->width() - 1;
+          bool h_overlap =
+              h % 2 == 0 && h > 0 && h < this->tensor_top_->height() - 1;
+          bool w_overlap =
+              w % 2 == 0 && w > 0 && w < this->tensor_top_->width() - 1;
           if (h_overlap && w_overlap) {
             expected += 9;
           } else if (h_overlap || w_overlap) {
             expected += 3;
           }
-          EXPECT_NEAR(top_data[this->tensor_top_->offset(n, c, h, w)],
-              expected, 1e-4);
+          EXPECT_NEAR(top_data[this->tensor_top_->offset(n, c, h, w)], expected,
+                      1e-4);
         }
       }
     }
@@ -952,7 +985,8 @@ TYPED_TEST(ConvOpsTest, TestDeconvNDAgainst2D) {
     top_diff.ReshapeLike(*this->tensor_top_);
     filler.Fill(&top_diff);
     ASSERT_EQ(1ul, ops.tensors().size());
-    copy_diff = false; reshape = true;
+    copy_diff = false;
+    reshape = true;
     weights.CopyFrom(*ops.tensors()[0], copy_diff, reshape);
   }
   std::vector<bool> propagate_down(1, true);
@@ -971,10 +1005,12 @@ TYPED_TEST(ConvOpsTest, TestDeconvNDAgainst2D) {
     ConvOps<Dtype> ops_2d(&ops_param);
     ops_2d.SetUp(this->tensor_bottom_vec_, this->tensor_top_vec_);
     ASSERT_EQ(1ul, ops_2d.tensors().size());
-    copy_diff = false; reshape = false;
+    copy_diff = false;
+    reshape = false;
     ops_2d.tensors()[0]->CopyFrom(weights, copy_diff, reshape);
     ops_2d.Forward(this->tensor_bottom_vec_, this->tensor_top_vec_);
-    copy_diff = false; reshape = true;
+    copy_diff = false;
+    reshape = true;
     result_2d.CopyFrom(*this->tensor_top_, copy_diff, reshape);
     // Copy pre-generated top diff into actual top diff;
     // do Backward and save result in backward_result_2d.
@@ -982,8 +1018,9 @@ TYPED_TEST(ConvOpsTest, TestDeconvNDAgainst2D) {
     mynet_copy(this->tensor_top_->mutable_cpu_diff(), top_diff.cpu_data(),
                top_diff.count());
     ops_2d.Backward(this->tensor_top_vec_, propagate_down,
-                      this->tensor_bottom_vec_);
-    copy_diff = true; reshape = true;
+                    this->tensor_bottom_vec_);
+    copy_diff = true;
+    reshape = true;
     backward_result_2d.CopyFrom(*this->tensor_bottom_, copy_diff, reshape);
     backward_weight_result_2d.CopyFrom(weights, copy_diff, reshape);
   }
@@ -1002,10 +1039,12 @@ TYPED_TEST(ConvOpsTest, TestDeconvNDAgainst2D) {
     ConvOps<Dtype> ops_nd(&ops_param);
     ops_nd.SetUp(this->tensor_bottom_vec_, this->tensor_top_vec_);
     ASSERT_EQ(1, ops_nd.tensors().size());
-    copy_diff = false; reshape = false;
+    copy_diff = false;
+    reshape = false;
     ops_nd.tensors()[0]->CopyFrom(weights, copy_diff, reshape);
     ops_nd.Forward(this->tensor_bottom_vec_, this->tensor_top_vec_);
-    copy_diff = false; reshape = true;
+    copy_diff = false;
+    reshape = true;
     result_nd.CopyFrom(*this->tensor_top_, copy_diff, reshape);
     // Copy pre-generated top diff into actual top diff;
     // do Backward and save result in backward_result_nd.
@@ -1013,13 +1052,14 @@ TYPED_TEST(ConvOpsTest, TestDeconvNDAgainst2D) {
     mynet_copy(this->tensor_top_->mutable_cpu_diff(), top_diff.cpu_data(),
                top_diff.count());
     ops_nd.Backward(this->tensor_top_vec_, propagate_down,
-                      this->tensor_bottom_vec_);
-    copy_diff = true; reshape = true;
+                    this->tensor_bottom_vec_);
+    copy_diff = true;
+    reshape = true;
     backward_result_nd.CopyFrom(*this->tensor_bottom_, copy_diff, reshape);
     backward_weight_result_nd.CopyFrom(weights, copy_diff, reshape);
   }
   ASSERT_EQ(result_nd.count(), result_2d.count());
-  for (uint32_t i = 0; i < result_2d.count(); ++i)  {
+  for (uint32_t i = 0; i < result_2d.count(); ++i) {
     EXPECT_EQ(result_2d.cpu_data()[i], result_nd.cpu_data()[i]);
   }
   ASSERT_EQ(backward_result_nd.count(), backward_result_2d.count());
