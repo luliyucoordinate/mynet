@@ -1,13 +1,13 @@
 cc_test(
     name = "ops_factory_test",
     srcs = ["ops_factory_test.cc"],
-    deps = [
-        "//core/schema:mynet_fbs",
-        ":ops_factory",
-        ":mynet_test_main",
-    ],
     copts = [
         "-std=c++17",
+    ],
+    deps = [
+        ":mynet_test_main",
+        ":ops_factory",
+        "//core/schema:mynet_fbs",
     ],
 )
 
@@ -17,13 +17,13 @@ cc_library(
         "ops_factory.cc",
     ],
     hdrs = ["ops_factory.hpp"],
+    copts = [
+        "-std=c++17",
+    ],
     deps = [
         ":common",
         ":ops",
-        "//core/kernels:conv_ops"
-    ],
-    copts = [
-        "-std=c++17",
+        "//core/kernels:conv_ops",
     ],
 )
 
@@ -33,22 +33,22 @@ cc_library(
         "ops.cc",
     ],
     hdrs = ["ops.hpp"],
+    visibility = ["//visibility:public"],
     deps = [
         ":common",
-        ":tensor",
         ":math_functions",
+        ":tensor",
         "//core/schema:mynet_fbs",
     ],
-    visibility = ["//visibility:public"],
 )
 
 cc_test(
     name = "tensor_test",
     srcs = ["tensor_test.cc"],
     deps = [
-        ":tensor",
         ":filler",
         ":mynet_test_main",
+        ":tensor",
     ],
 )
 
@@ -58,11 +58,11 @@ cc_library(
         "math_functions.cc",
     ],
     hdrs = ["math_functions.hpp"],
+    visibility = ["//visibility:public"],
     deps = [
         ":common",
         "//:openblas",
     ],
-    visibility = ["//visibility:public"],
 )
 
 cc_library(
@@ -71,10 +71,10 @@ cc_library(
         "mynet_test_main.cc",
     ],
     hdrs = ["mynet_test_main.hpp"],
+    visibility = ["//visibility:public"],
     deps = [
         ":common",
     ],
-    visibility = ["//visibility:public"],
 )
 
 cc_library(
@@ -83,15 +83,15 @@ cc_library(
         "tensor.cc",
     ],
     hdrs = ["tensor.hpp"],
-    deps = [
-        ":common",
-        ":syncedmem",
-        ":math_functions",
-        "//core/schema:mynet_fbs",
-    ],
-    visibility = ["//visibility:public"],
     copts = [
         "-std=c++17",
+    ],
+    visibility = ["//visibility:public"],
+    deps = [
+        ":common",
+        ":math_functions",
+        ":syncedmem",
+        "//core/schema:mynet_fbs",
     ],
 )
 
@@ -99,8 +99,8 @@ cc_test(
     name = "filler_test",
     srcs = ["filler_test.cc"],
     deps = [
-        ":filler",
         ":common",
+        ":filler",
         ":mynet_test_main",
         "//core/schema:mynet_fbs",
     ],
@@ -109,11 +109,11 @@ cc_test(
 cc_library(
     name = "filler",
     hdrs = ["filler.hpp"],
-    deps = [
-        ":tensor",
-        ":math_functions",
-    ],
     visibility = ["//visibility:public"],
+    deps = [
+        ":math_functions",
+        ":tensor",
+    ],
 )
 
 cc_test(
@@ -127,23 +127,23 @@ cc_test(
 cc_library(
     name = "syncedmem",
     srcs = [
-        "syncedmem.cc",
         "common.hpp",
+        "syncedmem.cc",
     ],
     hdrs = ["syncedmem.hpp"],
     deps = [
         ":common",
-    ]
+    ],
 )
 
 cc_library(
     name = "common",
     srcs = ["common.cc"],
     hdrs = ["common.hpp"],
+    visibility = ["//visibility:public"],
     deps = [
-        "@com_google_googletest//:gtest_main",
         "@com_github_gflags_gflags//:gflags",
         "@com_github_google_glog//:glog",
+        "@com_google_googletest//:gtest_main",
     ],
-    visibility = ["//visibility:public"],
 )

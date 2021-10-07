@@ -1,13 +1,13 @@
 cc_test(
     name = "conv_ops_test",
     srcs = ["conv_ops_test.cc"],
-    deps = [
-        "//core/schema:mynet_fbs",
-        "//core/framework:mynet_test_main",
-        ":conv_ops",
-    ],
     copts = [
         "-std=c++17",
+    ],
+    deps = [
+        ":conv_ops",
+        "//core/framework:mynet_test_main",
+        "//core/schema:mynet_fbs",
     ],
 )
 
@@ -17,16 +17,16 @@ cc_library(
         "conv_ops.cc",
     ],
     hdrs = ["conv_ops.hpp"],
+    visibility = ["//visibility:public"],
     deps = [
         ":im2col",
         "//core/framework:common",
-        "//core/framework:ops",
-        "//core/framework:tensor",
         "//core/framework:filler",
         "//core/framework:math_functions",
+        "//core/framework:ops",
+        "//core/framework:tensor",
         "//core/schema:mynet_fbs",
     ],
-    visibility = ["//visibility:public"],
 )
 
 cc_library(
