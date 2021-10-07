@@ -1,0 +1,18 @@
+namespace mynet;
+
+table TensorShape {
+    dim: [uint];
+}
+
+table TensorFlat {
+    num: uint;
+    channels: uint;
+    height: uint;
+    width: uint;
+
+    data: [float];
+    diff: [float];
+    shape: TensorShape;
+    double_data: [double];
+    double_diff: [double];
+}
