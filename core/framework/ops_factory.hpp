@@ -123,9 +123,9 @@ class OpsRegisterer {
 
 #define REGISTER_OPS_CLASS(type)                                             \
   template <typename Dtype>                                                  \
-  std::shared_ptr<Ops<Dtype>> Creator_##type##Ops(OpsParameterT* param) \
+  std::shared_ptr<Ops<Dtype>> Creator_##type##Ops(OpsParameterT* param)      \
   {                                                                          \
-    return std::shared_ptr<Ops<Dtype>>(new type##Ops<Dtype>(param));        \
+    return std::make_shared<type##Ops<Dtype>>(param);                      \
   }                                                                          \
   REGISTER_OPS_CREATOR(type, Creator_##type##Ops)
 

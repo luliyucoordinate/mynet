@@ -7,14 +7,15 @@ namespace mynet {
 // Get conv ops according to engine.
 template <typename Dtype>
 std::shared_ptr<Ops<Dtype>> GetConvOps(OpsParameterT* param) {
-  auto conv_param = std::move(param->conv_param);
-  DCHECK(conv_param) << "is nullptr !";
+  DCHECK(param);
+  auto& conv_param = param->conv_param;
+  DCHECK(conv_param);
   auto engine = conv_param->engine;
   if (engine == Engine_DEFAULT) {
     engine = Engine_MYNET;
   }
   if (engine == Engine_MYNET) {
-    return std::shared_ptr<Ops<Dtype>>(new ConvOps<Dtype>(param));
+    return std::make_shared<ConvOps<Dtype>>(param);
   } else {
     LOG(FATAL) << "ops " << param->name << " has unknown engine.";
     throw;  // Avoids missing return warning

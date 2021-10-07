@@ -25,7 +25,7 @@ enum Engine :byte {
 
 table ConvParameter {
     num_output: uint;
-    bias_term: bool;
+    bias_term: bool = true;
 
     pad: [uint];
     kernel_size: [uint];
@@ -39,14 +39,15 @@ table ConvParameter {
     stride_h: uint;
     stride_w: uint;
 
-    group: uint;
+    group: uint = 1;
 
     weight_filler: FillerParameter;
     bias_filler: FillerParameter;
     engine: Engine;
 
-    axis: int;
+    axis: int = 1;
     force_nd_im2col: bool;
+    transpose: bool;
 }
 
 enum Phase : byte {

@@ -32,7 +32,7 @@ class Ops {
       phase_(param->phase) {
       // Set phase and copy tensors (if there are any).
       // Because unique_ptr can not copy, so use move.
-      auto opst = std::move(ops_param_->tensors); 
+      auto& opst = ops_param_->tensors; 
       
       if (opst.size() > 0) {
         tensors_.resize(opst.size());
@@ -318,34 +318,47 @@ class Ops {
    */
   virtual void CheckTensorCounts(const std::vector<Tensor<Dtype>*>& bottom,
                                const std::vector<Tensor<Dtype>*>& top) {
-    DCHECK_EQ(ExactNumBottomTensors(), bottom.size())
-        << type() << " ops takes " << ExactNumBottomTensors()
-        << " bottom tensor(s) as input.";
+    if (ExactNumBottomTensors() > 0ul) {
+      DCHECK_EQ(ExactNumBottomTensors(), bottom.size())
+          << type() << " ops takes " << ExactNumBottomTensors()
+          << " bottom tensor(s) as input.";
+    }
 
-    DCHECK_LE(MinBottomTensors(), bottom.size())
-        << type() << " ops takes at least " << MinBottomTensors()
-        << " bottom tensor(s) as input.";
+    if (MinBottomTensors() > 0ul) {
+      DCHECK_LE(MinBottomTensors(), bottom.size())
+          << type() << " ops takes at least " << MinBottomTensors()
+          << " bottom tensor(s) as input.";
+    }
     
-    DCHECK_GE(MaxBottomTensors(), bottom.size())
-        << type() << " ops takes at most " << MaxBottomTensors()
-        << " bottom tensor(s) as input.";
+    if (MaxBottomTensors() > 0ul) {
+      DCHECK_GE(MaxBottomTensors(), bottom.size())
+          << type() << " ops takes at most " << MaxBottomTensors()
+          << " bottom tensor(s) as input.";
+    }
 
-    DCHECK_EQ(ExactNumTopTensors(), top.size())
-        << type() << " ops produces " << ExactNumTopTensors()
-        << " top tensor(s) as output.";
+    if (ExactNumTopTensors() > 0ul) {
+      DCHECK_EQ(ExactNumTopTensors(), top.size())
+          << type() << " ops produces " << ExactNumTopTensors()
+          << " top tensor(s) as output.";
+    }
     
-    DCHECK_LE(MinTopTensors(), top.size())
-        << type() << " ops produces at least " << MinTopTensors()
-        << " top tensor(s) as output.";
+    if (MinTopTensors() > 0ul) {
+      DCHECK_LE(MinTopTensors(), top.size())
+          << type() << " ops produces at least " << MinTopTensors()
+          << " top tensor(s) as output.";
+    }
 
-    DCHECK_GE(MaxTopTensors(), top.size())
-        << type() << " ops produces at most " << MaxTopTensors()
-        << " top tensor(s) as output.";
+    if (MaxTopTensors() > 0ul) {
+      DCHECK_GE(MaxTopTensors(), top.size())
+          << type() << " ops produces at most " << MaxTopTensors()
+          << " top tensor(s) as output.";
+    }
 
-    DCHECK_EQ(bottom.size(), top.size())
-        << type() << " ops produces one top tensor as output for each "
-        << "bottom tensor input.";
-    
+    if (EqualNumBottomTopTensors()) {
+      DCHECK_EQ(bottom.size(), top.size())
+          << type() << " ops produces one top tensor as output for each "
+          << "bottom tensor input.";
+    }
   }
 
   /**
@@ -420,12 +433,9 @@ inline void Ops<Dtype>::Backward(const std::vector<Tensor<Dtype>*>& top,
 template <typename Dtype>
 flatbuffers::DetachedBuffer Ops<Dtype>::ToFlat(bool write_diff) {
   flatbuffers::FlatBufferBuilder flatbuffer_builder;
-  // auto param = CreateOpsParameter(flatbuffer_builder, ops_param_);
   for (uint32_t i = 0; i < tensors_.size(); ++i) {
     flatbuffers::unique_ptr<mynet::TensorFlatT> tensor(flatbuffers::GetMutableRoot<TensorFlat>(tensors_[i]->ToFlat(write_diff).data())->UnPack());
     ops_param_->tensors.push_back(std::move(tensor));
-    // ops_param_->tensors.push_back(flatbuffers::unique_ptr<mynet::TensorFlatT>(tensors_[i]->ToFlat(write_diff).template GetRoot<TensorFlat>()));
-    // param->mutable_tensors()->Mutate(i, tensors_[i]->ToFlat(write_diff).GetRoot<TensorFlat>());
   }
   flatbuffer_builder.Finish(OpsParameter::Pack(flatbuffer_builder, ops_param_));
   return flatbuffer_builder.Release();

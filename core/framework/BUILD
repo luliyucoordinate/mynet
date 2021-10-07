@@ -90,6 +90,9 @@ cc_library(
         "//core/schema:mynet_fbs",
     ],
     visibility = ["//visibility:public"],
+    copts = [
+        "-std=c++17",
+    ],
 )
 
 cc_test(

@@ -80,7 +80,7 @@ inline void im2col_nd_core_cpu(const Dtype* data_input, bool im2col,
   for (uint32_t c_col = 0; c_col < channels_col; ++c_col) {
     // Loop over spatial axes in reverse order to compute a per-axis offset.
     uint32_t offset = c_col;
-    DCHECK_LE(num_spatial_axes - 1, UINT32_MAX);
+    DCHECK_LE(num_spatial_axes - 1, static_cast<uint32_t>(INT32_MAX));
     int32_t num_spatial_axes_sub = static_cast<int32_t>(num_spatial_axes - 1);
     for (int32_t d_i = num_spatial_axes_sub; d_i >= 0; --d_i) {
       if (d_i < num_spatial_axes_sub) {
@@ -116,8 +116,9 @@ inline void im2col_nd_core_cpu(const Dtype* data_input, bool im2col,
       // Loop over spatial axes in reverse order to choose an index,
       // like counting.
       incremented = false;
-      DCHECK_LE(num_spatial_axes - 1, UINT32_MAX);
-      for (uint32_t d_i = num_spatial_axes - 1; d_i >= 0; --d_i) {
+      DCHECK_LE(num_spatial_axes - 1, static_cast<uint32_t>(INT32_MAX));
+      int32_t num_spatial_axes_sub = static_cast<int32_t>(num_spatial_axes - 1);
+      for (int32_t d_i = num_spatial_axes_sub; d_i >= 0; --d_i) {
         uint32_t d_max = col_shape[d_i + 1];
         DCHECK_LT(d_iter[d_i], d_max);
         if (d_iter[d_i] == d_max - 1) {
@@ -166,7 +167,7 @@ void col2im_cpu(const Dtype* data_col, uint32_t channels,
   uint32_t output_w = (width + 2 * pad_w -
     (dilation_w * (kernel_w - 1) + 1)) / stride_w + 1;
   uint32_t channel_size = height * width;
-  for (uint32_t channel = 0; channel < channels; data_im += channel_size) {
+  for (uint32_t channel = 0; channel < channels; data_im += channel_size, channel++) {
     for (uint32_t kernel_row = 0; kernel_row < kernel_h; kernel_row++) {
       for (uint32_t kernel_col = 0; kernel_col < kernel_w; kernel_col++) {
         uint32_t input_row = -pad_h + kernel_row * dilation_h;
