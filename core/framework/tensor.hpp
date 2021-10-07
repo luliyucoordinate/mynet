@@ -6,6 +6,7 @@
 
 #include <string>
 #include <vector>
+#include <memory>
 
 #include "common.hpp"
 #include "core/schema/mynet_generated.h"
