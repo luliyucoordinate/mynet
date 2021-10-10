@@ -17,10 +17,10 @@ template <typename Dtype>
 class ConvOps : public Ops<Dtype> {
  public:
   explicit ConvOps(OpsParameterT* param) : Ops<Dtype>(param) {}
-  virtual void OpsSetUp(const std::vector<Tensor<Dtype>*>& bottom,
-                        const std::vector<Tensor<Dtype>*>& top);
-  virtual void Reshape(const std::vector<Tensor<Dtype>*>& bottom,
-                       const std::vector<Tensor<Dtype>*>& top);
+  virtual void OpsSetUp(const std::vector<Tensor<Dtype>*>& input,
+                        const std::vector<Tensor<Dtype>*>& output);
+  virtual void Reshape(const std::vector<Tensor<Dtype>*>& input,
+                       const std::vector<Tensor<Dtype>*>& output);
 
   virtual inline uint32_t MinBottomTensors() const { return 1; }
   virtual inline uint32_t MinTopTensors() const { return 1; }
@@ -29,11 +29,11 @@ class ConvOps : public Ops<Dtype> {
   // virtual inline bool reverse_dimensions() { return false; } // TODO: or not
 
  protected:
-  virtual void ForwardCpu(const std::vector<Tensor<Dtype>*>& bottom,
-                          const std::vector<Tensor<Dtype>*>& top);
-  virtual void BackwardCpu(const std::vector<Tensor<Dtype>*>& top,
+  virtual void ForwardCpu(const std::vector<Tensor<Dtype>*>& input,
+                          const std::vector<Tensor<Dtype>*>& output);
+  virtual void BackwardCpu(const std::vector<Tensor<Dtype>*>& output,
                            const std::vector<bool>& propagate_down,
-                           const std::vector<Tensor<Dtype>*>& bottom);
+                           const std::vector<Tensor<Dtype>*>& input);
   virtual void compute_output_shape();
 
   // Helper functions that abstract away the column buffer and gemm arguments.

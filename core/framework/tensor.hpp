@@ -43,7 +43,7 @@ class Tensor {
    *        necessary.
    *
    * This function can be called both to create an initial allocation
-   * of memory, and to adjust the dimensions of a top Tensor during
+   * of memory, and to adjust the dimensions of a output Tensor during
    * Layer::Reshape or Layer::Forward. When changing the size of Tensor, memory
    * will only be reallocated if sufficient memory does not already exist, and
    * excess memory will never be freed.

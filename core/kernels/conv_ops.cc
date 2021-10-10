@@ -13,15 +13,15 @@
 namespace mynet {
 
 template <typename Dtype>
-void ConvOps<Dtype>::OpsSetUp(const std::vector<Tensor<Dtype>*>& bottom,
-                              const std::vector<Tensor<Dtype>*>& top) {
+void ConvOps<Dtype>::OpsSetUp(const std::vector<Tensor<Dtype>*>& input,
+                              const std::vector<Tensor<Dtype>*>& output) {
   // Configure the kernel size, padding, stride, and inputs.
   auto& conv_param = this->ops_param_->conv_param;
   force_nd_im2col_ = conv_param->force_nd_im2col;
   transpose_ = conv_param->transpose;
-  channel_axis_ = bottom[0]->CanonicalAxisIndex(conv_param->axis);
+  channel_axis_ = input[0]->CanonicalAxisIndex(conv_param->axis);
   auto first_spatial_axis = channel_axis_ + 1;
-  auto num_axes = bottom[0]->num_axes();
+  auto num_axes = input[0]->num_axes();
   num_spatial_axes_ = num_axes - first_spatial_axis;
   std::vector<uint32_t> spatial_dim_tensor_shape(
       1, std::max(num_spatial_axes_, 1u));
@@ -127,7 +127,7 @@ void ConvOps<Dtype>::OpsSetUp(const std::vector<Tensor<Dtype>*>& bottom,
     }
   }
   // Configure output channels and groups.
-  channels_ = bottom[0]->shape(channel_axis_);
+  channels_ = input[0]->shape(channel_axis_);
   num_output_ = conv_param->num_output;
   DCHECK_GT(num_output_, 0ul);
   group_ = conv_param->group;
@@ -194,37 +194,37 @@ void ConvOps<Dtype>::OpsSetUp(const std::vector<Tensor<Dtype>*>& bottom,
 }
 
 template <typename Dtype>
-void ConvOps<Dtype>::Reshape(const std::vector<Tensor<Dtype>*>& bottom,
-                             const std::vector<Tensor<Dtype>*>& top) {
+void ConvOps<Dtype>::Reshape(const std::vector<Tensor<Dtype>*>& input,
+                             const std::vector<Tensor<Dtype>*>& output) {
   const uint32_t first_spatial_axis = channel_axis_ + 1;
-  DCHECK_EQ(bottom[0]->num_axes(), first_spatial_axis + num_spatial_axes_)
-      << "bottom num_axes may not change.";
-  num_ = bottom[0]->count(0, channel_axis_);
-  DCHECK_EQ(bottom[0]->shape(channel_axis_), channels_)
+  DCHECK_EQ(input[0]->num_axes(), first_spatial_axis + num_spatial_axes_)
+      << "input num_axes may not change.";
+  num_ = input[0]->count(0, channel_axis_);
+  DCHECK_EQ(input[0]->shape(channel_axis_), channels_)
       << "Input size incompatible with conv kernel.";
   // TODO(coordinate): generalize to handle inputs of different shapes.
-  for (uint32_t bottom_id = 1; bottom_id < bottom.size(); ++bottom_id) {
-    DCHECK(bottom[0]->shape() == bottom[bottom_id]->shape())
-        << "shape mismatch - bottom[0]: " << bottom[0]->shape_string()
-        << " vs. bottom[" << bottom_id
-        << "]: " << bottom[bottom_id]->shape_string();
+  for (uint32_t bottom_id = 1; bottom_id < input.size(); ++bottom_id) {
+    DCHECK(input[0]->shape() == input[bottom_id]->shape())
+        << "shape mismatch - input[0]: " << input[0]->shape_string()
+        << " vs. input[" << bottom_id
+        << "]: " << input[bottom_id]->shape_string();
   }
   // Shape the tops.
-  bottom_shape_ = bottom[0]->shape();
+  bottom_shape_ = input[0]->shape();
   compute_output_shape();
-  std::vector<uint32_t> top_shape(bottom[0]->shape().begin(),
-                                  bottom[0]->shape().begin() + channel_axis_);
+  std::vector<uint32_t> top_shape(input[0]->shape().begin(),
+                                  input[0]->shape().begin() + channel_axis_);
   top_shape.push_back(num_output_);
   for (uint32_t i = 0; i < num_spatial_axes_; ++i) {
     top_shape.push_back(output_shape_[i]);
   }
-  for (uint32_t top_id = 0; top_id < top.size(); ++top_id) {
-    top[top_id]->Reshape(top_shape);
+  for (uint32_t top_id = 0; top_id < output.size(); ++top_id) {
+    output[top_id]->Reshape(top_shape);
   }
   if (transpose_) {
-    conv_out_spatial_dim_ = bottom[0]->count(first_spatial_axis);
+    conv_out_spatial_dim_ = input[0]->count(first_spatial_axis);
   } else {
-    conv_out_spatial_dim_ = top[0]->count(first_spatial_axis);
+    conv_out_spatial_dim_ = output[0]->count(first_spatial_axis);
   }
   col_offset_ = kernel_dim_ * conv_out_spatial_dim_;
   output_offset_ = conv_out_channels_ * conv_out_spatial_dim_ / group_;
@@ -234,9 +234,9 @@ void ConvOps<Dtype>::Reshape(const std::vector<Tensor<Dtype>*>& bottom,
   uint32_t* conv_input_shape_data = conv_input_shape_.mutable_cpu_data();
   for (uint32_t i = 0; i < num_spatial_axes_ + 1; ++i) {
     if (transpose_) {
-      conv_input_shape_data[i] = top[0]->shape(channel_axis_ + i);
+      conv_input_shape_data[i] = output[0]->shape(channel_axis_ + i);
     } else {
-      conv_input_shape_data[i] = bottom[0]->shape(channel_axis_ + i);
+      conv_input_shape_data[i] = input[0]->shape(channel_axis_ + i);
     }
   }
   // The im2col result buffer will only hold one image at a time to avoid
@@ -252,12 +252,12 @@ void ConvOps<Dtype>::Reshape(const std::vector<Tensor<Dtype>*>& bottom,
     }
   }
   col_buffer_.Reshape(col_buffer_shape_);
-  bottom_dim_ = bottom[0]->count(channel_axis_);
-  top_dim_ = top[0]->count(channel_axis_);
+  bottom_dim_ = input[0]->count(channel_axis_);
+  top_dim_ = output[0]->count(channel_axis_);
   num_kernels_im2col_ = conv_in_channels_ * conv_out_spatial_dim_;
   num_kernels_col2im_ = transpose_ ? top_dim_ : bottom_dim_;
   // Set up the all ones "bias multiplier" for adding biases by BLAS
-  out_spatial_dim_ = top[0]->count(first_spatial_axis);
+  out_spatial_dim_ = output[0]->count(first_spatial_axis);
   if (bias_term_) {
     std::vector<uint32_t> bias_multiplier_shape(1, out_spatial_dim_);
     bias_multiplier_.Reshape(bias_multiplier_shape);
@@ -359,12 +359,12 @@ void ConvOps<Dtype>::compute_output_shape() {
 }
 
 template <typename Dtype>
-void ConvOps<Dtype>::ForwardCpu(const std::vector<Tensor<Dtype>*>& bottom,
-                                const std::vector<Tensor<Dtype>*>& top) {
+void ConvOps<Dtype>::ForwardCpu(const std::vector<Tensor<Dtype>*>& input,
+                                const std::vector<Tensor<Dtype>*>& output) {
   const Dtype* weight = this->tensors_[0]->cpu_data();
-  for (uint32_t i = 0; i < bottom.size(); ++i) {
-    const Dtype* bottom_data = bottom[i]->cpu_data();
-    Dtype* top_data = top[i]->mutable_cpu_data();
+  for (uint32_t i = 0; i < input.size(); ++i) {
+    const Dtype* bottom_data = input[i]->cpu_data();
+    Dtype* top_data = output[i]->mutable_cpu_data();
     for (uint32_t n = 0; n < this->num_; ++n) {
       if (transpose_) {
         this->backward_cpu_gemm(bottom_data + n * this->bottom_dim_, weight,
@@ -382,15 +382,15 @@ void ConvOps<Dtype>::ForwardCpu(const std::vector<Tensor<Dtype>*>& bottom,
 }
 
 template <typename Dtype>
-void ConvOps<Dtype>::BackwardCpu(const std::vector<Tensor<Dtype>*>& top,
+void ConvOps<Dtype>::BackwardCpu(const std::vector<Tensor<Dtype>*>& output,
                                  const std::vector<bool>& propagate_down,
-                                 const std::vector<Tensor<Dtype>*>& bottom) {
+                                 const std::vector<Tensor<Dtype>*>& input) {
   const Dtype* weight = this->tensors_[0]->cpu_data();
   Dtype* weight_diff = this->tensors_[0]->mutable_cpu_diff();
-  for (uint32_t i = 0; i < top.size(); ++i) {
-    const Dtype* top_diff = top[i]->cpu_diff();
-    const Dtype* bottom_data = bottom[i]->cpu_data();
-    Dtype* bottom_diff = bottom[i]->mutable_cpu_diff();
+  for (uint32_t i = 0; i < output.size(); ++i) {
+    const Dtype* top_diff = output[i]->cpu_diff();
+    const Dtype* bottom_data = input[i]->cpu_data();
+    Dtype* bottom_diff = input[i]->mutable_cpu_diff();
     // Bias gradient, if necessary.
     if (this->bias_term_ && this->param_propagate_down_[1]) {
       Dtype* bias_diff = this->tensors_[1]->mutable_cpu_diff();
@@ -411,7 +411,7 @@ void ConvOps<Dtype>::BackwardCpu(const std::vector<Tensor<Dtype>*>& top,
                                   top_diff + n * this->top_dim_, weight_diff);
           }
         }
-        // gradient w.r.t. bottom data, if necessary.
+        // gradient w.r.t. input data, if necessary.
         if (propagate_down[i]) {
           if (transpose_) {
             this->forward_cpu_gemm(top_diff + n * this->top_dim_, weight,
