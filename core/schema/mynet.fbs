@@ -7,7 +7,6 @@ table NetParameter {
     name: string;
     input: [string];
     input_shape: [TensorShape];
-    input_dim: [int];
 
     force_backward: bool;
     debug_info: bool;
