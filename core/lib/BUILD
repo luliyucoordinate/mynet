@@ -32,6 +32,9 @@ cc_library(
         "-std=c++17",
     ],
     data = [
+        "//core/schema:filler.fbs",
+        "//core/schema:mynet.fbs",
+        "//core/schema:ops.fbs",
         "//core/schema:tensor.fbs",
     ],
     deps = [

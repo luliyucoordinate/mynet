@@ -15,55 +15,54 @@
 
 namespace mynet {
 
-bool ReadFlatFromTextFile(const char* filename, TensorFlatT** tensor_flat) {
+bool ReadNetParamsFromTextFile(const char* filename, NetParameterT** flat) {
   std::string schema_file, json_file;
-  bool success =
-      flatbuffers::LoadFile("core/schema/tensor.fbs", false, &schema_file) &&
-      flatbuffers::LoadFile(filename, false, &json_file);
-  DCHECK(success) << "File not found: " << filename;
+  DCHECK(flatbuffers::LoadFile("core/schema/mynet.fbs", false, &schema_file))
+      << "Load schema file error";
+  DCHECK(flatbuffers::LoadFile(filename, false, &json_file))
+      << "File not found: " << filename;
 
   flatbuffers::Parser parser;
-  success =
-      parser.Parse(schema_file.c_str()) && parser.Parse(json_file.c_str());
-  std::cout << parser.error_ << std::endl;
-  DCHECK(success) << "Parse file error: " << filename;
-  *tensor_flat =
-      flatbuffers::GetRoot<TensorFlat>(parser.builder_.GetBufferPointer())
-          ->UnPack();
+  const char* include_directories[] = {"core/schema", nullptr};
+  DCHECK(parser.Parse(schema_file.c_str(), include_directories))
+      << parser.error_;
+  DCHECK(parser.Parse(json_file.c_str())) << parser.error_;
+  *flat = flatbuffers::GetRoot<NetParameter>(parser.builder_.GetBufferPointer())
+              ->UnPack();
   return true;
 }
 
-void WriteFlatToTextFile(const TensorFlatT* tensor_flat, const char* filename) {
+void WriteNetParamsToTextFile(const NetParameterT* flat, const char* filename) {
   std::ofstream output_file(filename);
   flatbuffers::FlatBufferBuilder fbb;
-  fbb.Finish(TensorFlat::Pack(fbb, tensor_flat));
+  fbb.Finish(NetParameter::Pack(fbb, flat));
 
   std::string schema_file;
-  DCHECK(flatbuffers::LoadFile("core/schema/tensor.fbs", false, &schema_file));
+  DCHECK(flatbuffers::LoadFile("core/schema/mynet.fbs", false, &schema_file));
 
   flatbuffers::Parser parser;
-  DCHECK(parser.Parse(schema_file.c_str()));
+  const char* include_directories[] = {"core/schema", nullptr};
+  DCHECK(parser.Parse(schema_file.c_str(), include_directories))
+      << parser.error_;
 
   std::string jsongen;
   DCHECK(flatbuffers::GenerateText(
       parser, reinterpret_cast<const void*>(fbb.GetBufferPointer()), &jsongen))
-      << "Flat to File error: " << filename;
+      << "NetParams to File error: " << filename;
   output_file << jsongen;
 }
 
-bool ReadFlatFromBinaryFile(const char* filename, TensorFlatT** tensor_flat) {
+bool ReadNetParamsFromBinaryFile(const char* filename, NetParameterT** flat) {
   std::string data;
   DCHECK(flatbuffers::LoadFile(filename, true, &data));
-  *tensor_flat = const_cast<TensorFlatT*>(
-      flatbuffers::GetRoot<TensorFlat>(data.c_str())->UnPack());
+  *flat = flatbuffers::GetRoot<NetParameter>(data.c_str())->UnPack();
   return true;
 }
 
-void WriteFlatToBinaryFile(const TensorFlatT* tensor_flat,
-                           const char* filename) {
-  DCHECK(tensor_flat) << "write empty file";
+void WriteNetParamsToBinaryFile(const NetParameterT* flat,
+                                const char* filename) {
   flatbuffers::FlatBufferBuilder fbb;
-  fbb.Finish(TensorFlat::Pack(fbb, tensor_flat));
+  fbb.Finish(NetParameter::Pack(fbb, flat));
   DCHECK(flatbuffers::SaveFile(filename,
                                reinterpret_cast<char*>(fbb.GetBufferPointer()),
                                fbb.GetSize(), true));

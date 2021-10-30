@@ -12,7 +12,10 @@
 #include <memory>
 #include <string>
 
+#include "core/schema/filler_generated.h"
 #include "core/schema/tensor_generated.h"
+#include "core/schema/ops_generated.h"  // tensor and filler must before than ops
+#include "core/schema/mynet_generated.h"
 #include "format.hpp"
 
 #ifndef MYNET_TMP_DIR_RETRIES
@@ -47,50 +50,31 @@ inline void MakeTempFilename(std::string* temp_filename) {
       (temp_files_subpath / mynet::format_int(next_temp_file++, 9)).string();
 }
 
-bool ReadFlatFromTextFile(const char* filename, TensorFlatT** tensor_flat);
+bool ReadNetParamsFromTextFile(const char* filename, NetParameterT** flat);
 
-inline bool ReadFlatFromTextFile(const std::string& filename,
-                                 TensorFlatT** flat) {
-  return ReadFlatFromTextFile(filename.c_str(), flat);
+inline bool ReadNetParamsFromTextFile(const std::string& filename,
+                                      NetParameterT** flat) {
+  return ReadNetParamsFromTextFile(filename.c_str(), flat);
 }
 
-// inline void ReadFlatFromTextFileOrDie(const char* filename, TensorFlatT**
-// flat) {
-//   CHECK(ReadFlatFromTextFile(filename, flat));
-// }
-
-// inline void ReadFlatFromTextFileOrDie(const std::string& filename,
-// TensorFlatT** flat) {
-//   ReadFlatFromTextFileOrDie(filename.c_str(), flat);
-// }
-
-void WriteFlatToTextFile(const TensorFlatT* flat, const char* filename);
-inline void WriteFlatToTextFile(const TensorFlatT* flat,
-                                const std::string& filename) {
-  WriteFlatToTextFile(flat, filename.c_str());
+void WriteNetParamsToTextFile(const NetParameterT* flat, const char* filename);
+inline void WriteNetParamsToTextFile(const NetParameterT* flat,
+                                     const std::string& filename) {
+  WriteNetParamsToTextFile(flat, filename.c_str());
 }
 
-bool ReadFlatFromBinaryFile(const char* filename, TensorFlatT** flat);
+bool ReadNetParamsFromBinaryFile(const char* filename, NetParameterT** flat);
 
-inline bool ReadFlatFromBinaryFile(const std::string& filename,
-                                   TensorFlatT** flat) {
-  return ReadFlatFromBinaryFile(filename.c_str(), flat);
+inline bool ReadNetParamsFromBinaryFile(const std::string& filename,
+                                        NetParameterT** flat) {
+  return ReadNetParamsFromBinaryFile(filename.c_str(), flat);
 }
 
-// inline void ReadFlatFromBinaryFileOrDie(const char* filename, TensorFlatT**
-// flat) {
-//   CHECK(ReadFlatFromBinaryFile(filename, flat));
-// }
-
-// inline void ReadFlatFromBinaryFileOrDie(const std::string& filename,
-// TensorFlatT** flat) {
-//   ReadFlatFromBinaryFileOrDie(filename.c_str(), flat);
-// }
-
-void WriteFlatToBinaryFile(const TensorFlatT* flat, const char* filename);
-inline void WriteFlatToBinaryFile(const TensorFlatT* flat,
-                                  const std::string& filename) {
-  WriteFlatToBinaryFile(flat, filename.c_str());
+void WriteNetParamsToBinaryFile(const NetParameterT* flat,
+                                const char* filename);
+inline void WriteNetParamsToBinaryFile(const NetParameterT* flat,
+                                       const std::string& filename) {
+  WriteNetParamsToBinaryFile(flat, filename.c_str());
 }
 
 }  // namespace mynet

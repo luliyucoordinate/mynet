@@ -5,26 +5,28 @@
 
 #include <gtest/gtest.h>
 
+#include <memory>
+
 #include "core/framework/mynet_test_main.hpp"
 
 namespace mynet {
 
 class IOTest : public ::testing::Test {};
 
-TEST_F(IOTest, ReadWriteFlatFromTextFile) {
-  TensorFlatT* tensor_flat = nullptr;
+TEST_F(IOTest, ReadWriteNetParamsFromTextFile) {
+  auto net_param = std::make_shared<NetParameterT*>();
   const char* filename_r = "core/test_data/io_read_test.json";
-  ReadFlatFromTextFile(filename_r, &tensor_flat);
+  ReadNetParamsFromTextFile(filename_r, net_param.get());
   const char* filename_w = "core/test_data/io_write_test.json";
-  WriteFlatToTextFile(tensor_flat, filename_w);
+  WriteNetParamsToTextFile(*net_param.get(), filename_w);
 }
 
-TEST_F(IOTest, ReadWriteFlatFromBinaryFile) {
-  TensorFlatT* tensor_flat = nullptr;
+TEST_F(IOTest, ReadWriteNetParamsFromBinaryFile) {
+  auto net_param = std::make_shared<NetParameterT*>();
   const char* filename_r = "core/test_data/io_read_test.bin";
-  ReadFlatFromBinaryFile(filename_r, &tensor_flat);
+  ReadNetParamsFromBinaryFile(filename_r, net_param.get());
   const char* filename_w = "core/test_data/io_write_test.bin";
-  WriteFlatToBinaryFile(tensor_flat, filename_w);
+  WriteNetParamsToBinaryFile(*net_param.get(), filename_w);
 }
 
 }  // namespace mynet
