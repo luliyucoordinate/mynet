@@ -4,12 +4,12 @@
 #ifndef CORE_FRAMEWORK_TENSOR_HPP_
 #define CORE_FRAMEWORK_TENSOR_HPP_
 
+#include <memory>
 #include <string>
 #include <vector>
-#include <memory>
 
 #include "common.hpp"
-#include "core/schema/mynet_generated.h"
+#include "core/schema/tensor_generated.h"
 #include "syncedmem.hpp"
 
 const uint32_t kMaxTensorAxes = 32;

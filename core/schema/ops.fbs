@@ -1,0 +1,53 @@
+include "filler.fbs";
+include "tensor.fbs";
+
+namespace mynet;
+
+enum Engine :byte {
+    DEFAULT = 0,
+    MYNET = 1,
+    CUDNN = 2,
+}
+
+table ConvParameter {
+    num_output: uint;
+    bias_term: bool = true;
+
+    pad: [uint];
+    kernel_size: [uint];
+    stride: [uint];
+    dilation: [uint];
+
+    pad_h: uint;
+    pad_w: uint;
+    kernel_h: uint;
+    kernel_w: uint;
+    stride_h: uint;
+    stride_w: uint;
+
+    group: uint = 1;
+
+    weight_filler: FillerParameter;
+    bias_filler: FillerParameter;
+    engine: Engine;
+
+    axis: int = 1;
+    force_nd_im2col: bool;
+    transpose: bool;
+}
+
+enum Phase : byte {
+    TRAIN = 0,
+    TEST = 1
+}
+
+table OpsParameter {
+    name: string;
+    type: string;
+    bottom: [string];
+    top: [string];
+    phase: Phase;
+    loss_weight: [float];
+    tensors: [TensorFlat];
+    conv_param: ConvParameter;
+}

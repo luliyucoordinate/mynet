@@ -1,70 +1,7 @@
+include "tensor.fbs";
+include "ops.fbs";
+
 namespace mynet;
-
-table TensorShape {
-    dim: [uint];
-}
-
-table TensorFlat {
-    num: uint;
-    channels: uint;
-    height: uint;
-    width: uint;
-
-    data: [float];
-    diff: [float];
-    shape: TensorShape;
-    double_data: [double];
-    double_diff: [double];
-}
-
-enum Engine :byte {
-    DEFAULT = 0,
-    MYNET = 1,
-    CUDNN = 2,
-}
-
-table ConvParameter {
-    num_output: uint;
-    bias_term: bool = true;
-
-    pad: [uint];
-    kernel_size: [uint];
-    stride: [uint];
-    dilation: [uint];
-
-    pad_h: uint;
-    pad_w: uint;
-    kernel_h: uint;
-    kernel_w: uint;
-    stride_h: uint;
-    stride_w: uint;
-
-    group: uint = 1;
-
-    weight_filler: FillerParameter;
-    bias_filler: FillerParameter;
-    engine: Engine;
-
-    axis: int = 1;
-    force_nd_im2col: bool;
-    transpose: bool;
-}
-
-enum Phase : byte {
-    TRAIN = 0,
-    TEST = 1
-}
-
-table OpsParameter {
-    name: string;
-    type: string;
-    bottom: [string];
-    top: [string];
-    phase: Phase;
-    loss_weight: [float];
-    tensors: [TensorFlat];
-    conv_param: ConvParameter;
-}
 
 table NetParameter {
     name: string;
@@ -77,20 +14,4 @@ table NetParameter {
     ops: [OpsParameter];
 }
 
-enum VarianceNorm : byte {
-    FAN_IN = 0,
-    FAN_OUT = 1,
-    AVERAGE = 2
-}
-
-table FillerParameter {
-    type: string;
-    value: float;
-    min: float;
-    max: float = 1;
-    mean: float;
-    std: float = 1;
-    sparse: int = -1;
-
-    variance_norm: VarianceNorm;
-}
+root_type NetParameter;

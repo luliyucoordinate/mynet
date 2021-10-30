@@ -5,11 +5,13 @@
 #define CORE_FRAMEWORK_OPS_HPP_
 
 #include <memory>
-#include <vector>
 #include <utility>
+#include <vector>
 
 #include "common.hpp"
-#include "core/schema/mynet_generated.h"
+#include "core/schema/filler_generated.h"
+#include "core/schema/ops_generated.h"  // tensor and filler must before than ops
+#include "core/schema/tensor_generated.h"
 #include "math_functions.hpp"
 #include "tensor.hpp"
 
@@ -81,16 +83,16 @@ class Ops {
    *
    * This method should do one-time ops specific setup. This includes reading
    * and processing relevent parameters from the <code>ops_param_</code>.
-   * Setting up the shapes of output tensors and internal buffers should be done in
-   * <code>Reshape</code>, which will be called before the forward pass to
+   * Setting up the shapes of output tensors and internal buffers should be done
+   * in <code>Reshape</code>, which will be called before the forward pass to
    * adjust the output tensor sizes.
    */
   virtual void OpsSetUp(const std::vector<Tensor<Dtype>*>& input,
                         const std::vector<Tensor<Dtype>*>& output) {}
 
   /**
-   * @brief Adjust the shapes of output tensors and internal buffers to accommodate
-   *        the shapes of the input tensors.
+   * @brief Adjust the shapes of output tensors and internal buffers to
+   * accommodate the shapes of the input tensors.
    *
    * @param input the input tensors, with the requested input shapes
    * @param output the output tensors, which should be reshaped as needed
@@ -247,9 +249,9 @@ class Ops {
    * @brief Return whether "anonymous" output tensors are created automatically
    *        by the ops.
    *
-   * If this method returns true, Net::Init will create enough "anonymous" output
-   * tensors to fulfill the requirement specified by ExactNumTopTensors() or
-   * EMinTopTensors().
+   * If this method returns true, Net::Init will create enough "anonymous"
+   * output tensors to fulfill the requirement specified by ExactNumTopTensors()
+   * or EMinTopTensors().
    */
   virtual inline bool AutoTopTensors() const { return false; }
 
@@ -318,8 +320,8 @@ class Ops {
 
   /**
    * Called by the parent ops's SetUp to check that the number of input
-   * and output tensors provided as input match the expected numbers specified by
-   * the {ExactNum,Min,Max}{Bottom,Top}tensors() functions.
+   * and output tensors provided as input match the expected numbers specified
+   * by the {ExactNum,Min,Max}{Bottom,Top}tensors() functions.
    */
   virtual void CheckTensorCounts(const std::vector<Tensor<Dtype>*>& input,
                                  const std::vector<Tensor<Dtype>*>& output) {
@@ -367,8 +369,9 @@ class Ops {
   }
 
   /**
-   * Called by SetUp to initialize the weights associated with any output tensors
-   * in the loss function. Store non-zero loss weights in the diff tensor.
+   * Called by SetUp to initialize the weights associated with any output
+   * tensors in the loss function. Store non-zero loss weights in the diff
+   * tensor.
    */
   inline void SetLossWeights(const std::vector<Tensor<Dtype>*>& output) {
     uint32_t num_loss_weights = ops_param_->loss_weight.size();

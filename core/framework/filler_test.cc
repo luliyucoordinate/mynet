@@ -7,7 +7,6 @@
 #include <vector>
 
 #include "common.hpp"
-#include "core/schema/mynet_generated.h"
 #include "mynet_test_main.hpp"
 
 namespace mynet {

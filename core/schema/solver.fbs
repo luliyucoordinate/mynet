@@ -1,0 +1,73 @@
+include "mynet.fbs";
+
+namespace mynet;
+
+table NetState {
+    phase: Phase = TEST;
+    level: uint;
+    stage: [string];
+}
+
+enum SolverMode : byte {
+    CPU = 0, 
+    GPU = 1,
+}
+
+enum SnapshotFormat : byte {
+    HDF5 = 0,
+    BINARY = 1,
+}
+
+table SolverParameter {
+    net: string;
+    net_param: NetParameter;
+    train_net: string;
+    test_net: [string];
+    train_net_param: NetParameter;
+    test_net_param: [NetParameter];
+
+    train_state: NetState;
+    test_state: [NetState];
+
+    test_iter: uint;
+    test_interval: uint;
+    test_compute_loass: bool;
+    test_initialization: bool;
+    base_lr: float;
+
+    display: uint;
+    average_loss: uint = 1;
+    max_iter: uint;
+    iter_size: uint = 1;
+
+    lr_policy: string;
+    gamma: float;
+    power: float;
+    momentum: float;
+    weight_decay: float;
+
+    regularization_type: string;
+    step_size: uint;
+    step_value: uint;
+
+    clip_gradients: float = -1;
+    snapshot: uint;
+    snapshot_prefix: string;
+    snapshot_diff: bool;
+
+    snapshot_format: SnapshotFormat = BINARY;
+    solver_mode: SolverMode;
+
+    device_id: uint;
+    random_seed: ulong;
+    type: string;
+    delta: float;
+
+    debug_info: bool;
+    snapshot_after_train: bool;
+
+    ops_wise_reduce: bool = true;
+    weight_path: [string];
+}
+
+root_type SolverParameter;

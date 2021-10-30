@@ -1,0 +1,21 @@
+namespace mynet;
+
+enum VarianceNorm : byte {
+    FAN_IN = 0,
+    FAN_OUT = 1,
+    AVERAGE = 2
+}
+
+table FillerParameter {
+    type: string;
+    value: float;
+    min: float;
+    max: float = 1;
+    mean: float;
+    std: float = 1;
+    sparse: int = -1;
+
+    variance_norm: VarianceNorm;
+}
+
+root_type FillerParameter;

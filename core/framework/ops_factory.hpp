@@ -10,7 +10,6 @@
 #include <vector>
 
 #include "common.hpp"
-#include "core/schema/mynet_generated.h"
 #include "ops.hpp"
 
 namespace mynet {

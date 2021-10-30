@@ -4,9 +4,10 @@
 #ifndef CORE_FRAMEWORK_FILLER_HPP_
 #define CORE_FRAMEWORK_FILLER_HPP_
 
-#include <string>
 #include <memory>
+#include <string>
 
+#include "core/schema/filler_generated.h"
 #include "math_functions.hpp"
 #include "tensor.hpp"
 
