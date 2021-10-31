@@ -25,7 +25,7 @@ class Filler {
   const FillerParameterT* filler_param_;
 };  // class Filler
 
-/// @brief Fills a Blob with constant values @f$ x = 0 @f$.
+/// @brief Fills a Tensor with constant values @f$ x = 0 @f$.
 template <typename Dtype>
 class ConstantFiller : public Filler<Dtype> {
  public:
@@ -34,7 +34,7 @@ class ConstantFiller : public Filler<Dtype> {
   virtual void Fill(Tensor<Dtype>* tensor) {
     DCHECK(tensor);
     Dtype* data = tensor->mutable_cpu_data();
-    const uint32_t count = tensor->count();
+    uint32_t count = tensor->count();
     const Dtype value = this->filler_param_->value;
     DCHECK(count);
     for (uint32_t i = 0; i < count; ++i) {
@@ -61,6 +61,42 @@ class UniformFiller : public Filler<Dtype> {
     // DCHECK_EQ(this->filler_param_.sparse(), -1)
     //      << "Sparsity not supported by this Filler.";
   }
+};
+
+/// @brief Fills a Tensor with Gaussian-distributed values @f$ x = a @f$.
+template <typename Dtype>
+class GaussianFiller : public Filler<Dtype> {
+ public:
+  explicit GaussianFiller(const FillerParameterT* param)
+      : Filler<Dtype>(param) {}
+  virtual void Fill(Tensor<Dtype>* tensor) {
+    Dtype* data = tensor->mutable_cpu_data();
+    DCHECK(tensor->count());
+    mynet_rng_gaussian<Dtype>(tensor->count(), Dtype(this->filler_param_->mean),
+                              Dtype(this->filler_param_->std),
+                              tensor->mutable_cpu_data());
+    int32_t sparse = this->filler_param_->sparse;
+    DCHECK_GE(sparse, -1);
+    if (sparse >= 0) {
+      // Sparse initialization is implemented for "weight" blobs; i.e. matrices.
+      // These have num == channels == 1; width is number of inputs; height is
+      // number of outputs.  The 'sparse' variable specifies the mean number
+      // of non-zero input weights for a given output.
+      DCHECK_GE(tensor->num_axes(), 1ul);
+      uint32_t num_outputs = tensor->shape(0);
+      Dtype non_zero_probability = Dtype(sparse) / Dtype(num_outputs);
+      rand_vec_.reset(new SyncedMemory(tensor->count() * sizeof(uint32_t)));
+      uint32_t* mask =
+          reinterpret_cast<uint32_t*>(rand_vec_->mutable_cpu_data());
+      mynet_rng_bernoulli(tensor->count(), non_zero_probability, mask);
+      for (uint32_t i = 0; i < tensor->count(); ++i) {
+        data[i] *= mask[i];
+      }
+    }
+  }
+
+ protected:
+  std::shared_ptr<SyncedMemory> rand_vec_;
 };
 
 /**

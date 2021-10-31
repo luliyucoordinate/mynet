@@ -52,6 +52,12 @@ void mynet_cpu_scale(uint32_t n, Dtype alpha, const Dtype* x, Dtype* y);
 template <typename Dtype>
 void mynet_rng_uniform(uint32_t n, Dtype a, Dtype b, Dtype* r);
 
+template <typename Dtype>
+void mynet_rng_gaussian(uint32_t n, Dtype mu, Dtype sigma, Dtype* r);
+
+template <typename Dtype>
+void mynet_rng_bernoulli(uint32_t n, Dtype p, uint32_t* r);
+
 }  // namespace mynet
 
 #endif  // CORE_FRAMEWORK_MATH_FUNCTIONS_HPP_

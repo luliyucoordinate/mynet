@@ -144,7 +144,7 @@ void mynet_cpu_scale<double>(uint32_t n, double alpha, const double* x,
 
 template <typename Dtype>
 void mynet_rng_uniform(uint32_t n, Dtype a, Dtype b, Dtype* r) {
-  DCHECK_GE(n, 0ul);
+  DCHECK_LE(n, INT32_MAX);
   DCHECK(r);
   DCHECK_LE(a, b);
 
@@ -163,5 +163,43 @@ template void mynet_rng_uniform<float>(uint32_t n, float a, float b, float* r);
 
 template void mynet_rng_uniform<double>(uint32_t n, double a, double b,
                                         double* r);
+
+template <typename Dtype>
+void mynet_rng_gaussian(uint32_t n, Dtype a, Dtype sigma, Dtype* r) {
+  DCHECK_LE(n, INT32_MAX);
+  DCHECK_LE(sigma, INT32_MAX);
+  DCHECK(r);
+  std::normal_distribution<Dtype> random_distribution(a, sigma);
+
+  std::random_device rd{};
+  std::mt19937 gen{rd()};
+  for (uint32_t i = 0; i < n; ++i) {
+    r[i] = random_distribution(gen);
+  }
+}
+
+template void mynet_rng_gaussian<float>(uint32_t n, float mu, float sigma,
+                                        float* r);
+
+template void mynet_rng_gaussian<double>(uint32_t n, double mu, double sigma,
+                                         double* r);
+
+template <typename Dtype>
+void mynet_rng_bernoulli(uint32_t n, Dtype p, uint32_t* r) {
+  DCHECK_LE(n, INT32_MAX);
+  DCHECK(r);
+  DCHECK_LE(p, 1);
+  std::bernoulli_distribution random_distribution(p);
+
+  std::random_device rd{};
+  std::mt19937 gen{rd()};
+  for (uint32_t i = 0; i < n; ++i) {
+    r[i] = random_distribution(gen);
+  }
+}
+
+template void mynet_rng_bernoulli<double>(uint32_t n, double p, uint32_t* r);
+
+template void mynet_rng_bernoulli<float>(uint32_t n, float p, uint32_t* r);
 
 }  // namespace mynet
