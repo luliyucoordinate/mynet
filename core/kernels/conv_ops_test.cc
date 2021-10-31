@@ -3,8 +3,8 @@
 
 #include "conv_ops.hpp"
 
-#include <vector>
 #include <memory>
+#include <vector>
 
 #include "core/framework/common.hpp"
 #include "core/framework/filler.hpp"
@@ -14,7 +14,7 @@
 namespace mynet {
 
 // Reference conv for checking results:
-// accumulate through explicit loops over input, output, and filters.
+// accumulate through explicit loop over input, output, and filters.
 template <typename Dtype>
 void mynet_conv(const Tensor<Dtype>* in, ConvParameterT* conv_param,
                 const std::vector<std::shared_ptr<Tensor<Dtype>>>& weights,
@@ -158,11 +158,11 @@ template void mynet_conv(
     Tensor<double>* out);
 
 template <typename TypeParam>
-class ConvOpsTest : public MultiDeviceTest<TypeParam> {
+class ConvOpTest : public MultiDeviceTest<TypeParam> {
   typedef typename TypeParam::Dtype Dtype;
 
  protected:
-  ConvOpsTest()
+  ConvOpTest()
       : tensor_input_(new Tensor<Dtype>(2ul, 3ul, 6ul, 4ul)),
         tensor_input_2_(new Tensor<Dtype>(2ul, 3ul, 6ul, 4ul)),
         tensor_output_(new Tensor<Dtype>()),
@@ -178,7 +178,7 @@ class ConvOpsTest : public MultiDeviceTest<TypeParam> {
     tensor_output_vec_.push_back(tensor_output_);
   }
 
-  virtual ~ConvOpsTest() {
+  virtual ~ConvOpTest() {
     delete tensor_input_;
     delete tensor_input_2_;
     delete tensor_output_;
@@ -200,24 +200,23 @@ class ConvOpsTest : public MultiDeviceTest<TypeParam> {
   std::vector<Tensor<Dtype>*> tensor_output_vec_;
 };
 
-TYPED_TEST_CASE(ConvOpsTest, TestDtypesAndDevices);
+TYPED_TEST_CASE(ConvOpTest, TestDtypesAndDevices);
 
-TYPED_TEST(ConvOpsTest, TestConvSetup) {
+TYPED_TEST(ConvOpTest, TestConvSetup) {
   typedef typename TypeParam::Dtype Dtype;
-  OpsParameterT ops_param;
-  ops_param.conv_param = std::make_unique<ConvParameterT>();
-  ops_param.conv_param->weight_filler = std::make_unique<FillerParameterT>();
-  ops_param.conv_param->weight_filler->type = "constant";
-  ops_param.conv_param->bias_filler = std::make_unique<FillerParameterT>();
-  ops_param.conv_param->bias_filler->type = "constant";
-  ops_param.conv_param->kernel_size.push_back(3ul);
-  ops_param.conv_param->stride.push_back(2ul);
-  ops_param.conv_param->num_output = 4ul;
+  OpParameterT op_param;
+  op_param.conv_param = std::make_unique<ConvParameterT>();
+  op_param.conv_param->weight_filler = std::make_unique<FillerParameterT>();
+  op_param.conv_param->weight_filler->type = "constant";
+  op_param.conv_param->bias_filler = std::make_unique<FillerParameterT>();
+  op_param.conv_param->bias_filler->type = "constant";
+  op_param.conv_param->kernel_size.push_back(3ul);
+  op_param.conv_param->stride.push_back(2ul);
+  op_param.conv_param->num_output = 4ul;
   this->tensor_input_vec_.push_back(this->tensor_input_2_);
   this->tensor_output_vec_.push_back(this->tensor_output_2_);
-  std::shared_ptr<Ops<Dtype>> ops =
-      std::make_shared<ConvOps<Dtype>>(&ops_param);
-  ops->SetUp(this->tensor_input_vec_, this->tensor_output_vec_);
+  std::shared_ptr<Op<Dtype>> op = std::make_shared<ConvOp<Dtype>>(&op_param);
+  op->SetUp(this->tensor_input_vec_, this->tensor_output_vec_);
   EXPECT_EQ(this->tensor_output_->num(), 2ul);
   EXPECT_EQ(this->tensor_output_->channels(), 4ul);
   EXPECT_EQ(this->tensor_output_->height(), 2ul);
@@ -227,10 +226,10 @@ TYPED_TEST(ConvOpsTest, TestConvSetup) {
   EXPECT_EQ(this->tensor_output_2_->height(), 2ul);
   EXPECT_EQ(this->tensor_output_2_->width(), 1ul);
   // setting group should not change the shape
-  ops_param.conv_param->num_output = 3ul;
-  ops_param.conv_param->group = 3ul;
-  ops.reset(new ConvOps<Dtype>(&ops_param));
-  ops->SetUp(this->tensor_input_vec_, this->tensor_output_vec_);
+  op_param.conv_param->num_output = 3ul;
+  op_param.conv_param->group = 3ul;
+  op.reset(new ConvOp<Dtype>(&op_param));
+  op->SetUp(this->tensor_input_vec_, this->tensor_output_vec_);
   EXPECT_EQ(this->tensor_output_->num(), 2ul);
   EXPECT_EQ(this->tensor_output_->channels(), 3ul);
   EXPECT_EQ(this->tensor_output_->height(), 2ul);
@@ -241,35 +240,34 @@ TYPED_TEST(ConvOpsTest, TestConvSetup) {
   EXPECT_EQ(this->tensor_output_2_->width(), 1ul);
 }
 
-TYPED_TEST(ConvOpsTest, TestSimpleConv) {
+TYPED_TEST(ConvOpTest, TestSimpleConv) {
   typedef typename TypeParam::Dtype Dtype;
   this->tensor_input_vec_.push_back(this->tensor_input_2_);
   this->tensor_output_vec_.push_back(this->tensor_output_2_);
-  OpsParameterT ops_param;
-  ops_param.conv_param = std::make_unique<ConvParameterT>();
-  ops_param.conv_param->weight_filler = std::make_unique<FillerParameterT>();
-  ops_param.conv_param->bias_filler = std::make_unique<FillerParameterT>();
-  ops_param.conv_param->kernel_size.push_back(3ul);
-  ops_param.conv_param->stride.push_back(2ul);
-  ops_param.conv_param->num_output = 4ul;
-  ops_param.conv_param->weight_filler->type = "uniform";
-  ops_param.conv_param->bias_filler->type = "constant";
-  ops_param.conv_param->bias_filler->value = 0.1f;
-  std::shared_ptr<Ops<Dtype>> ops =
-      std::make_shared<ConvOps<Dtype>>(&ops_param);
-  ops->SetUp(this->tensor_input_vec_, this->tensor_output_vec_);
-  ops->Forward(this->tensor_input_vec_, this->tensor_output_vec_);
+  OpParameterT op_param;
+  op_param.conv_param = std::make_unique<ConvParameterT>();
+  op_param.conv_param->weight_filler = std::make_unique<FillerParameterT>();
+  op_param.conv_param->bias_filler = std::make_unique<FillerParameterT>();
+  op_param.conv_param->kernel_size.push_back(3ul);
+  op_param.conv_param->stride.push_back(2ul);
+  op_param.conv_param->num_output = 4ul;
+  op_param.conv_param->weight_filler->type = "uniform";
+  op_param.conv_param->bias_filler->type = "constant";
+  op_param.conv_param->bias_filler->value = 0.1f;
+  std::shared_ptr<Op<Dtype>> op = std::make_shared<ConvOp<Dtype>>(&op_param);
+  op->SetUp(this->tensor_input_vec_, this->tensor_output_vec_);
+  op->Forward(this->tensor_input_vec_, this->tensor_output_vec_);
   // Check against reference conv.
   const Dtype* output_data;
   const Dtype* ref_output_data;
-  mynet_conv(this->tensor_input_, ops_param.conv_param.get(), ops->tensors(),
+  mynet_conv(this->tensor_input_, op_param.conv_param.get(), op->tensors(),
              this->MakeReferenceTop(this->tensor_output_));
   output_data = this->tensor_output_->cpu_data();
   ref_output_data = this->ref_tensor_output_->cpu_data();
   for (uint32_t i = 0; i < this->tensor_output_->count(); ++i) {
     EXPECT_NEAR(output_data[i], ref_output_data[i], 1e-4);
   }
-  mynet_conv(this->tensor_input_2_, ops_param.conv_param.get(), ops->tensors(),
+  mynet_conv(this->tensor_input_2_, op_param.conv_param.get(), op->tensors(),
              this->MakeReferenceTop(this->tensor_output_2_));
   output_data = this->tensor_output_2_->cpu_data();
   ref_output_data = this->ref_tensor_output_->cpu_data();
@@ -278,7 +276,7 @@ TYPED_TEST(ConvOpsTest, TestSimpleConv) {
   }
 }
 
-TYPED_TEST(ConvOpsTest, TestDilatedConv) {
+TYPED_TEST(ConvOpTest, TestDilatedConv) {
   typedef typename TypeParam::Dtype Dtype;
   std::vector<uint32_t> input_shape = {2ul, 3ul, 8ul, 7ul};
   this->tensor_input_vec_.push_back(this->tensor_input_2_);
@@ -286,31 +284,30 @@ TYPED_TEST(ConvOpsTest, TestDilatedConv) {
   for (uint32_t i = 0; i < this->tensor_input_vec_.size(); ++i) {
     this->tensor_input_vec_[i]->Reshape(input_shape);
   }
-  OpsParameterT ops_param;
-  ops_param.conv_param = std::make_unique<ConvParameterT>();
-  ops_param.conv_param->weight_filler = std::make_unique<FillerParameterT>();
-  ops_param.conv_param->bias_filler = std::make_unique<FillerParameterT>();
-  ops_param.conv_param->kernel_size.push_back(3ul);
-  ops_param.conv_param->dilation.push_back(2ul);
-  ops_param.conv_param->num_output = 4ul;
-  ops_param.conv_param->weight_filler->type = "uniform";
-  ops_param.conv_param->bias_filler->type = "constant";
-  ops_param.conv_param->bias_filler->value = 0.1f;
-  std::shared_ptr<Ops<Dtype>> ops =
-      std::make_shared<ConvOps<Dtype>>(&ops_param);
-  ops->SetUp(this->tensor_input_vec_, this->tensor_output_vec_);
-  ops->Forward(this->tensor_input_vec_, this->tensor_output_vec_);
+  OpParameterT op_param;
+  op_param.conv_param = std::make_unique<ConvParameterT>();
+  op_param.conv_param->weight_filler = std::make_unique<FillerParameterT>();
+  op_param.conv_param->bias_filler = std::make_unique<FillerParameterT>();
+  op_param.conv_param->kernel_size.push_back(3ul);
+  op_param.conv_param->dilation.push_back(2ul);
+  op_param.conv_param->num_output = 4ul;
+  op_param.conv_param->weight_filler->type = "uniform";
+  op_param.conv_param->bias_filler->type = "constant";
+  op_param.conv_param->bias_filler->value = 0.1f;
+  std::shared_ptr<Op<Dtype>> op = std::make_shared<ConvOp<Dtype>>(&op_param);
+  op->SetUp(this->tensor_input_vec_, this->tensor_output_vec_);
+  op->Forward(this->tensor_input_vec_, this->tensor_output_vec_);
   // Check against reference conv.
   const Dtype* output_data;
   const Dtype* ref_output_data;
-  mynet_conv(this->tensor_input_, ops_param.conv_param.get(), ops->tensors(),
+  mynet_conv(this->tensor_input_, op_param.conv_param.get(), op->tensors(),
              this->MakeReferenceTop(this->tensor_output_));
   output_data = this->tensor_output_->cpu_data();
   ref_output_data = this->ref_tensor_output_->cpu_data();
   for (uint32_t i = 0; i < this->tensor_output_->count(); ++i) {
     EXPECT_NEAR(output_data[i], ref_output_data[i], 1e-4);
   }
-  mynet_conv(this->tensor_input_2_, ops_param.conv_param.get(), ops->tensors(),
+  mynet_conv(this->tensor_input_2_, op_param.conv_param.get(), op->tensors(),
              this->MakeReferenceTop(this->tensor_output_2_));
   output_data = this->tensor_output_2_->cpu_data();
   ref_output_data = this->ref_tensor_output_->cpu_data();
@@ -319,29 +316,28 @@ TYPED_TEST(ConvOpsTest, TestDilatedConv) {
   }
 }
 
-TYPED_TEST(ConvOpsTest, Test0DConv) {
+TYPED_TEST(ConvOpTest, Test0DConv) {
   typedef typename TypeParam::Dtype Dtype;
-  OpsParameterT ops_param;
-  ops_param.conv_param = std::make_unique<ConvParameterT>();
-  ops_param.conv_param->weight_filler = std::make_unique<FillerParameterT>();
-  ops_param.conv_param->bias_filler = std::make_unique<FillerParameterT>();
+  OpParameterT op_param;
+  op_param.conv_param = std::make_unique<ConvParameterT>();
+  op_param.conv_param->weight_filler = std::make_unique<FillerParameterT>();
+  op_param.conv_param->bias_filler = std::make_unique<FillerParameterT>();
 
   const uint32_t kNumOutput = 3ul;
-  ops_param.conv_param->num_output = kNumOutput;
-  ops_param.conv_param->axis = 3;
-  ops_param.conv_param->weight_filler->type = "uniform";
-  ops_param.conv_param->bias_filler->type = "uniform";
-  std::shared_ptr<Ops<Dtype>> ops =
-      std::make_shared<ConvOps<Dtype>>(&ops_param);
+  op_param.conv_param->num_output = kNumOutput;
+  op_param.conv_param->axis = 3;
+  op_param.conv_param->weight_filler->type = "uniform";
+  op_param.conv_param->bias_filler->type = "uniform";
+  std::shared_ptr<Op<Dtype>> op = std::make_shared<ConvOp<Dtype>>(&op_param);
   std::vector<uint32_t> output_shape = this->tensor_input_->shape();
   output_shape[3] = kNumOutput;
-  ops->SetUp(this->tensor_input_vec_, this->tensor_output_vec_);
+  op->SetUp(this->tensor_input_vec_, this->tensor_output_vec_);
   EXPECT_EQ(output_shape, this->tensor_output_->shape());
-  ops->Forward(this->tensor_input_vec_, this->tensor_output_vec_);
+  op->Forward(this->tensor_input_vec_, this->tensor_output_vec_);
   // Check against reference conv.
   std::vector<uint32_t> weight_offset(2);
-  const Tensor<Dtype>* weight = ops->tensors()[0].get();
-  const Tensor<Dtype>* bias = ops->tensors()[1].get();
+  const Tensor<Dtype>* weight = op->tensors()[0].get();
+  const Tensor<Dtype>* bias = op->tensors()[1].get();
   const uint32_t num = this->tensor_output_->count(3);
   const uint32_t dim = this->tensor_output_->shape(3);
   const uint32_t input_dim = this->tensor_input_->shape(3);
@@ -359,7 +355,7 @@ TYPED_TEST(ConvOpsTest, Test0DConv) {
   }
 }
 
-TYPED_TEST(ConvOpsTest, TestSimple3DConv) {
+TYPED_TEST(ConvOpTest, TestSimple3DConv) {
   typedef typename TypeParam::Dtype Dtype;
   this->tensor_input_vec_.push_back(this->tensor_input_2_);
   this->tensor_output_vec_.push_back(this->tensor_output_2_);
@@ -375,30 +371,29 @@ TYPED_TEST(ConvOpsTest, TestSimple3DConv) {
     this->tensor_input_vec_[i]->Reshape(input_shape);
     filler.Fill(this->tensor_input_vec_[i]);
   }
-  OpsParameterT ops_param;
-  ops_param.conv_param = std::make_unique<ConvParameterT>();
-  ops_param.conv_param->weight_filler = std::make_unique<FillerParameterT>();
-  ops_param.conv_param->bias_filler = std::make_unique<FillerParameterT>();
-  ops_param.conv_param->kernel_size.push_back(3ul);
-  ops_param.conv_param->stride.push_back(2ul);
-  ops_param.conv_param->num_output = 4ul;
-  ops_param.conv_param->weight_filler->type = "uniform";
-  ops_param.conv_param->bias_filler->type = "uniform";
-  std::shared_ptr<Ops<Dtype>> ops =
-      std::make_shared<ConvOps<Dtype>>(&ops_param);
-  ops->SetUp(this->tensor_input_vec_, this->tensor_output_vec_);
-  ops->Forward(this->tensor_input_vec_, this->tensor_output_vec_);
+  OpParameterT op_param;
+  op_param.conv_param = std::make_unique<ConvParameterT>();
+  op_param.conv_param->weight_filler = std::make_unique<FillerParameterT>();
+  op_param.conv_param->bias_filler = std::make_unique<FillerParameterT>();
+  op_param.conv_param->kernel_size.push_back(3ul);
+  op_param.conv_param->stride.push_back(2ul);
+  op_param.conv_param->num_output = 4ul;
+  op_param.conv_param->weight_filler->type = "uniform";
+  op_param.conv_param->bias_filler->type = "uniform";
+  std::shared_ptr<Op<Dtype>> op = std::make_shared<ConvOp<Dtype>>(&op_param);
+  op->SetUp(this->tensor_input_vec_, this->tensor_output_vec_);
+  op->Forward(this->tensor_input_vec_, this->tensor_output_vec_);
   // Check against reference conv.
   const Dtype* output_data;
   const Dtype* ref_output_data;
-  mynet_conv(this->tensor_input_, ops_param.conv_param.get(), ops->tensors(),
+  mynet_conv(this->tensor_input_, op_param.conv_param.get(), op->tensors(),
              this->MakeReferenceTop(this->tensor_output_));
   output_data = this->tensor_output_->cpu_data();
   ref_output_data = this->ref_tensor_output_->cpu_data();
   for (uint32_t i = 0; i < this->tensor_output_->count(); ++i) {
     EXPECT_NEAR(output_data[i], ref_output_data[i], 1e-4);
   }
-  mynet_conv(this->tensor_input_2_, ops_param.conv_param.get(), ops->tensors(),
+  mynet_conv(this->tensor_input_2_, op_param.conv_param.get(), op->tensors(),
              this->MakeReferenceTop(this->tensor_output_2_));
   output_data = this->tensor_output_2_->cpu_data();
   ref_output_data = this->ref_tensor_output_->cpu_data();
@@ -407,7 +402,7 @@ TYPED_TEST(ConvOpsTest, TestSimple3DConv) {
   }
 }
 
-TYPED_TEST(ConvOpsTest, TestDilated3DConv) {
+TYPED_TEST(ConvOpTest, TestDilated3DConv) {
   typedef typename TypeParam::Dtype Dtype;
   this->tensor_input_vec_.push_back(this->tensor_input_2_);
   this->tensor_output_vec_.push_back(this->tensor_output_2_);
@@ -423,30 +418,29 @@ TYPED_TEST(ConvOpsTest, TestDilated3DConv) {
     this->tensor_input_vec_[i]->Reshape(input_shape);
     filler.Fill(this->tensor_input_vec_[i]);
   }
-  OpsParameterT ops_param;
-  ops_param.conv_param = std::make_unique<ConvParameterT>();
-  ops_param.conv_param->weight_filler = std::make_unique<FillerParameterT>();
-  ops_param.conv_param->bias_filler = std::make_unique<FillerParameterT>();
-  ops_param.conv_param->kernel_size.push_back(3ul);
-  ops_param.conv_param->stride.push_back(2ul);
-  ops_param.conv_param->num_output = 4ul;
-  ops_param.conv_param->weight_filler->type = "uniform";
-  ops_param.conv_param->bias_filler->type = "uniform";
-  std::shared_ptr<Ops<Dtype>> ops =
-      std::make_shared<ConvOps<Dtype>>(&ops_param);
-  ops->SetUp(this->tensor_input_vec_, this->tensor_output_vec_);
-  ops->Forward(this->tensor_input_vec_, this->tensor_output_vec_);
+  OpParameterT op_param;
+  op_param.conv_param = std::make_unique<ConvParameterT>();
+  op_param.conv_param->weight_filler = std::make_unique<FillerParameterT>();
+  op_param.conv_param->bias_filler = std::make_unique<FillerParameterT>();
+  op_param.conv_param->kernel_size.push_back(3ul);
+  op_param.conv_param->stride.push_back(2ul);
+  op_param.conv_param->num_output = 4ul;
+  op_param.conv_param->weight_filler->type = "uniform";
+  op_param.conv_param->bias_filler->type = "uniform";
+  std::shared_ptr<Op<Dtype>> op = std::make_shared<ConvOp<Dtype>>(&op_param);
+  op->SetUp(this->tensor_input_vec_, this->tensor_output_vec_);
+  op->Forward(this->tensor_input_vec_, this->tensor_output_vec_);
   // Check against reference conv.
   const Dtype* output_data;
   const Dtype* ref_output_data;
-  mynet_conv(this->tensor_input_, ops_param.conv_param.get(), ops->tensors(),
+  mynet_conv(this->tensor_input_, op_param.conv_param.get(), op->tensors(),
              this->MakeReferenceTop(this->tensor_output_));
   output_data = this->tensor_output_->cpu_data();
   ref_output_data = this->ref_tensor_output_->cpu_data();
   for (uint32_t i = 0; i < this->tensor_output_->count(); ++i) {
     EXPECT_NEAR(output_data[i], ref_output_data[i], 1e-4);
   }
-  mynet_conv(this->tensor_input_2_, ops_param.conv_param.get(), ops->tensors(),
+  mynet_conv(this->tensor_input_2_, op_param.conv_param.get(), op->tensors(),
              this->MakeReferenceTop(this->tensor_output_2_));
   output_data = this->tensor_output_2_->cpu_data();
   ref_output_data = this->ref_tensor_output_->cpu_data();
@@ -455,26 +449,25 @@ TYPED_TEST(ConvOpsTest, TestDilated3DConv) {
   }
 }
 
-TYPED_TEST(ConvOpsTest, Test1x1Conv) {
+TYPED_TEST(ConvOpTest, Test1x1Conv) {
   typedef typename TypeParam::Dtype Dtype;
-  OpsParameterT ops_param;
-  ops_param.conv_param = std::make_unique<ConvParameterT>();
-  ops_param.conv_param->weight_filler = std::make_unique<FillerParameterT>();
-  ops_param.conv_param->bias_filler = std::make_unique<FillerParameterT>();
-  ops_param.conv_param->kernel_size.push_back(1ul);
-  ops_param.conv_param->stride.push_back(1ul);
-  ops_param.conv_param->num_output = 4ul;
-  ops_param.conv_param->weight_filler->type = "uniform";
-  ops_param.conv_param->bias_filler->type = "constant";
-  ops_param.conv_param->bias_filler->value = 0.1f;
-  std::shared_ptr<Ops<Dtype>> ops =
-      std::make_shared<ConvOps<Dtype>>(&ops_param);
-  ops->SetUp(this->tensor_input_vec_, this->tensor_output_vec_);
-  ops->Forward(this->tensor_input_vec_, this->tensor_output_vec_);
+  OpParameterT op_param;
+  op_param.conv_param = std::make_unique<ConvParameterT>();
+  op_param.conv_param->weight_filler = std::make_unique<FillerParameterT>();
+  op_param.conv_param->bias_filler = std::make_unique<FillerParameterT>();
+  op_param.conv_param->kernel_size.push_back(1ul);
+  op_param.conv_param->stride.push_back(1ul);
+  op_param.conv_param->num_output = 4ul;
+  op_param.conv_param->weight_filler->type = "uniform";
+  op_param.conv_param->bias_filler->type = "constant";
+  op_param.conv_param->bias_filler->value = 0.1f;
+  std::shared_ptr<Op<Dtype>> op = std::make_shared<ConvOp<Dtype>>(&op_param);
+  op->SetUp(this->tensor_input_vec_, this->tensor_output_vec_);
+  op->Forward(this->tensor_input_vec_, this->tensor_output_vec_);
   // Check against reference conv.
   const Dtype* output_data;
   const Dtype* ref_output_data;
-  mynet_conv(this->tensor_input_, ops_param.conv_param.get(), ops->tensors(),
+  mynet_conv(this->tensor_input_, op_param.conv_param.get(), op->tensors(),
              this->MakeReferenceTop(this->tensor_output_));
   output_data = this->tensor_output_->cpu_data();
   ref_output_data = this->ref_tensor_output_->cpu_data();
@@ -483,27 +476,26 @@ TYPED_TEST(ConvOpsTest, Test1x1Conv) {
   }
 }
 
-TYPED_TEST(ConvOpsTest, TestSimpleConvGroup) {
+TYPED_TEST(ConvOpTest, TestSimpleConvGroup) {
   typedef typename TypeParam::Dtype Dtype;
-  OpsParameterT ops_param;
-  ops_param.conv_param = std::make_unique<ConvParameterT>();
-  ops_param.conv_param->weight_filler = std::make_unique<FillerParameterT>();
-  ops_param.conv_param->bias_filler = std::make_unique<FillerParameterT>();
-  ops_param.conv_param->kernel_size.push_back(3ul);
-  ops_param.conv_param->stride.push_back(2ul);
-  ops_param.conv_param->num_output = 3ul;
-  ops_param.conv_param->group = 3ul;
-  ops_param.conv_param->weight_filler->type = "uniform";
-  ops_param.conv_param->bias_filler->type = "constant";
-  ops_param.conv_param->bias_filler->value = 0.1f;
-  std::shared_ptr<Ops<Dtype>> ops =
-      std::make_shared<ConvOps<Dtype>>(&ops_param);
-  ops->SetUp(this->tensor_input_vec_, this->tensor_output_vec_);
-  ops->Forward(this->tensor_input_vec_, this->tensor_output_vec_);
+  OpParameterT op_param;
+  op_param.conv_param = std::make_unique<ConvParameterT>();
+  op_param.conv_param->weight_filler = std::make_unique<FillerParameterT>();
+  op_param.conv_param->bias_filler = std::make_unique<FillerParameterT>();
+  op_param.conv_param->kernel_size.push_back(3ul);
+  op_param.conv_param->stride.push_back(2ul);
+  op_param.conv_param->num_output = 3ul;
+  op_param.conv_param->group = 3ul;
+  op_param.conv_param->weight_filler->type = "uniform";
+  op_param.conv_param->bias_filler->type = "constant";
+  op_param.conv_param->bias_filler->value = 0.1f;
+  std::shared_ptr<Op<Dtype>> op = std::make_shared<ConvOp<Dtype>>(&op_param);
+  op->SetUp(this->tensor_input_vec_, this->tensor_output_vec_);
+  op->Forward(this->tensor_input_vec_, this->tensor_output_vec_);
   // Check against reference conv.
   const Dtype* output_data;
   const Dtype* ref_output_data;
-  mynet_conv(this->tensor_input_, ops_param.conv_param.get(), ops->tensors(),
+  mynet_conv(this->tensor_input_, op_param.conv_param.get(), op->tensors(),
              this->MakeReferenceTop(this->tensor_output_));
   output_data = this->tensor_output_->cpu_data();
   ref_output_data = this->ref_tensor_output_->cpu_data();
@@ -512,7 +504,7 @@ TYPED_TEST(ConvOpsTest, TestSimpleConvGroup) {
   }
 }
 
-TYPED_TEST(ConvOpsTest, TestSobelConv) {
+TYPED_TEST(ConvOpTest, TestSobelConv) {
   // Test separable conv by computing the Sobel operator
   // as a single filter then comparing the result
   // as the conv of two rectangular filters.
@@ -524,21 +516,20 @@ TYPED_TEST(ConvOpsTest, TestSobelConv) {
   filler->Fill(this->tensor_input_);
   this->tensor_input_2_->CopyFrom(*this->tensor_input_);
   // Compute Sobel G_x operator as 3 x 3 conv.
-  OpsParameterT ops_param;
-  ops_param.conv_param = std::make_unique<ConvParameterT>();
-  ops_param.conv_param->weight_filler = std::make_unique<FillerParameterT>();
-  ops_param.conv_param->bias_filler = std::make_unique<FillerParameterT>();
-  ops_param.conv_param->weight_filler->type = "constant";
-  ops_param.conv_param->bias_filler->type = "constant";
-  ops_param.conv_param->kernel_size.push_back(3ul);
-  ops_param.conv_param->stride.push_back(2ul);
-  ops_param.conv_param->num_output = 1ul;
-  ops_param.conv_param->bias_term = false;
-  std::shared_ptr<Ops<Dtype>> ops =
-      std::make_shared<ConvOps<Dtype>>(&ops_param);
-  ops->tensors().resize(1);
-  ops->tensors()[0].reset(new Tensor<Dtype>(1ul, 3ul, 3ul, 3ul));
-  Dtype* weights = ops->tensors()[0]->mutable_cpu_data();
+  OpParameterT op_param;
+  op_param.conv_param = std::make_unique<ConvParameterT>();
+  op_param.conv_param->weight_filler = std::make_unique<FillerParameterT>();
+  op_param.conv_param->bias_filler = std::make_unique<FillerParameterT>();
+  op_param.conv_param->weight_filler->type = "constant";
+  op_param.conv_param->bias_filler->type = "constant";
+  op_param.conv_param->kernel_size.push_back(3ul);
+  op_param.conv_param->stride.push_back(2ul);
+  op_param.conv_param->num_output = 1ul;
+  op_param.conv_param->bias_term = false;
+  std::shared_ptr<Op<Dtype>> op = std::make_shared<ConvOp<Dtype>>(&op_param);
+  op->tensors().resize(1);
+  op->tensors()[0].reset(new Tensor<Dtype>(1ul, 3ul, 3ul, 3ul));
+  Dtype* weights = op->tensors()[0]->mutable_cpu_data();
   for (uint32_t c = 0; c < 3; ++c) {
     uint32_t i = c * 9;  // 3 x 3 filter
     weights[i + 0] = -1;
@@ -551,8 +542,8 @@ TYPED_TEST(ConvOpsTest, TestSobelConv) {
     weights[i + 7] = 0;
     weights[i + 8] = 1;
   }
-  ops->SetUp(this->tensor_input_vec_, this->tensor_output_vec_);
-  ops->Forward(this->tensor_input_vec_, this->tensor_output_vec_);
+  op->SetUp(this->tensor_input_vec_, this->tensor_output_vec_);
+  op->Forward(this->tensor_input_vec_, this->tensor_output_vec_);
   // Compute Sobel G_x operator as separable 3 x 1 and 1 x 3 convs.
   // (1) the [1 2 1] column filter
   std::vector<Tensor<Dtype>*> sep_tensor_input_vec;
@@ -560,45 +551,45 @@ TYPED_TEST(ConvOpsTest, TestSobelConv) {
   auto tensor_sep = std::make_shared<Tensor<Dtype>>();
   sep_tensor_input_vec.push_back(this->tensor_input_2_);
   sep_tensor_output_vec.push_back(this->tensor_output_2_);
-  ops_param.conv_param->kernel_size.clear();
-  ops_param.conv_param->stride.clear();
-  ops_param.conv_param->kernel_h = 3ul;
-  ops_param.conv_param->kernel_w = 1ul;
-  ops_param.conv_param->stride_h = 2ul;
-  ops_param.conv_param->stride_w = 1ul;
-  ops_param.conv_param->num_output = 1ul;
-  ops_param.conv_param->bias_term = false;
-  ops.reset(new ConvOps<Dtype>(&ops_param));
-  ops->tensors().resize(1);
-  ops->tensors()[0].reset(new Tensor<Dtype>(1ul, 3ul, 3ul, 1ul));
-  Dtype* weights_1 = ops->tensors()[0]->mutable_cpu_data();
+  op_param.conv_param->kernel_size.clear();
+  op_param.conv_param->stride.clear();
+  op_param.conv_param->kernel_h = 3ul;
+  op_param.conv_param->kernel_w = 1ul;
+  op_param.conv_param->stride_h = 2ul;
+  op_param.conv_param->stride_w = 1ul;
+  op_param.conv_param->num_output = 1ul;
+  op_param.conv_param->bias_term = false;
+  op.reset(new ConvOp<Dtype>(&op_param));
+  op->tensors().resize(1);
+  op->tensors()[0].reset(new Tensor<Dtype>(1ul, 3ul, 3ul, 1ul));
+  Dtype* weights_1 = op->tensors()[0]->mutable_cpu_data();
   for (uint32_t c = 0; c < 3; ++c) {
     uint32_t i = c * 3;  // 3 x 1 filter
     weights_1[i + 0] = 1;
     weights_1[i + 1] = 2;
     weights_1[i + 2] = 1;
   }
-  ops->SetUp(sep_tensor_input_vec, sep_tensor_output_vec);
-  ops->Forward(sep_tensor_input_vec, sep_tensor_output_vec);
+  op->SetUp(sep_tensor_input_vec, sep_tensor_output_vec);
+  op->Forward(sep_tensor_input_vec, sep_tensor_output_vec);
   // (2) the [-1 0 1] row filter
   tensor_sep->CopyFrom(*this->tensor_output_2_, false, true);
   sep_tensor_input_vec.clear();
   sep_tensor_input_vec.push_back(tensor_sep.get());
-  ops_param.conv_param->kernel_h = 1ul;
-  ops_param.conv_param->kernel_w = 3ul;
-  ops_param.conv_param->stride_h = 1ul;
-  ops_param.conv_param->stride_w = 2ul;
-  ops_param.conv_param->num_output = 1ul;
-  ops_param.conv_param->bias_term = false;
-  ops.reset(new ConvOps<Dtype>(&ops_param));
-  ops->tensors().resize(1);
-  ops->tensors()[0].reset(new Tensor<Dtype>(1ul, 1ul, 1ul, 3ul));
-  Dtype* weights_2 = ops->tensors()[0]->mutable_cpu_data();
+  op_param.conv_param->kernel_h = 1ul;
+  op_param.conv_param->kernel_w = 3ul;
+  op_param.conv_param->stride_h = 1ul;
+  op_param.conv_param->stride_w = 2ul;
+  op_param.conv_param->num_output = 1ul;
+  op_param.conv_param->bias_term = false;
+  op.reset(new ConvOp<Dtype>(&op_param));
+  op->tensors().resize(1);
+  op->tensors()[0].reset(new Tensor<Dtype>(1ul, 1ul, 1ul, 3ul));
+  Dtype* weights_2 = op->tensors()[0]->mutable_cpu_data();
   weights_2[0] = -1;
   weights_2[1] = 0;
   weights_2[2] = 1;
-  ops->SetUp(sep_tensor_input_vec, sep_tensor_output_vec);
-  ops->Forward(sep_tensor_input_vec, sep_tensor_output_vec);
+  op->SetUp(sep_tensor_input_vec, sep_tensor_output_vec);
+  op->Forward(sep_tensor_input_vec, sep_tensor_output_vec);
   // Test equivalence of full and separable filters.
   const Dtype* output_data = this->tensor_output_->cpu_data();
   const Dtype* sep_output_data = this->tensor_output_2_->cpu_data();
@@ -607,7 +598,7 @@ TYPED_TEST(ConvOpsTest, TestSobelConv) {
   }
 }
 
-TYPED_TEST(ConvOpsTest, TestNDAgainst2D) {
+TYPED_TEST(ConvOpTest, TestNDAgainst2D) {
   typedef typename TypeParam::Dtype Dtype;
   const uint32_t kernel_h = 11ul;
   const uint32_t kernel_w = 13ul;
@@ -622,31 +613,31 @@ TYPED_TEST(ConvOpsTest, TestNDAgainst2D) {
     this->tensor_input_vec_[i]->Reshape(input_shape);
     filler.Fill(this->tensor_input_vec_[i]);
   }
-  OpsParameterT ops_param;
-  ops_param.conv_param = std::make_unique<ConvParameterT>();
-  ops_param.conv_param->weight_filler = std::make_unique<FillerParameterT>();
-  ops_param.conv_param->bias_filler = std::make_unique<FillerParameterT>();
-  ops_param.conv_param->num_output = 12ul;
-  ops_param.conv_param->bias_term = false;
-  ops_param.conv_param->group = 6ul;
-  ops_param.conv_param->kernel_h = kernel_h;
-  ops_param.conv_param->kernel_w = kernel_w;
-  ops_param.conv_param->weight_filler->type = "uniform";
-  ops_param.conv_param->bias_filler->type = "constant";
+  OpParameterT op_param;
+  op_param.conv_param = std::make_unique<ConvParameterT>();
+  op_param.conv_param->weight_filler = std::make_unique<FillerParameterT>();
+  op_param.conv_param->bias_filler = std::make_unique<FillerParameterT>();
+  op_param.conv_param->num_output = 12ul;
+  op_param.conv_param->bias_term = false;
+  op_param.conv_param->group = 6ul;
+  op_param.conv_param->kernel_h = kernel_h;
+  op_param.conv_param->kernel_w = kernel_w;
+  op_param.conv_param->weight_filler->type = "uniform";
+  op_param.conv_param->bias_filler->type = "constant";
   Tensor<Dtype> weights;
   Tensor<Dtype> output_diff;
   // Shape and fill weights and output_diff.
   bool copy_diff;
   bool reshape;
   {
-    ConvOps<Dtype> ops(&ops_param);
-    ops.SetUp(this->tensor_input_vec_, this->tensor_output_vec_);
+    ConvOp<Dtype> op(&op_param);
+    op.SetUp(this->tensor_input_vec_, this->tensor_output_vec_);
     output_diff.ReshapeLike(*this->tensor_output_);
     filler.Fill(&output_diff);
-    ASSERT_EQ(1, ops.tensors().size());
+    ASSERT_EQ(1, op.tensors().size());
     copy_diff = false;
     reshape = true;
-    weights.CopyFrom(*ops.tensors()[0], copy_diff, reshape);
+    weights.CopyFrom(*op.tensors()[0], copy_diff, reshape);
   }
   std::vector<bool> propagate_down(1, true);
   Tensor<Dtype> result_2d;
@@ -660,8 +651,8 @@ TYPED_TEST(ConvOpsTest, TestNDAgainst2D) {
               this->tensor_input_->count());
     mynet_set(weights.mutable_cpu_diff(), Dtype(0), weights.count());
     // Do SetUp and Forward; save Forward result in result_2d.
-    ops_param.conv_param->force_nd_im2col = false;
-    ConvOps<Dtype> conv_2d(&ops_param);
+    op_param.conv_param->force_nd_im2col = false;
+    ConvOp<Dtype> conv_2d(&op_param);
     conv_2d.SetUp(this->tensor_input_vec_, this->tensor_output_vec_);
     ASSERT_EQ(1ul, conv_2d.tensors().size());
     copy_diff = false;
@@ -694,8 +685,8 @@ TYPED_TEST(ConvOpsTest, TestNDAgainst2D) {
               this->tensor_input_->count());
     mynet_set(weights.mutable_cpu_diff(), Dtype(0), weights.count());
     // Do SetUp and Forward; save Forward result in result_nd.
-    ops_param.conv_param->force_nd_im2col = true;
-    ConvOps<Dtype> conv_nd(&ops_param);
+    op_param.conv_param->force_nd_im2col = true;
+    ConvOp<Dtype> conv_nd(&op_param);
     conv_nd.SetUp(this->tensor_input_vec_, this->tensor_output_vec_);
     ASSERT_EQ(1ul, conv_nd.tensors().size());
     copy_diff = false;
@@ -734,29 +725,29 @@ TYPED_TEST(ConvOpsTest, TestNDAgainst2D) {
   }
 }
 
-// TYPED_TEST(ConvOpsTest, TestGradient) {
+// TYPED_TEST(ConvOpTest, TestGradient) {
 //   typedef typename TypeParam::Dtype Dtype;
-//   OpsParameterT ops_param;
-//   ops_param.conv_param = std::make_unique<ConvParameterT>();
-//   ops_param.conv_param->weight_filler = std::make_unique<FillerParameterT>();
+//   OpParameterT op_param;
+//   op_param.conv_param = std::make_unique<ConvParameterT>();
+//   op_param.conv_param->weight_filler = std::make_unique<FillerParameterT>();
 //   this->tensor_input_vec_.push_back(this->tensor_input_2_);
 //   this->tensor_output_vec_.push_back(this->tensor_output_2_);
-//   ops_param.conv_param->kernel_size.push_back(3ul);
-//   ops_param.conv_param->stride.push_back(2ul);
-//   ops_param.conv_param->num_output = 2ul;
-//   ops_param.conv_param->weight_filler->type = "uniform";
-//   ops_param.conv_param->bias_filler->type = "uniform";
-//   ConvOps<Dtype> ops(&ops_param);
+//   op_param.conv_param->kernel_size.push_back(3ul);
+//   op_param.conv_param->stride.push_back(2ul);
+//   op_param.conv_param->num_output = 2ul;
+//   op_param.conv_param->weight_filler->type = "uniform";
+//   op_param.conv_param->bias_filler->type = "uniform";
+//   ConvOp<Dtype> op(&op_param);
 //   GradientChecker<Dtype> checker(1e-2, 1e-3);
-//   checker.CheckGradientExhaustive(&ops, this->tensor_input_vec_,
+//   checker.CheckGradientExhaustive(&op, this->tensor_input_vec_,
 //       this->tensor_output_vec_);
 // }
 
-// TYPED_TEST(ConvOpsTest, TestDilatedGradient) {
+// TYPED_TEST(ConvOpTest, TestDilatedGradient) {
 //   typedef typename TypeParam::Dtype Dtype;
-//   OpsParameterT ops_param;
-//   ops_param.conv_param = std::make_unique<ConvParameterT>();
-//   ops_param.conv_param->weight_filler = std::make_unique<FillerParameterT>();
+//   OpParameterT op_param;
+//   op_param.conv_param = std::make_unique<ConvParameterT>();
+//   op_param.conv_param->weight_filler = std::make_unique<FillerParameterT>();
 //   std::vector<uint32_t> input_shape;
 //   input_shape.push_back(2ul);
 //   input_shape.push_back(3ul);
@@ -765,22 +756,22 @@ TYPED_TEST(ConvOpsTest, TestNDAgainst2D) {
 //   for (uint32_t i = 0; i < this->tensor_input_vec_.size(); ++i) {
 //     this->tensor_input_vec_[i]->Reshape(input_shape);
 //   }
-//   ops_param.conv_param->kernel_size.push_back(3ul);
-//   ops_param.conv_param->dilation.push_back(2ul);
-//   ops_param.conv_param->num_output = 2ul;
-//   ops_param.conv_param->weight_filler->type = "uniform";
-//   ops_param.conv_param->bias_filler->type = "uniform";
-//   ConvOps<Dtype> ops(&ops_param);
+//   op_param.conv_param->kernel_size.push_back(3ul);
+//   op_param.conv_param->dilation.push_back(2ul);
+//   op_param.conv_param->num_output = 2ul;
+//   op_param.conv_param->weight_filler->type = "uniform";
+//   op_param.conv_param->bias_filler->type = "uniform";
+//   ConvOp<Dtype> op(&op_param);
 //   GradientChecker<Dtype> checker(1e-2, 1e-3);
-//   checker.CheckGradientExhaustive(&ops, this->tensor_input_vec_,
+//   checker.CheckGradientExhaustive(&op, this->tensor_input_vec_,
 //                                   this->tensor_output_vec_);
 // }
 
-// TYPED_TEST(ConvOpsTest, TestGradient3D) {
+// TYPED_TEST(ConvOpTest, TestGradient3D) {
 //   typedef typename TypeParam::Dtype Dtype;
-//   OpsParameterT ops_param;
-//   ops_param.conv_param = std::make_unique<ConvParameterT>();
-//   ops_param.conv_param->weight_filler = std::make_unique<FillerParameterT>();
+//   OpParameterT op_param;
+//   op_param.conv_param = std::make_unique<ConvParameterT>();
+//   op_param.conv_param->weight_filler = std::make_unique<FillerParameterT>();
 //   std::vector<uint32_t> input_shape(5);
 //   input_shape[0] = this->tensor_input_vec_[0]->shape(0);
 //   input_shape[1] = this->tensor_input_vec_[0]->shape(1);
@@ -793,69 +784,68 @@ TYPED_TEST(ConvOpsTest, TestNDAgainst2D) {
 //     this->tensor_input_vec_[i]->Reshape(input_shape);
 //     filler.Fill(this->tensor_input_vec_[i]);
 //   }
-//   ops_param.conv_param->kernel_size.push_back(3ul);
-//   ops_param.conv_param->stride.push_back(2ul);
-//   ops_param.conv_param->num_output = 2ul;
-//   ops_param.conv_param->weight_filler->type = "uniform";
-//   ops_param.conv_param->bias_filler->type = "uniform";
-//   ConvOps<Dtype> ops(&ops_param);
+//   op_param.conv_param->kernel_size.push_back(3ul);
+//   op_param.conv_param->stride.push_back(2ul);
+//   op_param.conv_param->num_output = 2ul;
+//   op_param.conv_param->weight_filler->type = "uniform";
+//   op_param.conv_param->bias_filler->type = "uniform";
+//   ConvOp<Dtype> op(&op_param);
 //   GradientChecker<Dtype> checker(1e-2, 1e-3);
-//   checker.CheckGradientExhaustive(&ops, this->tensor_input_vec_,
+//   checker.CheckGradientExhaustive(&op, this->tensor_input_vec_,
 //       this->tensor_output_vec_);
 // }
 
-// TYPED_TEST(ConvOpsTest, Test1x1Gradient) {
+// TYPED_TEST(ConvOpTest, Test1x1Gradient) {
 //   typedef typename TypeParam::Dtype Dtype;
-//   OpsParameterT ops_param;
-//   ops_param.conv_param = std::make_unique<ConvParameterT>();
-//   ops_param.conv_param->weight_filler = std::make_unique<FillerParameterT>();
+//   OpParameterT op_param;
+//   op_param.conv_param = std::make_unique<ConvParameterT>();
+//   op_param.conv_param->weight_filler = std::make_unique<FillerParameterT>();
 //   this->tensor_input_vec_.push_back(this->tensor_input_2_);
 //   this->tensor_output_vec_.push_back(this->tensor_output_2_);
-//   ops_param.conv_param->kernel_size.push_back(1ul);
-//   ops_param.conv_param->stride.push_back(1ul);
-//   ops_param.conv_param->num_output = 2ul;
-//   ops_param.conv_param->weight_filler->type = "uniform";
-//   ops_param.conv_param->bias_filler->type = "uniform";
-//   ConvOps<Dtype> ops(&ops_param);
+//   op_param.conv_param->kernel_size.push_back(1ul);
+//   op_param.conv_param->stride.push_back(1ul);
+//   op_param.conv_param->num_output = 2ul;
+//   op_param.conv_param->weight_filler->type = "uniform";
+//   op_param.conv_param->bias_filler->type = "uniform";
+//   ConvOp<Dtype> op(&op_param);
 //   GradientChecker<Dtype> checker(1e-2, 1e-3);
-//   checker.CheckGradientExhaustive(&ops, this->tensor_input_vec_,
+//   checker.CheckGradientExhaustive(&op, this->tensor_input_vec_,
 //       this->tensor_output_vec_);
 // }
 
-// TYPED_TEST(ConvOpsTest, TestGradientGroup) {
+// TYPED_TEST(ConvOpTest, TestGradientGroup) {
 //   typedef typename TypeParam::Dtype Dtype;
-//   OpsParameterT ops_param;
-//   ops_param.conv_param = std::make_unique<ConvParameterT>();
-//   ops_param.conv_param->weight_filler = std::make_unique<FillerParameterT>();
-//   ops_param.conv_param->kernel_size.push_back(3ul);
-//   ops_param.conv_param->stride.push_back(2ul);
-//   ops_param.conv_param->num_output = 3ul;
-//   ops_param.conv_param->group = 3ul;
-//   ops_param.conv_param->weight_filler->type = "uniform";
-//   ops_param.conv_param->bias_filler->type = "uniform";
-//   ConvOps<Dtype> ops(&ops_param);
+//   OpParameterT op_param;
+//   op_param.conv_param = std::make_unique<ConvParameterT>();
+//   op_param.conv_param->weight_filler = std::make_unique<FillerParameterT>();
+//   op_param.conv_param->kernel_size.push_back(3ul);
+//   op_param.conv_param->stride.push_back(2ul);
+//   op_param.conv_param->num_output = 3ul;
+//   op_param.conv_param->group = 3ul;
+//   op_param.conv_param->weight_filler->type = "uniform";
+//   op_param.conv_param->bias_filler->type = "uniform";
+//   ConvOp<Dtype> op(&op_param);
 //   GradientChecker<Dtype> checker(1e-2, 1e-3);
-//   checker.CheckGradientExhaustive(&ops, this->tensor_input_vec_,
+//   checker.CheckGradientExhaustive(&op, this->tensor_input_vec_,
 //       this->tensor_output_vec_);
 // }
 
-TYPED_TEST(ConvOpsTest, TestDeConvSetup) {
+TYPED_TEST(ConvOpTest, TestDeConvSetup) {
   typedef typename TypeParam::Dtype Dtype;
-  OpsParameterT ops_param;
-  ops_param.conv_param = std::make_unique<ConvParameterT>();
-  ops_param.conv_param->weight_filler = std::make_unique<FillerParameterT>();
-  ops_param.conv_param->weight_filler->type = "constant";
-  ops_param.conv_param->bias_filler = std::make_unique<FillerParameterT>();
-  ops_param.conv_param->bias_filler->type = "constant";
-  ops_param.conv_param->transpose = true;
-  ops_param.conv_param->kernel_size.push_back(3ul);
-  ops_param.conv_param->stride.push_back(2ul);
-  ops_param.conv_param->num_output = 4ul;
+  OpParameterT op_param;
+  op_param.conv_param = std::make_unique<ConvParameterT>();
+  op_param.conv_param->weight_filler = std::make_unique<FillerParameterT>();
+  op_param.conv_param->weight_filler->type = "constant";
+  op_param.conv_param->bias_filler = std::make_unique<FillerParameterT>();
+  op_param.conv_param->bias_filler->type = "constant";
+  op_param.conv_param->transpose = true;
+  op_param.conv_param->kernel_size.push_back(3ul);
+  op_param.conv_param->stride.push_back(2ul);
+  op_param.conv_param->num_output = 4ul;
   this->tensor_input_vec_.push_back(this->tensor_input_2_);
   this->tensor_output_vec_.push_back(this->tensor_output_2_);
-  std::shared_ptr<Ops<Dtype>> ops =
-      std::make_shared<ConvOps<Dtype>>(&ops_param);
-  ops->SetUp(this->tensor_input_vec_, this->tensor_output_vec_);
+  std::shared_ptr<Op<Dtype>> op = std::make_shared<ConvOp<Dtype>>(&op_param);
+  op->SetUp(this->tensor_input_vec_, this->tensor_output_vec_);
   EXPECT_EQ(this->tensor_output_->num(), 2ul);
   EXPECT_EQ(this->tensor_output_->channels(), 4ul);
   EXPECT_EQ(this->tensor_output_->height(), 13ul);
@@ -865,10 +855,10 @@ TYPED_TEST(ConvOpsTest, TestDeConvSetup) {
   EXPECT_EQ(this->tensor_output_2_->height(), 13ul);
   EXPECT_EQ(this->tensor_output_2_->width(), 9ul);
   // setting group should not change the shape
-  ops_param.conv_param->num_output = 3ul;
-  ops_param.conv_param->group = 3ul;
-  ops.reset(new ConvOps<Dtype>(&ops_param));
-  ops->SetUp(this->tensor_input_vec_, this->tensor_output_vec_);
+  op_param.conv_param->num_output = 3ul;
+  op_param.conv_param->group = 3ul;
+  op.reset(new ConvOp<Dtype>(&op_param));
+  op->SetUp(this->tensor_input_vec_, this->tensor_output_vec_);
   EXPECT_EQ(this->tensor_output_->num(), 2ul);
   EXPECT_EQ(this->tensor_output_->channels(), 3ul);
   EXPECT_EQ(this->tensor_output_->height(), 13ul);
@@ -879,32 +869,31 @@ TYPED_TEST(ConvOpsTest, TestDeConvSetup) {
   EXPECT_EQ(this->tensor_output_2_->width(), 9ul);
 }
 
-TYPED_TEST(ConvOpsTest, TestSimpleDeconv) {
+TYPED_TEST(ConvOpTest, TestSimpleDeconv) {
   typedef typename TypeParam::Dtype Dtype;
   this->tensor_input_vec_.push_back(this->tensor_input_2_);
   this->tensor_output_vec_.push_back(this->tensor_output_2_);
-  OpsParameterT ops_param;
-  ops_param.conv_param = std::make_unique<ConvParameterT>();
-  ops_param.conv_param->weight_filler = std::make_unique<FillerParameterT>();
-  ops_param.conv_param->bias_filler = std::make_unique<FillerParameterT>();
-  ops_param.conv_param->kernel_size.push_back(3ul);
-  ops_param.conv_param->stride.push_back(2ul);
-  ops_param.conv_param->num_output = 4ul;
-  ops_param.conv_param->weight_filler->type = "constant";
-  ops_param.conv_param->weight_filler->value = 1.0f;
-  ops_param.conv_param->bias_filler->type = "constant";
-  ops_param.conv_param->bias_filler->value = 0.1f;
-  ops_param.conv_param->transpose = true;
-  std::shared_ptr<Ops<Dtype>> ops =
-      std::make_shared<ConvOps<Dtype>>(&ops_param);
-  ops->SetUp(this->tensor_input_vec_, this->tensor_output_vec_);
+  OpParameterT op_param;
+  op_param.conv_param = std::make_unique<ConvParameterT>();
+  op_param.conv_param->weight_filler = std::make_unique<FillerParameterT>();
+  op_param.conv_param->bias_filler = std::make_unique<FillerParameterT>();
+  op_param.conv_param->kernel_size.push_back(3ul);
+  op_param.conv_param->stride.push_back(2ul);
+  op_param.conv_param->num_output = 4ul;
+  op_param.conv_param->weight_filler->type = "constant";
+  op_param.conv_param->weight_filler->value = 1.0f;
+  op_param.conv_param->bias_filler->type = "constant";
+  op_param.conv_param->bias_filler->value = 0.1f;
+  op_param.conv_param->transpose = true;
+  std::shared_ptr<Op<Dtype>> op = std::make_shared<ConvOp<Dtype>>(&op_param);
+  op->SetUp(this->tensor_input_vec_, this->tensor_output_vec_);
   // constant-fill the input tensors
   FillerParameterT filler_param;
   filler_param.value = 1.0f;
   ConstantFiller<Dtype> filler(&filler_param);
   filler.Fill(this->tensor_input_);
   filler.Fill(this->tensor_input_2_);
-  ops->Forward(this->tensor_input_vec_, this->tensor_output_vec_);
+  op->Forward(this->tensor_input_vec_, this->tensor_output_vec_);
   // simply check that accumulation works with overlapping filters
   const Dtype* output_data = this->tensor_output_->cpu_data();
   for (uint32_t n = 0; n < this->tensor_output_->num(); ++n) {
@@ -921,34 +910,34 @@ TYPED_TEST(ConvOpsTest, TestSimpleDeconv) {
           } else if (h_overlap || w_overlap) {
             expected += 3;
           }
-          EXPECT_NEAR(output_data[this->tensor_output_->offset(n, c, h, w)], expected,
-                      1e-4);
+          EXPECT_NEAR(output_data[this->tensor_output_->offset(n, c, h, w)],
+                      expected, 1e-4);
         }
       }
     }
   }
 }
 
-// TYPED_TEST(ConvOpsTest, TestDeconvGradient) {
+// TYPED_TEST(ConvOpTest, TestDeconvGradient) {
 //   typedef typename TypeParam::Dtype Dtype;
-//   OpsParameterT ops_param;
-//   ops_param.conv_param = std::make_unique<ConvParameterT>();
-//   ops_param.conv_param->weight_filler = std::make_unique<FillerParameterT>();
+//   OpParameterT op_param;
+//   op_param.conv_param = std::make_unique<ConvParameterT>();
+//   op_param.conv_param->weight_filler = std::make_unique<FillerParameterT>();
 //   this->tensor_input_vec_.push_back(this->tensor_input_2_);
 //   this->tensor_output_vec_.push_back(this->tensor_output_2_);
-//   ops_param.conv_param->kernel_size.push_back(2ul);
-//   ops_param.conv_param->stride.push_back(1ul);
-//   ops_param.conv_param->num_output = 1ul;
-//   ops_param.conv_param->weight_filler->type = "uniform";
-//   ops_param.conv_param->bias_filler->type = "uniform";
-//   ops_param.conv_param->transpose = true;
-//   ConvOps<Dtype> ops(&ops_param);
+//   op_param.conv_param->kernel_size.push_back(2ul);
+//   op_param.conv_param->stride.push_back(1ul);
+//   op_param.conv_param->num_output = 1ul;
+//   op_param.conv_param->weight_filler->type = "uniform";
+//   op_param.conv_param->bias_filler->type = "uniform";
+//   op_param.conv_param->transpose = true;
+//   ConvOp<Dtype> op(&op_param);
 //   GradientChecker<Dtype> checker(1e-2, 1e-3);
-//   checker.CheckGradientExhaustive(&ops, this->tensor_input_vec_,
+//   checker.CheckGradientExhaustive(&op, this->tensor_input_vec_,
 //       this->tensor_output_vec_);
 // }
 
-TYPED_TEST(ConvOpsTest, TestDeconvNDAgainst2D) {
+TYPED_TEST(ConvOpTest, TestDeconvNDAgainst2D) {
   typedef typename TypeParam::Dtype Dtype;
   const uint32_t kernel_h = 11ul;
   const uint32_t kernel_w = 13ul;
@@ -963,31 +952,31 @@ TYPED_TEST(ConvOpsTest, TestDeconvNDAgainst2D) {
     this->tensor_input_vec_[i]->Reshape(input_shape);
     filler.Fill(this->tensor_input_vec_[i]);
   }
-  OpsParameterT ops_param;
-  ops_param.conv_param = std::make_unique<ConvParameterT>();
-  ops_param.conv_param->weight_filler = std::make_unique<FillerParameterT>();
-  ops_param.conv_param->bias_filler = std::make_unique<FillerParameterT>();
-  ops_param.conv_param->num_output = 18ul;
-  ops_param.conv_param->bias_term = false;
-  ops_param.conv_param->group = 6ul;
-  ops_param.conv_param->kernel_h = kernel_h;
-  ops_param.conv_param->kernel_w = kernel_w;
-  ops_param.conv_param->weight_filler->type = "uniform";
-  ops_param.conv_param->transpose = true;
+  OpParameterT op_param;
+  op_param.conv_param = std::make_unique<ConvParameterT>();
+  op_param.conv_param->weight_filler = std::make_unique<FillerParameterT>();
+  op_param.conv_param->bias_filler = std::make_unique<FillerParameterT>();
+  op_param.conv_param->num_output = 18ul;
+  op_param.conv_param->bias_term = false;
+  op_param.conv_param->group = 6ul;
+  op_param.conv_param->kernel_h = kernel_h;
+  op_param.conv_param->kernel_w = kernel_w;
+  op_param.conv_param->weight_filler->type = "uniform";
+  op_param.conv_param->transpose = true;
   Tensor<Dtype> weights;
   Tensor<Dtype> output_diff;
   // Shape and fill weights and output_diff.
   bool copy_diff;
   bool reshape;
   {
-    ConvOps<Dtype> ops(&ops_param);
-    ops.SetUp(this->tensor_input_vec_, this->tensor_output_vec_);
+    ConvOp<Dtype> op(&op_param);
+    op.SetUp(this->tensor_input_vec_, this->tensor_output_vec_);
     output_diff.ReshapeLike(*this->tensor_output_);
     filler.Fill(&output_diff);
-    ASSERT_EQ(1ul, ops.tensors().size());
+    ASSERT_EQ(1ul, op.tensors().size());
     copy_diff = false;
     reshape = true;
-    weights.CopyFrom(*ops.tensors()[0], copy_diff, reshape);
+    weights.CopyFrom(*op.tensors()[0], copy_diff, reshape);
   }
   std::vector<bool> propagate_down(1, true);
   Tensor<Dtype> result_2d;
@@ -1001,14 +990,14 @@ TYPED_TEST(ConvOpsTest, TestDeconvNDAgainst2D) {
               this->tensor_input_->count());
     mynet_set(weights.mutable_cpu_diff(), Dtype(0), weights.count());
     // Do SetUp and Forward; save Forward result in result_2d.
-    ops_param.conv_param->force_nd_im2col = false;
-    ConvOps<Dtype> ops_2d(&ops_param);
-    ops_2d.SetUp(this->tensor_input_vec_, this->tensor_output_vec_);
-    ASSERT_EQ(1ul, ops_2d.tensors().size());
+    op_param.conv_param->force_nd_im2col = false;
+    ConvOp<Dtype> op_2d(&op_param);
+    op_2d.SetUp(this->tensor_input_vec_, this->tensor_output_vec_);
+    ASSERT_EQ(1ul, op_2d.tensors().size());
     copy_diff = false;
     reshape = false;
-    ops_2d.tensors()[0]->CopyFrom(weights, copy_diff, reshape);
-    ops_2d.Forward(this->tensor_input_vec_, this->tensor_output_vec_);
+    op_2d.tensors()[0]->CopyFrom(weights, copy_diff, reshape);
+    op_2d.Forward(this->tensor_input_vec_, this->tensor_output_vec_);
     copy_diff = false;
     reshape = true;
     result_2d.CopyFrom(*this->tensor_output_, copy_diff, reshape);
@@ -1017,8 +1006,8 @@ TYPED_TEST(ConvOpsTest, TestDeconvNDAgainst2D) {
     ASSERT_EQ(this->tensor_output_->shape(), output_diff.shape());
     mynet_copy(this->tensor_output_->mutable_cpu_diff(), output_diff.cpu_data(),
                output_diff.count());
-    ops_2d.Backward(this->tensor_output_vec_, propagate_down,
-                    this->tensor_input_vec_);
+    op_2d.Backward(this->tensor_output_vec_, propagate_down,
+                   this->tensor_input_vec_);
     copy_diff = true;
     reshape = true;
     backward_result_2d.CopyFrom(*this->tensor_input_, copy_diff, reshape);
@@ -1035,14 +1024,14 @@ TYPED_TEST(ConvOpsTest, TestDeconvNDAgainst2D) {
               this->tensor_input_->count());
     mynet_set(weights.mutable_cpu_diff(), Dtype(0), weights.count());
     // Do SetUp and Forward; save Forward result in result_nd.
-    ops_param.conv_param->force_nd_im2col = true;
-    ConvOps<Dtype> ops_nd(&ops_param);
-    ops_nd.SetUp(this->tensor_input_vec_, this->tensor_output_vec_);
-    ASSERT_EQ(1, ops_nd.tensors().size());
+    op_param.conv_param->force_nd_im2col = true;
+    ConvOp<Dtype> op_nd(&op_param);
+    op_nd.SetUp(this->tensor_input_vec_, this->tensor_output_vec_);
+    ASSERT_EQ(1, op_nd.tensors().size());
     copy_diff = false;
     reshape = false;
-    ops_nd.tensors()[0]->CopyFrom(weights, copy_diff, reshape);
-    ops_nd.Forward(this->tensor_input_vec_, this->tensor_output_vec_);
+    op_nd.tensors()[0]->CopyFrom(weights, copy_diff, reshape);
+    op_nd.Forward(this->tensor_input_vec_, this->tensor_output_vec_);
     copy_diff = false;
     reshape = true;
     result_nd.CopyFrom(*this->tensor_output_, copy_diff, reshape);
@@ -1051,8 +1040,8 @@ TYPED_TEST(ConvOpsTest, TestDeconvNDAgainst2D) {
     ASSERT_EQ(this->tensor_output_->shape(), output_diff.shape());
     mynet_copy(this->tensor_output_->mutable_cpu_diff(), output_diff.cpu_data(),
                output_diff.count());
-    ops_nd.Backward(this->tensor_output_vec_, propagate_down,
-                    this->tensor_input_vec_);
+    op_nd.Backward(this->tensor_output_vec_, propagate_down,
+                   this->tensor_input_vec_);
     copy_diff = true;
     reshape = true;
     backward_result_nd.CopyFrom(*this->tensor_input_, copy_diff, reshape);
@@ -1075,7 +1064,7 @@ TYPED_TEST(ConvOpsTest, TestDeconvNDAgainst2D) {
   }
 }
 
-// TYPED_TEST(ConvOpsTest, TestDeconvGradient3D) {
+// TYPED_TEST(ConvOpTest, TestDeconvGradient3D) {
 //   typedef typename TypeParam::Dtype Dtype;
 //   std::vector<uint32_t> input_shape(5);
 //   input_shape[0] = this->tensor_input_vec_[0]->shape(0);
@@ -1089,19 +1078,19 @@ TYPED_TEST(ConvOpsTest, TestDeconvNDAgainst2D) {
 //     this->tensor_input_vec_[i]->Reshape(input_shape);
 //     filler.Fill(this->tensor_input_vec_[i]);
 //   }
-//   OpsParameterT ops_param;
-//   ops_param.conv_param = std::make_unique<ConvParameterT>();
-//   ops_param.conv_param->weight_filler = std::make_unique<FillerParameterT>();
-//   ops_param.conv_param->kernel_size.push_back(2ul);
-//   ops_param.conv_param->stride.push_back(2ul);
-//   ops_param.conv_param->pad.push_back(1ul);
-//   ops_param.conv_param->num_output = 2ul;
-//   ops_param.conv_param->weight_filler->type = "uniform";
-//   ops_param.conv_param->bias_filler->type = "uniform";
-//   ops_param.conv_param->transpose = true;
-//   ConvOps<Dtype> ops(&ops_param);
+//   OpParameterT op_param;
+//   op_param.conv_param = std::make_unique<ConvParameterT>();
+//   op_param.conv_param->weight_filler = std::make_unique<FillerParameterT>();
+//   op_param.conv_param->kernel_size.push_back(2ul);
+//   op_param.conv_param->stride.push_back(2ul);
+//   op_param.conv_param->pad.push_back(1ul);
+//   op_param.conv_param->num_output = 2ul;
+//   op_param.conv_param->weight_filler->type = "uniform";
+//   op_param.conv_param->bias_filler->type = "uniform";
+//   op_param.conv_param->transpose = true;
+//   ConvOp<Dtype> op(&op_param);
 //   GradientChecker<Dtype> checker(1e-2, 1e-3);
-//   checker.CheckGradientExhaustive(&ops, this->tensor_input_vec_,
+//   checker.CheckGradientExhaustive(&op, this->tensor_input_vec_,
 //       this->tensor_output_vec_);
 // }
 

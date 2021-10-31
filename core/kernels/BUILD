@@ -23,7 +23,7 @@ cc_library(
         "//core/framework:common",
         "//core/framework:filler",
         "//core/framework:math_functions",
-        "//core/framework:ops",
+        "//core/framework:op",
         "//core/framework:tensor",
         "//core/schema:mynet_fbs",
     ],

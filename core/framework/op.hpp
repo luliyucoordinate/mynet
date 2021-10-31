@@ -1,8 +1,8 @@
 // Copyright 2021 coordinate
 // Author: coordinate
 
-#ifndef CORE_FRAMEWORK_OPS_HPP_
-#define CORE_FRAMEWORK_OPS_HPP_
+#ifndef CORE_FRAMEWORK_OP_HPP_
+#define CORE_FRAMEWORK_OP_HPP_
 
 #include <memory>
 #include <utility>
@@ -10,8 +10,8 @@
 
 #include "common.hpp"
 #include "core/schema/filler_generated.h"
-#include "core/schema/ops_generated.h"  // tensor and filler must before than ops
 #include "core/schema/tensor_generated.h"
+#include "core/schema/op_generated.h"  // tensor and filler must before than op
 #include "math_functions.hpp"
 #include "tensor.hpp"
 
@@ -21,44 +21,44 @@ namespace mynet {
  * @brief An interface for the units of computation which can be composed into a
  *        Net.
  *
- * Ops%s must implement a Forward function, in which they take their input
+ * Op%s must implement a Forward function, in which they take their input
  * (input) tensor%s (if any) and compute their output tensor%s (if any).
  * They may also implement a Backward function, in which they compute the error
  * gradients with respect to their input tensor%s, given the error gradients
  * with their output tensor%s.
  */
 template <typename Dtype>
-class Ops {
+class Op {
  public:
   /**
    * You should not implement your own constructor. Any set up code should go
    * to SetUp(), where the dimensions of the input tensors are provided to the
-   * ops.
+   * op.
    */
-  explicit Ops(OpsParameterT* param) : ops_param_(param), phase_(param->phase) {
+  explicit Op(OpParameterT* param) : op_param_(param), phase_(param->phase) {
     // Set phase and copy tensors (if there are any).
     // Because unique_ptr can not copy, so use move.
-    auto& opst = ops_param_->tensors;
+    auto& opt = op_param_->tensors;
 
-    if (opst.size() > 0) {
-      tensors_.resize(opst.size());
-      for (uint32_t i = 0; i < opst.size(); ++i) {
+    if (opt.size() > 0) {
+      tensors_.resize(opt.size());
+      for (uint32_t i = 0; i < opt.size(); ++i) {
         tensors_[i].reset(new Tensor<Dtype>());
-        tensors_[i]->FromFlat(opst[i].get());
+        tensors_[i]->FromFlat(opt[i].get());
       }
     }
   }
-  virtual ~Ops() {}
+  virtual ~Op() {}
 
   /**
-   * @brief Implements common ops setup functionality.
+   * @brief Implements common op setup functionality.
    *
    * @param input the preshaped input tensors
    * @param output
    *     the allocated but unshaped output tensors, to be shaped by Reshape
    *
    * Checks that the number of input and output tensors is correct.
-   * Calls OpsSetUp to do special ops setup for individual ops types,
+   * Calls OpSetUp to do special op setup for individual op types,
    * followed by Reshape to set up sizes of output tensors and internal buffers.
    * Sets up the loss weight multiplier tensors for any non-zero loss weights.
    * This method may not be overridden.
@@ -66,29 +66,29 @@ class Ops {
   void SetUp(const std::vector<Tensor<Dtype>*>& input,
              const std::vector<Tensor<Dtype>*>& output) {
     CheckTensorCounts(input, output);
-    OpsSetUp(input, output);
+    OpSetUp(input, output);
     Reshape(input, output);
     SetLossWeights(output);
   }
 
   /**
-   * @brief Does ops-specific setup: your ops should implement this function
+   * @brief Does op-specific setup: your op should implement this function
    *        as well as Reshape.
    *
    * @param input
    *     the preshaped input tensors, whose data fields store the input data for
-   *     this ops
+   *     this op
    * @param output
    *     the allocated but unshaped output tensors
    *
-   * This method should do one-time ops specific setup. This includes reading
-   * and processing relevent parameters from the <code>ops_param_</code>.
+   * This method should do one-time op specific setup. This includes reading
+   * and processing relevent parameters from the <code>op_param_</code>.
    * Setting up the shapes of output tensors and internal buffers should be done
    * in <code>Reshape</code>, which will be called before the forward pass to
    * adjust the output tensor sizes.
    */
-  virtual void OpsSetUp(const std::vector<Tensor<Dtype>*>& input,
-                        const std::vector<Tensor<Dtype>*>& output) {}
+  virtual void OpSetUp(const std::vector<Tensor<Dtype>*>& input,
+                       const std::vector<Tensor<Dtype>*>& output) {}
 
   /**
    * @brief Adjust the shapes of output tensors and internal buffers to
@@ -99,7 +99,7 @@ class Ops {
    *
    * This method should reshape output tensors as needed according to the shapes
    * of the input (input) tensors, as well as reshaping any internal buffers
-   * and making any other necessary adjustments so that the ops can
+   * and making any other necessary adjustments so that the op can
    * accommodate the input tensors.
    */
   virtual void Reshape(const std::vector<Tensor<Dtype>*>& input,
@@ -109,18 +109,18 @@ class Ops {
    * @brief Given the input tensors, compute the output tensors and the loss.
    *
    * @param input
-   *     the input tensors, whose data fields store the input data for this ops
+   *     the input tensors, whose data fields store the input data for this op
    * @param output
-   *     the preshaped output tensors, whose data fields will store this opss'
+   *     the preshaped output tensors, whose data fields will store this ops'
    *     outputs
-   * \return The total loss from the ops.
+   * \return The total loss from the op.
    *
    * The Forward wrapper calls the relevant device wrapper function
    * (ForwardCpu or ForwardGpu) to compute the output tensor values given the
-   * input tensors.  If the ops has any non-zero loss_weights, the wrapper
+   * input tensors.  If the op has any non-zero loss_weights, the wrapper
    * then computes and returns the loss.
    *
-   * Your ops should implement ForwardCpu and (optionally) ForwardGpu.
+   * Your op should implement ForwardCpu and (optionally) ForwardGpu.
    */
   inline Dtype Forward(const std::vector<Tensor<Dtype>*>& input,
                        const std::vector<Tensor<Dtype>*>& output);
@@ -144,7 +144,7 @@ class Ops {
    * (Backward_cpu or Backward_gpu) to compute the input tensor diffs given the
    * output tensor diffs.
    *
-   * Your ops should implement Backward_cpu and (optionally) Backward_gpu.
+   * Your op should implement Backward_cpu and (optionally) Backward_gpu.
    */
   inline void Backward(const std::vector<Tensor<Dtype>*>& output,
                        const std::vector<bool>& propagate_down,
@@ -156,12 +156,12 @@ class Ops {
   std::vector<std::shared_ptr<Tensor<Dtype>>>& tensors() { return tensors_; }
 
   /**
-   * @brief Returns the ops parameter.
+   * @brief Returns the op parameter.
    */
-  const OpsParameterT* ops_param() const { return ops_param_; }
+  const OpParameterT* op_param() const { return op_param_; }
 
   /**
-   * @brief Writes the ops parameter to a flatbuffers
+   * @brief Writes the op parameter to a flatbuffers
    */
   virtual flatbuffers::DetachedBuffer ToFlat(bool write_diff = false);
 
@@ -184,70 +184,70 @@ class Ops {
   }
 
   /**
-   * @brief Returns the ops type.
+   * @brief Returns the op type.
    */
   virtual inline const char* type() const { return ""; }
 
   /**
-   * @brief Returns the exact number of input tensors required by the ops,
+   * @brief Returns the exact number of input tensors required by the op,
    *        or -1 if no exact number is required.
    *
    * This method should be overridden to return a non-negative value if your
-   * ops expects some exact number of input tensors.
+   * op expects some exact number of input tensors.
    */
   virtual inline uint32_t ExactNumBottomTensors() const { return 0; }
   /**
-   * @brief Returns the minimum number of input tensors required by the ops,
+   * @brief Returns the minimum number of input tensors required by the op,
    *        or -1 if no minimum number is required.
    *
    * This method should be overridden to return a non-negative value if your
-   * ops expects some minimum number of input tensors.
+   * op expects some minimum number of input tensors.
    */
   virtual inline uint32_t MinBottomTensors() const { return 0; }
   /**
-   * @brief Returns the maximum number of input tensors required by the ops,
+   * @brief Returns the maximum number of input tensors required by the op,
    *        or -1 if no maximum number is required.
    *
    * This method should be overridden to return a non-negative value if your
-   * ops expects some maximum number of input tensors.
+   * op expects some maximum number of input tensors.
    */
   virtual inline uint32_t MaxBottomTensors() const { return 0; }
   /**
-   * @brief Returns the exact number of output tensors required by the ops,
+   * @brief Returns the exact number of output tensors required by the op,
    *        or -1 if no exact number is required.
    *
    * This method should be overridden to return a non-negative value if your
-   * ops expects some exact number of output tensors.
+   * op expects some exact number of output tensors.
    */
   virtual inline uint32_t ExactNumTopTensors() const { return 0; }
   /**
-   * @brief Returns the minimum number of output tensors required by the ops,
+   * @brief Returns the minimum number of output tensors required by the op,
    *        or -1 if no minimum number is required.
    *
    * This method should be overridden to return a non-negative value if your
-   * ops expects some minimum number of output tensors.
+   * op expects some minimum number of output tensors.
    */
   virtual inline uint32_t MinTopTensors() const { return 0; }
   /**
-   * @brief Returns the maximum number of output tensors required by the ops,
+   * @brief Returns the maximum number of output tensors required by the op,
    *        or -1 if no maximum number is required.
    *
    * This method should be overridden to return a non-negative value if your
-   * ops expects some maximum number of output tensors.
+   * op expects some maximum number of output tensors.
    */
   virtual inline uint32_t MaxTopTensors() const { return 0; }
   /**
-   * @brief Returns true if the ops requires an equal number of input and
+   * @brief Returns true if the op requires an equal number of input and
    *        output tensors.
    *
-   * This method should be overridden to return true if your ops expects an
+   * This method should be overridden to return true if your op expects an
    * equal number of input and output tensors.
    */
   virtual inline bool EqualNumBottomTopTensors() const { return false; }
 
   /**
    * @brief Return whether "anonymous" output tensors are created automatically
-   *        by the ops.
+   *        by the op.
    *
    * If this method returns true, Net::Init will create enough "anonymous"
    * output tensors to fulfill the requirement specified by ExactNumTopTensors()
@@ -268,7 +268,7 @@ class Ops {
   }
 
   /**
-   * @brief Specifies whether the ops should compute gradients w.r.t. a
+   * @brief Specifies whether the op should compute gradients w.r.t. a
    *        parameter at a particular index given by param_id.
    *
    * You can safely ignore false values and always compute gradients
@@ -280,7 +280,7 @@ class Ops {
                : false;
   }
   /**
-   * @brief Sets whether the ops should compute gradients w.r.t. a
+   * @brief Sets whether the op should compute gradients w.r.t. a
    *        parameter at a particular index given by param_id.
    */
   inline void set_param_propagate_down(uint32_t param_id, const bool value) {
@@ -291,8 +291,8 @@ class Ops {
   }
 
  protected:
-  /** The flatbuffer that stores the ops parameters */
-  OpsParameterT* ops_param_;
+  /** The flatbuffer that stores the op parameters */
+  OpParameterT* op_param_;
   /** The phase: TRAIN or TEST */
   const Phase phase_;
   /** The std::vector that stores the learnable parameters as a set of tensors.
@@ -306,7 +306,7 @@ class Ops {
    * weight in the objective function. */
   std::vector<Dtype> loss_;
 
-  /** @brief Using the CPU device, compute the ops output. */
+  /** @brief Using the CPU device, compute the op output. */
   virtual void ForwardCpu(const std::vector<Tensor<Dtype>*>& input,
                           const std::vector<Tensor<Dtype>*>& output) = 0;
 
@@ -319,7 +319,7 @@ class Ops {
                            const std::vector<Tensor<Dtype>*>& input) = 0;
 
   /**
-   * Called by the parent ops's SetUp to check that the number of input
+   * Called by the parent op's SetUp to check that the number of input
    * and output tensors provided as input match the expected numbers specified
    * by the {ExactNum,Min,Max}{Bottom,Top}tensors() functions.
    */
@@ -327,43 +327,43 @@ class Ops {
                                  const std::vector<Tensor<Dtype>*>& output) {
     if (ExactNumBottomTensors() > 0ul) {
       DCHECK_EQ(ExactNumBottomTensors(), input.size())
-          << type() << " ops takes " << ExactNumBottomTensors()
+          << type() << " op takes " << ExactNumBottomTensors()
           << " input tensor(s) as input.";
     }
 
     if (MinBottomTensors() > 0ul) {
       DCHECK_LE(MinBottomTensors(), input.size())
-          << type() << " ops takes at least " << MinBottomTensors()
+          << type() << " op takes at least " << MinBottomTensors()
           << " input tensor(s) as input.";
     }
 
     if (MaxBottomTensors() > 0ul) {
       DCHECK_GE(MaxBottomTensors(), input.size())
-          << type() << " ops takes at most " << MaxBottomTensors()
+          << type() << " op takes at most " << MaxBottomTensors()
           << " input tensor(s) as input.";
     }
 
     if (ExactNumTopTensors() > 0ul) {
       DCHECK_EQ(ExactNumTopTensors(), output.size())
-          << type() << " ops produces " << ExactNumTopTensors()
+          << type() << " op produces " << ExactNumTopTensors()
           << " output tensor(s) as output.";
     }
 
     if (MinTopTensors() > 0ul) {
       DCHECK_LE(MinTopTensors(), output.size())
-          << type() << " ops produces at least " << MinTopTensors()
+          << type() << " op produces at least " << MinTopTensors()
           << " output tensor(s) as output.";
     }
 
     if (MaxTopTensors() > 0ul) {
       DCHECK_GE(MaxTopTensors(), output.size())
-          << type() << " ops produces at most " << MaxTopTensors()
+          << type() << " op produces at most " << MaxTopTensors()
           << " output tensor(s) as output.";
     }
 
     if (EqualNumBottomTopTensors()) {
       DCHECK_EQ(input.size(), output.size())
-          << type() << " ops produces one output tensor as output for each "
+          << type() << " op produces one output tensor as output for each "
           << "input tensor input.";
     }
   }
@@ -374,13 +374,13 @@ class Ops {
    * tensor.
    */
   inline void SetLossWeights(const std::vector<Tensor<Dtype>*>& output) {
-    uint32_t num_loss_weights = ops_param_->loss_weight.size();
+    uint32_t num_loss_weights = op_param_->loss_weight.size();
     if (num_loss_weights) {
       DCHECK_EQ(output.size(), num_loss_weights)
           << "loss_weight must be "
              "unspecified or specified once per output tensor.";
       for (uint32_t output_id = 0; output_id < output.size(); ++output_id) {
-        const Dtype loss_weight = ops_param_->loss_weight[output_id];
+        const Dtype loss_weight = op_param_->loss_weight[output_id];
         if (loss_weight == Dtype(0)) {
           continue;
         }
@@ -397,15 +397,15 @@ class Ops {
   }
 
  private:
-  DISABLE_COPY_AND_ASSIGN(Ops);
-};  // class Ops
+  DISABLE_COPY_AND_ASSIGN(Op);
+};  // class Op
 
 // Forward and backward wrappers. You should implement the cpu and
 // gpu specific implementations instead, and should not change these
 // functions.
 template <typename Dtype>
-inline Dtype Ops<Dtype>::Forward(const std::vector<Tensor<Dtype>*>& input,
-                                 const std::vector<Tensor<Dtype>*>& output) {
+inline Dtype Op<Dtype>::Forward(const std::vector<Tensor<Dtype>*>& input,
+                                const std::vector<Tensor<Dtype>*>& output) {
   Dtype loss = 0;
   Reshape(input, output);
   switch (Mynet::mode()) {
@@ -428,9 +428,9 @@ inline Dtype Ops<Dtype>::Forward(const std::vector<Tensor<Dtype>*>& input,
 }
 
 template <typename Dtype>
-inline void Ops<Dtype>::Backward(const std::vector<Tensor<Dtype>*>& output,
-                                 const std::vector<bool>& propagate_down,
-                                 const std::vector<Tensor<Dtype>*>& input) {
+inline void Op<Dtype>::Backward(const std::vector<Tensor<Dtype>*>& output,
+                                const std::vector<bool>& propagate_down,
+                                const std::vector<Tensor<Dtype>*>& input) {
   switch (Mynet::mode()) {
     case Mynet::CPU:
       BackwardCpu(output, propagate_down, input);
@@ -440,21 +440,21 @@ inline void Ops<Dtype>::Backward(const std::vector<Tensor<Dtype>*>& output,
   }
 }
 
-// Serialize OpsParameter to flatbuffer
+// Serialize OpParameter to flatbuffer
 template <typename Dtype>
-flatbuffers::DetachedBuffer Ops<Dtype>::ToFlat(bool write_diff) {
+flatbuffers::DetachedBuffer Op<Dtype>::ToFlat(bool write_diff) {
   flatbuffers::FlatBufferBuilder flatbuffer_builder;
   for (uint32_t i = 0; i < tensors_.size(); ++i) {
     flatbuffers::unique_ptr<mynet::TensorFlatT> tensor(
         flatbuffers::GetMutableRoot<TensorFlat>(
             tensors_[i]->ToFlat(write_diff).data())
             ->UnPack());
-    ops_param_->tensors.push_back(std::move(tensor));
+    op_param_->tensors.push_back(std::move(tensor));
   }
-  flatbuffer_builder.Finish(OpsParameter::Pack(flatbuffer_builder, ops_param_));
+  flatbuffer_builder.Finish(OpParameter::Pack(flatbuffer_builder, op_param_));
   return flatbuffer_builder.Release();
 }
 
 }  // namespace mynet
 
-#endif  // CORE_FRAMEWORK_OPS_HPP_
+#endif  // CORE_FRAMEWORK_OP_HPP_

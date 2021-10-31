@@ -1,10 +1,10 @@
 // Copyright 2021 coordinate
 // Author: coordinate
 
-#include "ops.hpp"
+#include "op.hpp"
 
 namespace mynet {
 
-INSTANTIATE_CLASS(Ops);
+INSTANTIATE_CLASS(Op);
 
 }  // namespace mynet

@@ -6,7 +6,7 @@
 
 #include <vector>
 
-#include "core/framework/ops.hpp"
+#include "core/framework/op.hpp"
 #include "core/framework/tensor.hpp"
 #include "core/schema/mynet_generated.h"
 #include "im2col.hpp"
@@ -14,11 +14,11 @@
 namespace mynet {
 
 template <typename Dtype>
-class ConvOps : public Ops<Dtype> {
+class ConvOp : public Op<Dtype> {
  public:
-  explicit ConvOps(OpsParameterT* param) : Ops<Dtype>(param) {}
-  virtual void OpsSetUp(const std::vector<Tensor<Dtype>*>& input,
-                        const std::vector<Tensor<Dtype>*>& output);
+  explicit ConvOp(OpParameterT* param) : Op<Dtype>(param) {}
+  virtual void OpSetUp(const std::vector<Tensor<Dtype>*>& input,
+                       const std::vector<Tensor<Dtype>*>& output);
   virtual void Reshape(const std::vector<Tensor<Dtype>*>& input,
                        const std::vector<Tensor<Dtype>*>& output);
 

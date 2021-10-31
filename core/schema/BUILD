@@ -5,7 +5,7 @@ flatbuffer_cc_library(
     srcs = [
         "filler.fbs",
         "mynet.fbs",
-        "ops.fbs",
+        "op.fbs",
         "solver.fbs",
         "tensor.fbs",
     ],
@@ -16,6 +16,6 @@ exports_files([
     "mynet.fbs",
     "solver.fbs",
     "tensor.fbs",
-    "ops.fbs",
+    "op.fbs",
     "filler.fbs",
 ])

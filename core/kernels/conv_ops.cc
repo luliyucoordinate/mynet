@@ -13,10 +13,10 @@
 namespace mynet {
 
 template <typename Dtype>
-void ConvOps<Dtype>::OpsSetUp(const std::vector<Tensor<Dtype>*>& input,
-                              const std::vector<Tensor<Dtype>*>& output) {
+void ConvOp<Dtype>::OpSetUp(const std::vector<Tensor<Dtype>*>& input,
+                            const std::vector<Tensor<Dtype>*>& output) {
   // Configure the kernel size, padding, stride, and inputs.
-  auto& conv_param = this->ops_param_->conv_param;
+  auto& conv_param = this->op_param_->conv_param;
   force_nd_im2col_ = conv_param->force_nd_im2col;
   transpose_ = conv_param->transpose;
   channel_axis_ = input[0]->CanonicalAxisIndex(conv_param->axis);
@@ -194,8 +194,8 @@ void ConvOps<Dtype>::OpsSetUp(const std::vector<Tensor<Dtype>*>& input,
 }
 
 template <typename Dtype>
-void ConvOps<Dtype>::Reshape(const std::vector<Tensor<Dtype>*>& input,
-                             const std::vector<Tensor<Dtype>*>& output) {
+void ConvOp<Dtype>::Reshape(const std::vector<Tensor<Dtype>*>& input,
+                            const std::vector<Tensor<Dtype>*>& output) {
   const uint32_t first_spatial_axis = channel_axis_ + 1;
   DCHECK_EQ(input[0]->num_axes(), first_spatial_axis + num_spatial_axes_)
       << "input num_axes may not change.";
@@ -209,7 +209,7 @@ void ConvOps<Dtype>::Reshape(const std::vector<Tensor<Dtype>*>& input,
         << " vs. input[" << bottom_id
         << "]: " << input[bottom_id]->shape_string();
   }
-  // Shape the tops.
+  // Shape the top.
   bottom_shape_ = input[0]->shape();
   compute_output_shape();
   std::vector<uint32_t> top_shape(input[0]->shape().begin(),
@@ -269,8 +269,8 @@ void ConvOps<Dtype>::Reshape(const std::vector<Tensor<Dtype>*>& input,
 }
 
 template <typename Dtype>
-void ConvOps<Dtype>::forward_cpu_gemm(const Dtype* input, const Dtype* weights,
-                                      Dtype* output, bool skip_im2col) {
+void ConvOp<Dtype>::forward_cpu_gemm(const Dtype* input, const Dtype* weights,
+                                     Dtype* output, bool skip_im2col) {
   const Dtype* col_buff = input;
   if (!is_1x1_) {
     if (!skip_im2col) {
@@ -288,15 +288,15 @@ void ConvOps<Dtype>::forward_cpu_gemm(const Dtype* input, const Dtype* weights,
 }
 
 template <typename Dtype>
-void ConvOps<Dtype>::forward_cpu_bias(Dtype* output, const Dtype* bias) {
+void ConvOp<Dtype>::forward_cpu_bias(Dtype* output, const Dtype* bias) {
   mynet_cpu_gemm<Dtype>(CblasNoTrans, CblasNoTrans, num_output_,
                         out_spatial_dim_, 1, (Dtype)1., bias,
                         bias_multiplier_.cpu_data(), (Dtype)1., output);
 }
 
 template <typename Dtype>
-void ConvOps<Dtype>::backward_cpu_gemm(const Dtype* output,
-                                       const Dtype* weights, Dtype* input) {
+void ConvOp<Dtype>::backward_cpu_gemm(const Dtype* output, const Dtype* weights,
+                                      Dtype* input) {
   Dtype* col_buff = col_buffer_.mutable_cpu_data();
   if (is_1x1_) {
     col_buff = input;
@@ -313,8 +313,8 @@ void ConvOps<Dtype>::backward_cpu_gemm(const Dtype* output,
 }
 
 template <typename Dtype>
-void ConvOps<Dtype>::weight_cpu_gemm(const Dtype* input, const Dtype* output,
-                                     Dtype* weights) {
+void ConvOp<Dtype>::weight_cpu_gemm(const Dtype* input, const Dtype* output,
+                                    Dtype* weights) {
   const Dtype* col_buff = input;
   if (!is_1x1_) {
     conv_im2col_cpu(input, col_buffer_.mutable_cpu_data());
@@ -329,13 +329,13 @@ void ConvOps<Dtype>::weight_cpu_gemm(const Dtype* input, const Dtype* output,
 }
 
 template <typename Dtype>
-void ConvOps<Dtype>::backward_cpu_bias(Dtype* bias, const Dtype* input) {
+void ConvOp<Dtype>::backward_cpu_bias(Dtype* bias, const Dtype* input) {
   mynet_cpu_gemv<Dtype>(CblasNoTrans, num_output_, out_spatial_dim_, 1., input,
                         bias_multiplier_.cpu_data(), 1., bias);
 }
 
 template <typename Dtype>
-void ConvOps<Dtype>::compute_output_shape() {
+void ConvOp<Dtype>::compute_output_shape() {
   const uint32_t* kernel_shape_data = this->kernel_shape_.cpu_data();
   const uint32_t* stride_data = this->stride_.cpu_data();
   const uint32_t* pad_data = this->pad_.cpu_data();
@@ -359,8 +359,8 @@ void ConvOps<Dtype>::compute_output_shape() {
 }
 
 template <typename Dtype>
-void ConvOps<Dtype>::ForwardCpu(const std::vector<Tensor<Dtype>*>& input,
-                                const std::vector<Tensor<Dtype>*>& output) {
+void ConvOp<Dtype>::ForwardCpu(const std::vector<Tensor<Dtype>*>& input,
+                               const std::vector<Tensor<Dtype>*>& output) {
   const Dtype* weight = this->tensors_[0]->cpu_data();
   for (uint32_t i = 0; i < input.size(); ++i) {
     const Dtype* bottom_data = input[i]->cpu_data();
@@ -382,9 +382,9 @@ void ConvOps<Dtype>::ForwardCpu(const std::vector<Tensor<Dtype>*>& input,
 }
 
 template <typename Dtype>
-void ConvOps<Dtype>::BackwardCpu(const std::vector<Tensor<Dtype>*>& output,
-                                 const std::vector<bool>& propagate_down,
-                                 const std::vector<Tensor<Dtype>*>& input) {
+void ConvOp<Dtype>::BackwardCpu(const std::vector<Tensor<Dtype>*>& output,
+                                const std::vector<bool>& propagate_down,
+                                const std::vector<Tensor<Dtype>*>& input) {
   const Dtype* weight = this->tensors_[0]->cpu_data();
   Dtype* weight_diff = this->tensors_[0]->mutable_cpu_diff();
   for (uint32_t i = 0; i < output.size(); ++i) {
@@ -427,6 +427,6 @@ void ConvOps<Dtype>::BackwardCpu(const std::vector<Tensor<Dtype>*>& output,
   }
 }
 
-INSTANTIATE_CLASS(ConvOps);
+INSTANTIATE_CLASS(ConvOp);
 
 }  // namespace mynet

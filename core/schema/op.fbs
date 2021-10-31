@@ -41,13 +41,29 @@ enum Phase : byte {
     TEST = 1
 }
 
-table OpsParameter {
+enum DimCheckMode : byte {
+    STRICT = 0,   
+    PERMISSIVE = 1,
+}
+
+table ParamSpec {
+    name: string;
+    share_mode: DimCheckMode;
+    lr_mult: float = 1.0;
+    decay_mult: float = 1.0;
+}
+
+table OpParameter {
     name: string;
     type: string;
-    bottom: [string];
-    top: [string];
+    input: [string];
+    output: [string];
     phase: Phase;
     loss_weight: [float];
+    param: [ParamSpec];
     tensors: [TensorFlat];
+    propagate_down: [bool];
     conv_param: ConvParameter;
 }
+
+root_type OpParameter;
