@@ -14,7 +14,7 @@
 
 #include "core/schema/filler_generated.h"
 #include "core/schema/tensor_generated.h"
-#include "core/schema/ops_generated.h"  // tensor and filler must before than ops
+#include "core/schema/op_generated.h"  // tensor and filler must before than op
 #include "core/schema/mynet_generated.h"
 #include "format.hpp"
 
