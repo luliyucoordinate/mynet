@@ -4,17 +4,18 @@
 #ifndef CORE_FRAMEWORK_SYNCEDMEM_HPP_
 #define CORE_FRAMEWORK_SYNCEDMEM_HPP_
 
-
 #include <cstdlib>
+
 #include "common.hpp"
 
 namespace mynet {
 
 inline void MynetMallocHost(void** ptr, uint32_t size) {
   *ptr = malloc(size);
-
+  DCHECK(*ptr) << "host allocation of size" << size << "failed";
 }
 
+inline void MynetFreeHost(void* ptr) { free(ptr); }
 
 class SyncedMemory {
  public:
@@ -26,7 +27,7 @@ class SyncedMemory {
   void set_gpu_data(void* data);
   void* mutable_cpu_data();
   void* mutable_gpu_data();
-  enum SyncedHead { UNINITIALIZED, HEAD_AT_CPU, SYNCED };
+  enum SyncedHead { UNINITIALIZED, HEAD_AT_CPU, HEAD_AT_GPU, SYNCED };
   SyncedHead head() const { return head_; }
   uint32_t size() const { return size_; }
 
