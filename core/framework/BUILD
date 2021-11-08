@@ -4,6 +4,7 @@ cc_library(
     hdrs = ["tensor.hpp"],
     visibility = ["//visibility:public"],
     deps = [
+        ":common",
         "//core/schema:mynet_fbs",
     ],
 )

@@ -7,6 +7,12 @@
 #include <string>
 #include <vector>
 
+#include "commmon.hpp"
+#include "mynet_generated.h"
+#include "syncedmem.hpp"
+
+const uint32_t kMaxTensorAxes = 32;
+
 namespace mynet {
 
 template <typename Dtype>
@@ -23,6 +29,7 @@ class Tensor {
                uint32_t width);
   void Reshape(const std::vector<uint32_t>& shape);
   void Reshape(const TensorShapeT* shape);
+  void ReshapeLike(const Tensor& other);
 
   inline std::string shape_string() const {
     std::ostringstream stream;
@@ -135,15 +142,46 @@ class Tensor {
     return cpu_diff()[offset(index)];
   }
 
-  inline const Dtype data() const {
-    
+  inline const std::shared_ptr<SyncedMemory>& data() const {
+    DCHECK(data_);
+    return data_;
   }
 
+  inline const std::shared_ptr<SyncedMemory>& diff() const {
+    DCHECK(diff_);
+    return diff_;
+  }
+
+  const Dtype* cpu_data() const;
+  void set_cpu_data(Dtype* data);
+  const Dtype* cpu_diff() const;
+  Dtype* mutable_cpu_data();
+  Dtype* mutable_cpu_diff();
+
+  void FromFlat(const TensorFlatT* flat, bool reshape = true);
+  flatbuffers::DetachedBuffer ToFlat(bool write_diff = false) const;
+
+  Dtype asum_data() const;
+  Dtype asum_diff() const;
+  Dtype sumsq_data() const;
+  Dtype sumsq_diff() const;
+
+  void scale_data(Dtype scale_factor);
+  void scale_diff(Dtype scale_factor);
+
+  void ShareData(const Tensor& other);
+  void ShareDiff(const Tensor& other);
+  bool ShapeEquals(const TensorFlatT* other);
+
  protected:
-  Dtype data_;
-  Dtype diff_;
+  std::shared_ptr<SyncedMemory> data_;
+  std::shared_ptr<SyncedMemory> diff_;
+  std::shared_ptr<SyncedMemory> shape_data_;
   std::vector<uint32_t> shape_;
   uint32_t count_;
+  uint32_t capacity_;
+
+  DISABLE_COPY_AND_ASSIGN(Tensor);
 };
 
 }  // namespace mynet
