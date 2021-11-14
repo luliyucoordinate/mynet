@@ -158,7 +158,9 @@ class Tensor {
   Dtype* mutable_cpu_data();
   Dtype* mutable_cpu_diff();
 
-  void FromFlat(const TensorFlatT* flat, bool reshape = true);
+  void Update();
+
+  void FromFlat(const TensorFlatT* flat);
   flatbuffers::DetachedBuffer ToFlat(bool write_diff = false) const;
 
   Dtype asum_data() const;

@@ -29,4 +29,10 @@ namespace gflags = google;
   classname(const classname&);             \
   classname& operator=(const classname&)
 
+#define INSTANTIATE_CLASS(classname) \
+  template class classname<float>;   \
+  template class classname<double>
+
+#define NOT_IMPLEMENTED LOG(FATAL) << "Not Implemented Yet"
+
 #endif  // CORE_FRAMEWORK_COMMON_HPP_
