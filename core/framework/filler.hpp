@@ -106,13 +106,15 @@ class GaussianFiller : public Filler<Dtype> {
  * this way for now.
  */
 template <typename Dtype>
-std::shared_ptr<Filler<Dtype>> GetFiller(const FillerParameterT* param) {
+Filler<Dtype>* GetFiller(const FillerParameterT* param) {
   DCHECK(param);
   const std::string& type = param->type;
   if (type == "constant") {
-    return std::make_shared<ConstantFiller<Dtype>>(param);
+    return new ConstantFiller<Dtype>(param);
+  } else if (type == "gaussian") {
+    return new GaussianFiller<Dtype>(param);
   } else if (type == "uniform") {
-    return std::make_shared<UniformFiller<Dtype>>(param);
+    return new UniformFiller<Dtype>(param);
   } else {
     DCHECK(false) << "Unknown filler name: " << type;
   }

@@ -4,6 +4,7 @@
 #include "conv_ops.hpp"
 
 #include <algorithm>
+#include <memory>
 #include <vector>
 
 #include "core/framework/common.hpp"
@@ -178,12 +179,14 @@ void ConvOp<Dtype>::OpSetUp(const std::vector<Tensor<Dtype>*>& input,
     // Initialize and fill the weights:
     // output channels x input channels per-group x kernel height x kernel width
     this->tensors_[0].reset(new Tensor<Dtype>(weight_shape));
-    auto weight_filler = GetFiller<Dtype>(conv_param->weight_filler.get());
+    std::shared_ptr<Filler<Dtype>> weight_filler(
+        GetFiller<Dtype>(conv_param->weight_filler.get()));
     weight_filler->Fill(this->tensors_[0].get());
     // If necessary, initialize and fill the biases.
     if (bias_term_) {
       this->tensors_[1].reset(new Tensor<Dtype>(bias_shape));
-      auto bias_filler = GetFiller<Dtype>(conv_param->bias_filler.get());
+      std::shared_ptr<Filler<Dtype>> bias_filler(
+          GetFiller<Dtype>(conv_param->bias_filler.get()));
       bias_filler->Fill(this->tensors_[1].get());
     }
   }
