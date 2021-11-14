@@ -224,7 +224,7 @@ class Tensor {
   void Update();
   // void FromProto(const TensorProto& proto, bool reshape = true);
   // void ToProto(TensorProto* proto, bool write_diff = false) const;
-  void FromFlat(const TensorFlatT* flat, bool reshape = true);
+  void FromFlat(const TensorFlatT* flat);
   flatbuffers::DetachedBuffer ToFlat(bool write_diff = false) const;
 
   /// @brief Compute the sum of absolute values (L1 norm) of the data.

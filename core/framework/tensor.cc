@@ -4,6 +4,7 @@
 #include "tensor.hpp"
 
 #include <memory>
+#include <utility>
 #include <vector>
 
 #include "common.hpp"
@@ -31,12 +32,7 @@ Tensor<Dtype>::Tensor(const std::vector<uint32_t>& shape)
 template <typename Dtype>
 void Tensor<Dtype>::Reshape(uint32_t num, uint32_t channels, uint32_t height,
                             uint32_t width) {
-  std::vector<uint32_t> shape(4);
-  shape[0] = num;
-  shape[1] = channels;
-  shape[2] = height;
-  shape[3] = width;
-  Reshape(shape);
+  Reshape(std::vector<uint32_t>({num, channels, height, width}));
 }
 
 template <typename Dtype>
@@ -70,13 +66,7 @@ void Tensor<Dtype>::Reshape(const std::vector<uint32_t>& shape) {
 template <typename Dtype>
 void Tensor<Dtype>::Reshape(const TensorShapeT* shape) {
   DCHECK(shape);
-  auto shape_dim = shape->dim;
-  DCHECK_LE(shape_dim.size(), kMaxTensorAxes);
-  std::vector<uint32_t> shape_vec(shape_dim.size());
-  for (uint32_t i = 0; i < shape_dim.size(); ++i) {
-    shape_vec[i] = shape_dim[i];
-  }
-  Reshape(shape_vec);
+  Reshape(shape->dim);
 }
 
 template <typename Dtype>
@@ -360,13 +350,7 @@ bool Tensor<Dtype>::ShapeEquals(const TensorFlatT* other) {
            LegacyShape(-2) == other->height && LegacyShape(-1) == other->width;
   }
 
-  auto other_shape_dim = other->shape->dim;
-
-  std::vector<uint32_t> other_shape(other_shape_dim.size());
-  for (uint32_t i = 0; i < other_shape_dim.size(); ++i) {
-    other_shape[i] = other_shape_dim[i];
-  }
-  return shape_ == other_shape;
+  return shape_ == other->shape->dim;
 }
 
 template <typename Dtype>
@@ -395,28 +379,21 @@ void Tensor<Dtype>::CopyFrom(const Tensor& source, bool copy_diff,
 }
 
 template <typename Dtype>
-void Tensor<Dtype>::FromFlat(const TensorFlatT* flat, bool reshape) {
-  if (reshape) {
-    std::vector<uint32_t> shape;
-    if (flat->num || flat->channels || flat->height || flat->width) {
-      // Using deprecated 4D Tensor dimensions --
-      // shape is (num, channels, height, width).
-      shape.resize(4);
-      shape[0] = flat->num;
-      shape[1] = flat->channels;
-      shape[2] = flat->height;
-      shape[3] = flat->width;
-    } else {
-      auto flat_shape_dim = flat->shape->dim;
-      shape.resize(flat_shape_dim.size());
-      for (uint32_t i = 0; i < flat_shape_dim.size(); ++i) {
-        shape[i] = flat_shape_dim[i];
-      }
-    }
-    Reshape(shape);
+void Tensor<Dtype>::FromFlat(const TensorFlatT* flat) {
+  std::vector<uint32_t> shape;
+  if (flat->num || flat->channels || flat->height || flat->width) {
+    // Using deprecated 4D Tensor dimensions --
+    // shape is (num, channels, height, width).
+    shape.resize(4);
+    shape[0] = flat->num;
+    shape[1] = flat->channels;
+    shape[2] = flat->height;
+    shape[3] = flat->width;
   } else {
-    DCHECK(ShapeEquals(flat)) << "shape mismatch (reshape not set)";
+    shape = flat->shape->dim;
   }
+  Reshape(shape);
+
   // copy data
   Dtype* data_vec = mutable_cpu_data();
   auto flat_double_data = flat->double_data;
@@ -433,17 +410,16 @@ void Tensor<Dtype>::FromFlat(const TensorFlatT* flat, bool reshape) {
     }
   }
 
+  Dtype* diff_vec = mutable_cpu_diff();
   auto flat_double_diff = flat->double_diff;
   auto flat_diff = flat->diff;
-  if (flat_double_diff.size() > 0) {
+  if (!flat_double_diff.empty()) {
     DCHECK_EQ(count_, flat_double_diff.size());
-    Dtype* diff_vec = mutable_cpu_diff();
     for (uint32_t i = 0; i < count_; ++i) {
       diff_vec[i] = flat_double_diff[i];
     }
-  } else if (flat_diff.size() > 0) {
+  } else if (!flat_diff.empty()) {
     DCHECK_EQ(count_, flat_diff.size());
-    Dtype* diff_vec = mutable_cpu_diff();
     for (uint32_t i = 0; i < count_; ++i) {
       diff_vec[i] = flat_diff[i];
     }
@@ -470,8 +446,8 @@ flatbuffers::DetachedBuffer Tensor<double>::ToFlat(bool write_diff) const {
   tensor_flat.height = height();
   tensor_flat.width = width();
   tensor_flat.shape = std::make_unique<TensorShapeT>(tensor_shape);
-  tensor_flat.double_data = data;
-  tensor_flat.double_diff = diff;
+  tensor_flat.double_data = std::move(data);
+  tensor_flat.double_diff = std::move(diff);
   // auto tensor_flat = CreateTensorFlatDirect(flatbuffer_builder, num(),
   // channels(), height(), width(), nullptr, nullptr, tensor_shape, data_ptr,
   // diff_ptr);
@@ -499,8 +475,8 @@ flatbuffers::DetachedBuffer Tensor<float>::ToFlat(bool write_diff) const {
   tensor_flat.height = height();
   tensor_flat.width = width();
   tensor_flat.shape = std::make_unique<TensorShapeT>(tensor_shape);
-  tensor_flat.data = data;
-  tensor_flat.diff = diff;
+  tensor_flat.data = std::move(data);
+  tensor_flat.diff = std::move(diff);
   flatbuffers::FlatBufferBuilder flatbuffer_builder;
   flatbuffer_builder.Finish(TensorFlat::Pack(flatbuffer_builder, &tensor_flat));
   return flatbuffer_builder.Release();
