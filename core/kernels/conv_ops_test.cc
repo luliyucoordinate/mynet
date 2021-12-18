@@ -185,7 +185,7 @@ class ConvOpTest : public MultiDeviceTest<TypeParam> {
     delete tensor_output_2_;
   }
 
-  virtual Tensor<Dtype>* MakeReferenceTop(Tensor<Dtype>* output) {
+  virtual Tensor<Dtype>* MakeReferenceInput(Tensor<Dtype>* output) {
     this->ref_tensor_output_.reset(new Tensor<Dtype>());
     this->ref_tensor_output_->ReshapeLike(*output);
     return this->ref_tensor_output_.get();
@@ -261,14 +261,14 @@ TYPED_TEST(ConvOpTest, TestSimpleConv) {
   const Dtype* output_data;
   const Dtype* ref_output_data;
   mynet_conv(this->tensor_input_, op_param.conv_param.get(), op->tensors(),
-             this->MakeReferenceTop(this->tensor_output_));
+             this->MakeReferenceInput(this->tensor_output_));
   output_data = this->tensor_output_->cpu_data();
   ref_output_data = this->ref_tensor_output_->cpu_data();
   for (uint32_t i = 0; i < this->tensor_output_->count(); ++i) {
     EXPECT_NEAR(output_data[i], ref_output_data[i], 1e-4);
   }
   mynet_conv(this->tensor_input_2_, op_param.conv_param.get(), op->tensors(),
-             this->MakeReferenceTop(this->tensor_output_2_));
+             this->MakeReferenceInput(this->tensor_output_2_));
   output_data = this->tensor_output_2_->cpu_data();
   ref_output_data = this->ref_tensor_output_->cpu_data();
   for (uint32_t i = 0; i < this->tensor_output_->count(); ++i) {
@@ -301,14 +301,14 @@ TYPED_TEST(ConvOpTest, TestDilatedConv) {
   const Dtype* output_data;
   const Dtype* ref_output_data;
   mynet_conv(this->tensor_input_, op_param.conv_param.get(), op->tensors(),
-             this->MakeReferenceTop(this->tensor_output_));
+             this->MakeReferenceInput(this->tensor_output_));
   output_data = this->tensor_output_->cpu_data();
   ref_output_data = this->ref_tensor_output_->cpu_data();
   for (uint32_t i = 0; i < this->tensor_output_->count(); ++i) {
     EXPECT_NEAR(output_data[i], ref_output_data[i], 1e-4);
   }
   mynet_conv(this->tensor_input_2_, op_param.conv_param.get(), op->tensors(),
-             this->MakeReferenceTop(this->tensor_output_2_));
+             this->MakeReferenceInput(this->tensor_output_2_));
   output_data = this->tensor_output_2_->cpu_data();
   ref_output_data = this->ref_tensor_output_->cpu_data();
   for (uint32_t i = 0; i < this->tensor_output_->count(); ++i) {
@@ -387,14 +387,14 @@ TYPED_TEST(ConvOpTest, TestSimple3DConv) {
   const Dtype* output_data;
   const Dtype* ref_output_data;
   mynet_conv(this->tensor_input_, op_param.conv_param.get(), op->tensors(),
-             this->MakeReferenceTop(this->tensor_output_));
+             this->MakeReferenceInput(this->tensor_output_));
   output_data = this->tensor_output_->cpu_data();
   ref_output_data = this->ref_tensor_output_->cpu_data();
   for (uint32_t i = 0; i < this->tensor_output_->count(); ++i) {
     EXPECT_NEAR(output_data[i], ref_output_data[i], 1e-4);
   }
   mynet_conv(this->tensor_input_2_, op_param.conv_param.get(), op->tensors(),
-             this->MakeReferenceTop(this->tensor_output_2_));
+             this->MakeReferenceInput(this->tensor_output_2_));
   output_data = this->tensor_output_2_->cpu_data();
   ref_output_data = this->ref_tensor_output_->cpu_data();
   for (uint32_t i = 0; i < this->tensor_output_->count(); ++i) {
@@ -434,14 +434,14 @@ TYPED_TEST(ConvOpTest, TestDilated3DConv) {
   const Dtype* output_data;
   const Dtype* ref_output_data;
   mynet_conv(this->tensor_input_, op_param.conv_param.get(), op->tensors(),
-             this->MakeReferenceTop(this->tensor_output_));
+             this->MakeReferenceInput(this->tensor_output_));
   output_data = this->tensor_output_->cpu_data();
   ref_output_data = this->ref_tensor_output_->cpu_data();
   for (uint32_t i = 0; i < this->tensor_output_->count(); ++i) {
     EXPECT_NEAR(output_data[i], ref_output_data[i], 1e-4);
   }
   mynet_conv(this->tensor_input_2_, op_param.conv_param.get(), op->tensors(),
-             this->MakeReferenceTop(this->tensor_output_2_));
+             this->MakeReferenceInput(this->tensor_output_2_));
   output_data = this->tensor_output_2_->cpu_data();
   ref_output_data = this->ref_tensor_output_->cpu_data();
   for (uint32_t i = 0; i < this->tensor_output_->count(); ++i) {
@@ -468,7 +468,7 @@ TYPED_TEST(ConvOpTest, Test1x1Conv) {
   const Dtype* output_data;
   const Dtype* ref_output_data;
   mynet_conv(this->tensor_input_, op_param.conv_param.get(), op->tensors(),
-             this->MakeReferenceTop(this->tensor_output_));
+             this->MakeReferenceInput(this->tensor_output_));
   output_data = this->tensor_output_->cpu_data();
   ref_output_data = this->ref_tensor_output_->cpu_data();
   for (uint32_t i = 0; i < this->tensor_output_->count(); ++i) {
@@ -496,7 +496,7 @@ TYPED_TEST(ConvOpTest, TestSimpleConvGroup) {
   const Dtype* output_data;
   const Dtype* ref_output_data;
   mynet_conv(this->tensor_input_, op_param.conv_param.get(), op->tensors(),
-             this->MakeReferenceTop(this->tensor_output_));
+             this->MakeReferenceInput(this->tensor_output_));
   output_data = this->tensor_output_->cpu_data();
   ref_output_data = this->ref_tensor_output_->cpu_data();
   for (uint32_t i = 0; i < this->tensor_output_->count(); ++i) {
