@@ -144,7 +144,7 @@ void mynet_cpu_scale<double>(uint32_t n, double alpha, const double* x,
 
 template <typename Dtype>
 void mynet_rng_uniform(uint32_t n, Dtype a, Dtype b, Dtype* r) {
-  DCHECK_LE(n, INT32_MAX);
+  DCHECK_LE(n, static_cast<uint32_t>(INT32_MAX));
   DCHECK(r);
   DCHECK_LE(a, b);
 
@@ -166,8 +166,8 @@ template void mynet_rng_uniform<double>(uint32_t n, double a, double b,
 
 template <typename Dtype>
 void mynet_rng_gaussian(uint32_t n, Dtype a, Dtype sigma, Dtype* r) {
-  DCHECK_LE(n, INT32_MAX);
-  DCHECK_LE(sigma, INT32_MAX);
+  DCHECK_LE(n, static_cast<uint32_t>(INT32_MAX));
+  DCHECK_LE(sigma, static_cast<Dtype>(INT32_MAX));
   DCHECK(r);
   std::normal_distribution<Dtype> random_distribution(a, sigma);
 
@@ -186,7 +186,7 @@ template void mynet_rng_gaussian<double>(uint32_t n, double mu, double sigma,
 
 template <typename Dtype>
 void mynet_rng_bernoulli(uint32_t n, Dtype p, uint32_t* r) {
-  DCHECK_LE(n, INT32_MAX);
+  DCHECK_LE(n, static_cast<uint32_t>(INT32_MAX));
   DCHECK(r);
   DCHECK_LE(p, 1);
   std::bernoulli_distribution random_distribution(p);
