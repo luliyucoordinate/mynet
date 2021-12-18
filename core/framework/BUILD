@@ -1,38 +1,77 @@
 cc_test(
-    name = "ops_factory_test",
-    srcs = ["ops_factory_test.cc"],
+    name = "solver_factory_test",
+    srcs = ["solver_factory_test.cc"],
     copts = [
         "-std=c++17",
     ],
     deps = [
         ":mynet_test_main",
-        ":ops_factory",
+        ":solver",
+        ":solver_factory",
         "//core/schema:mynet_fbs",
     ],
 )
 
 cc_library(
-    name = "ops_factory",
-    srcs = [
-        "ops_factory.cc",
-    ],
-    hdrs = ["ops_factory.hpp"],
+    name = "solver_factory",
+    hdrs = ["solver_factory.hpp"],
     copts = [
         "-std=c++17",
     ],
     deps = [
         ":common",
-        ":ops",
+        "//core/schema:mynet_fbs",
+    ],
+)
+
+cc_library(
+    name = "solver",
+    hdrs = ["solver.hpp"],
+    copts = [
+        "-std=c++17",
+    ],
+    deps = [
+        ":common",
+        "//core/schema:mynet_fbs",
+    ],
+)
+
+cc_test(
+    name = "op_factory_test",
+    srcs = ["op_factory_test.cc"],
+    copts = [
+        "-std=c++17",
+    ],
+    deps = [
+        ":mynet_test_main",
+        ":op_factory",
+        "//core/schema:mynet_fbs",
+    ],
+)
+
+cc_library(
+    name = "op_factory",
+    srcs = [
+        "op_factory.cc",
+    ],
+    hdrs = ["op_factory.hpp"],
+    copts = [
+        "-std=c++17",
+    ],
+    visibility = ["//visibility:public"],
+    deps = [
+        ":common",
+        ":op",
         "//core/kernels:conv_ops",
     ],
 )
 
 cc_library(
-    name = "ops",
+    name = "op",
     srcs = [
-        "ops.cc",
+        "op.cc",
     ],
-    hdrs = ["ops.hpp"],
+    hdrs = ["op.hpp"],
     visibility = ["//visibility:public"],
     deps = [
         ":common",
@@ -139,7 +178,10 @@ cc_library(
 cc_library(
     name = "common",
     srcs = ["common.cc"],
-    hdrs = ["common.hpp"],
+    hdrs = [
+        "common.hpp",
+        "rng.hpp",
+    ],
     visibility = ["//visibility:public"],
     deps = [
         "@com_github_gflags_gflags//:gflags",

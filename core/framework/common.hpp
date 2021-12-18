@@ -14,6 +14,7 @@
 #include <fstream>
 #include <iostream>
 #include <map>
+#include <memory>
 #include <set>
 #include <sstream>
 #include <string>
@@ -50,17 +51,41 @@ class Mynet {
   ~Mynet();
 
   enum Mode { CPU, GPU };
+  class RNG {
+   public:
+    RNG();
+    explicit RNG(unsigned int seed);
+    explicit RNG(const RNG&);
+    RNG& operator=(const RNG&);
+    void* generator();
 
+   private:
+    class Generator;
+    std::shared_ptr<Generator> generator_;
+  };
+
+  // Getters for boost rng, curand, and cublas handles
+  inline static RNG& rng_stream() {
+    if (!Get().random_generator_) {
+      Get().random_generator_.reset(new RNG());
+    }
+    return *(Get().random_generator_);
+  }
   // Thread local context for Mynet. Moved to common.cpp instead of
   // including boost/thread.hpp to avoid a boost/NVCC issues (#1009, #1010)
   // on OSX. Also fails on Linux with CUDA 7.0.18.
   static Mynet& Get();
 
   inline static Mode mode() { return Get().mode_; }
+  inline static void set_mode(Mode mode) { Get().mode_ = mode; }
+  static void set_random_seed(uint32_t seed);
+  inline static uint32_t solver_rank() { return Get().solver_rank_; }
+  inline static void set_solver_rank(uint32_t val) { Get().solver_rank_ = val; }
   inline static bool root_solver() { return Get().solver_rank_ == 0ul; }
 
  protected:
   Mode mode_;
+  std::shared_ptr<RNG> random_generator_;
 
   // Parallel training
   uint32_t solver_count_;
