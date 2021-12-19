@@ -29,6 +29,41 @@ cc_library(
     ],
 )
 
+cc_test(
+    name = "fully_connected_op_test",
+    srcs = ["fully_connected_op_test.cc"],
+    copts = [
+        "-std=c++17",
+    ],
+    deps = [
+        ":fully_connected_op",
+        ":gradient_check_util",
+        "//core/framework:mynet_test_main",
+        "//core/schema:mynet_fbs",
+    ],
+)
+
+cc_library(
+    name = "fully_connected_op",
+    srcs = [
+        "fully_connected_op.cc",
+    ],
+    hdrs = ["fully_connected_op.hpp"],
+    copts = [
+        "-std=c++17",
+    ],
+    visibility = ["//visibility:public"],
+    deps = [
+        "//core/framework:common",
+        "//core/framework:filler",
+        "//core/framework:math_functions",
+        "//core/framework:op",
+        "//core/framework:op_factory",
+        "//core/framework:tensor",
+        "//core/schema:mynet_fbs",
+    ],
+)
+
 cc_library(
     name = "im2col",
     srcs = [
@@ -70,5 +105,15 @@ cc_library(
         "//core/framework:op_factory",
         "//core/framework:tensor",
         "//core/schema:mynet_fbs",
+    ],
+)
+
+cc_library(
+    name = "gradient_check_util",
+    hdrs = ["gradient_check_util.hpp"],
+    visibility = ["//visibility:public"],
+    deps = [
+        "//core/framework:op",
+        "//core/framework:tensor",
     ],
 )

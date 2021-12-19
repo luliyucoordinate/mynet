@@ -36,6 +36,20 @@ table ConvParameter {
     transpose: bool;
 }
 
+table DummyDataParameter {
+    data_filler: [FillerParameter];
+    shape: [TensorShape];
+}
+
+table FullyConnectedParameter {
+    num_output: uint = 1;
+    bias_term: bool = true;
+    weight_filler: FillerParameter;
+    bias_filler: FillerParameter;
+    axis: int = 1;
+    transpose: bool;
+}
+
 enum Phase : byte {
     TRAIN = 0,
     TEST = 1
@@ -64,6 +78,8 @@ table OpParameter {
     tensors: [TensorFlat];
     propagate_down: [bool];
     conv_param: ConvParameter;
+    dummy_data_param: DummyDataParameter;
+    fully_connected_param: FullyConnectedParameter;
 }
 
 root_type OpParameter;
