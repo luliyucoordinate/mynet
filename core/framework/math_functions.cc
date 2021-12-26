@@ -138,8 +138,8 @@ void mynet_cpu_scale<float>(uint32_t n, float alpha, const float* x, float* y) {
 template <>
 void mynet_cpu_scale<double>(uint32_t n, double alpha, const double* x,
                              double* y) {
-  cblas_dcopy(n, x, 1, y, 1);
-  cblas_dscal(n, alpha, y, 1);
+  cblas_dcopy(static_cast<int>(n), x, 1, y, 1);
+  cblas_dscal(static_cast<int>(n), alpha, y, 1);
 }
 
 template <typename Dtype>
@@ -201,5 +201,17 @@ void mynet_rng_bernoulli(uint32_t n, Dtype p, uint32_t* r) {
 template void mynet_rng_bernoulli<double>(uint32_t n, double p, uint32_t* r);
 
 template void mynet_rng_bernoulli<float>(uint32_t n, float p, uint32_t* r);
+
+template <typename Dtype>
+void mynet_exp(uint32_t n, const Dtype* a, Dtype* y) {
+  DCHECK_LE(n, static_cast<uint32_t>(INT32_MAX));
+  for (uint32_t i = 0; i < n; i++) {
+    y[i] = exp(a[i]);
+  }
+}
+
+template void mynet_exp<float>(uint32_t n, const float* a, float* y);
+
+template void mynet_exp<double>(uint32_t n, const double* a, double* y);
 
 }  // namespace mynet
