@@ -64,6 +64,9 @@ void mynet_exp(uint32_t n, const Dtype* a, Dtype* y);
 template <typename Dtype>
 void mynet_div(uint32_t n, const Dtype* a, const Dtype* b, Dtype* y);
 
+template <typename Dtype>
+void mynet_mul(uint32_t n, const Dtype* a, const Dtype* b, Dtype* y);
+
 }  // namespace mynet
 
 #endif  // CORE_FRAMEWORK_MATH_FUNCTIONS_HPP_
