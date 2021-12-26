@@ -64,6 +64,41 @@ cc_library(
     ],
 )
 
+cc_test(
+    name = "softmax_op_test",
+    srcs = ["softmax_op_test.cc"],
+    copts = [
+        "-std=c++17",
+    ],
+    deps = [
+        ":gradient_check_util",
+        ":softmax_op",
+        "//core/framework:mynet_test_main",
+        "//core/schema:mynet_fbs",
+    ],
+)
+
+cc_library(
+    name = "softmax_op",
+    srcs = [
+        "softmax_op.cc",
+    ],
+    hdrs = ["softmax_op.hpp"],
+    copts = [
+        "-std=c++17",
+    ],
+    visibility = ["//visibility:public"],
+    deps = [
+        "//core/framework:common",
+        "//core/framework:filler",
+        "//core/framework:math_functions",
+        "//core/framework:op",
+        "//core/framework:op_factory",
+        "//core/framework:tensor",
+        "//core/schema:mynet_fbs",
+    ],
+)
+
 cc_library(
     name = "im2col",
     srcs = [

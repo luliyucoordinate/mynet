@@ -50,6 +50,11 @@ table FullyConnectedParameter {
     transpose: bool;
 }
 
+table SoftmaxParameter {
+    engine: Engine;
+    axis: int = 1;
+}
+
 enum Phase : byte {
     TRAIN = 0,
     TEST = 1
@@ -80,6 +85,7 @@ table OpParameter {
     conv_param: ConvParameter;
     dummy_data_param: DummyDataParameter;
     fully_connected_param: FullyConnectedParameter;
+    softmax_param: SoftmaxParameter;
 }
 
 root_type OpParameter;
