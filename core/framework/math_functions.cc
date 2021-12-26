@@ -214,4 +214,18 @@ template void mynet_exp<float>(uint32_t n, const float* a, float* y);
 
 template void mynet_exp<double>(uint32_t n, const double* a, double* y);
 
+template <typename Dtype>
+void mynet_div(uint32_t n, const Dtype* a, const Dtype* b, Dtype* y) {
+  DCHECK_LE(n, static_cast<uint32_t>(INT32_MAX));
+  for (uint32_t i = 0; i < n; i++) {
+    y[i] = a[i] / b[i];
+  }
+}
+
+template void mynet_div<float>(uint32_t n, const float* a, const float* b,
+                               float* y);
+
+template void mynet_div<double>(uint32_t n, const double* a, const double* b,
+                                double* y);
+
 }  // namespace mynet

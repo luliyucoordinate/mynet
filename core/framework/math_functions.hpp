@@ -61,6 +61,9 @@ void mynet_rng_bernoulli(uint32_t n, Dtype p, uint32_t* r);
 template <typename Dtype>
 void mynet_exp(uint32_t n, const Dtype* a, Dtype* y);
 
+template <typename Dtype>
+void mynet_div(uint32_t n, const Dtype* a, const Dtype* b, Dtype* y);
+
 }  // namespace mynet
 
 #endif  // CORE_FRAMEWORK_MATH_FUNCTIONS_HPP_
