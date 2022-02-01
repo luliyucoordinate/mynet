@@ -11,7 +11,7 @@ template <typename Dtype>
 void LossOp<Dtype>::OpSetUp(const std::vector<Tensor<Dtype>*>& input,
                             const std::vector<Tensor<Dtype>*>& output) {
   // LossOps have a non-zero (1) loss by default.
-  if (!this->op_param_->loss_weight.empty()) {
+  if (this->op_param_->loss_weight.empty()) {
     this->op_param_->loss_weight.emplace_back(Dtype(1));
   }
 }
