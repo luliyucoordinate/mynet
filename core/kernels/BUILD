@@ -100,6 +100,22 @@ cc_library(
 )
 
 cc_library(
+    name = "loss_op",
+    srcs = [
+        "loss_op.cc",
+    ],
+    hdrs = ["loss_op.hpp"],
+    copts = [
+        "-std=c++17",
+    ],
+    visibility = ["//visibility:public"],
+    deps = [
+        "//core/framework:op",
+        "//core/framework:tensor",
+    ],
+)
+
+cc_library(
     name = "im2col",
     srcs = [
         "im2col.cc",
