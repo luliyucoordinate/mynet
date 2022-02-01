@@ -147,6 +147,41 @@ cc_library(
     ],
 )
 
+cc_test(
+    name = "split_op_test",
+    srcs = ["split_op_test.cc"],
+    copts = [
+        "-std=c++17",
+    ],
+    deps = [
+        ":gradient_check_util",
+        ":split_op",
+        "//core/framework:common",
+        "//core/framework:filler",
+        "//core/framework:mynet_test_main",
+        "//core/framework:tensor",
+        "//core/schema:mynet_fbs",
+    ],
+)
+
+cc_library(
+    name = "split_op",
+    srcs = [
+        "split_op.cc",
+    ],
+    hdrs = ["split_op.hpp"],
+    copts = [
+        "-std=c++17",
+    ],
+    visibility = ["//visibility:public"],
+    deps = [
+        "//core/framework:math_functions",
+        "//core/framework:op",
+        "//core/framework:op_factory",
+        "//core/framework:tensor",
+    ],
+)
+
 cc_library(
     name = "im2col",
     srcs = [
