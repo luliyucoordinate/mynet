@@ -57,6 +57,18 @@ void mynet_axpy<double>(uint32_t N, double alpha, const double* X, double* Y) {
   cblas_daxpy(static_cast<int>(N), alpha, X, 1, Y, 1);
 }
 
+template <>
+void mynet_cpu_axpby<float>(uint32_t N, float alpha, const float* X, float beta,
+                            float* Y) {
+  cblas_saxpby(static_cast<int>(N), alpha, X, 1, beta, Y, 1);
+}
+
+template <>
+void mynet_cpu_axpby<double>(uint32_t N, double alpha, const double* X,
+                             double beta, double* Y) {
+  cblas_daxpby(static_cast<int>(N), alpha, X, 1, beta, Y, 1);
+}
+
 template <typename Dtype>
 void mynet_copy(Dtype* Y, const Dtype* X, uint32_t N) {
   if (X != Y) {
@@ -240,6 +252,34 @@ template void mynet_mul<float>(uint32_t n, const float* a, const float* b,
                                float* y);
 
 template void mynet_mul<double>(uint32_t n, const double* a, const double* b,
+                                double* y);
+
+template <typename Dtype>
+void mynet_sub(uint32_t n, const Dtype* a, const Dtype* b, Dtype* y) {
+  DCHECK_LE(n, static_cast<uint32_t>(INT32_MAX));
+  for (uint32_t i = 0; i < n; i++) {
+    y[i] = a[i] - b[i];
+  }
+}
+
+template void mynet_sub<float>(uint32_t n, const float* a, const float* b,
+                               float* y);
+
+template void mynet_sub<double>(uint32_t n, const double* a, const double* b,
+                                double* y);
+
+template <typename Dtype>
+void mynet_add(uint32_t n, const Dtype* a, const Dtype* b, Dtype* y) {
+  DCHECK_LE(n, static_cast<uint32_t>(INT32_MAX));
+  for (uint32_t i = 0; i < n; i++) {
+    y[i] = a[i] + b[i];
+  }
+}
+
+template void mynet_add<float>(uint32_t n, const float* a, const float* b,
+                               float* y);
+
+template void mynet_add<double>(uint32_t n, const double* a, const double* b,
                                 double* y);
 
 }  // namespace mynet

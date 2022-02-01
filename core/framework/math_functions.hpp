@@ -26,6 +26,10 @@ template <typename Dtype>
 void mynet_axpy(uint32_t N, Dtype alpha, const Dtype* X, Dtype* Y);
 
 template <typename Dtype>
+void mynet_cpu_axpby(uint32_t N, Dtype alpha, const Dtype* X, Dtype beta,
+                     Dtype* Y);
+
+template <typename Dtype>
 void mynet_copy(Dtype* Y, const Dtype* X, uint32_t N);
 
 // no imply for void Y
@@ -66,6 +70,12 @@ void mynet_div(uint32_t n, const Dtype* a, const Dtype* b, Dtype* y);
 
 template <typename Dtype>
 void mynet_mul(uint32_t n, const Dtype* a, const Dtype* b, Dtype* y);
+
+template <typename Dtype>
+void mynet_add(uint32_t n, const Dtype* a, const Dtype* b, Dtype* y);
+
+template <typename Dtype>
+void mynet_sub(uint32_t n, const Dtype* a, const Dtype* b, Dtype* y);
 
 }  // namespace mynet
 
