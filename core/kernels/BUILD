@@ -115,6 +115,38 @@ cc_library(
     ],
 )
 
+cc_test(
+    name = "euclidean_loss_op_test",
+    srcs = ["euclidean_loss_op_test.cc"],
+    copts = [
+        "-std=c++17",
+    ],
+    deps = [
+        ":euclidean_loss_op",
+        ":gradient_check_util",
+        "//core/framework:filler",
+        "//core/framework:mynet_test_main",
+        "//core/schema:mynet_fbs",
+    ],
+)
+
+cc_library(
+    name = "euclidean_loss_op",
+    srcs = [
+        "euclidean_loss_op.cc",
+    ],
+    hdrs = ["euclidean_loss_op.hpp"],
+    copts = [
+        "-std=c++17",
+    ],
+    visibility = ["//visibility:public"],
+    deps = [
+        ":loss_op",
+        "//core/framework:op_factory",
+        "//core/framework:tensor",
+    ],
+)
+
 cc_library(
     name = "im2col",
     srcs = [
