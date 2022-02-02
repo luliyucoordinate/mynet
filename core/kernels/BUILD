@@ -93,7 +93,6 @@ cc_library(
         "//core/framework:filler",
         "//core/framework:math_functions",
         "//core/framework:op",
-        "//core/framework:op_factory",
         "//core/framework:tensor",
         "//core/schema:mynet_fbs",
     ],
