@@ -24,8 +24,8 @@ class SoftmaxOp : public Op<Dtype> {
                        const std::vector<Tensor<Dtype>*>& output);
 
   virtual inline const char* type() const { return "Softmax"; }
-  virtual inline uint32_t ExactNumBottomTensors() const { return 1ul; }
-  virtual inline uint32_t ExactNumTopTensors() const { return 1ul; }
+  virtual inline uint32_t ExactNumInputTensors() const { return 1ul; }
+  virtual inline uint32_t ExactNumOutputTensors() const { return 1ul; }
 
  protected:
   virtual void ForwardCpu(const std::vector<Tensor<Dtype>*>& input,

@@ -195,7 +195,7 @@ class Op {
    * This method should be overridden to return a non-negative value if your
    * op expects some exact number of input tensors.
    */
-  virtual inline uint32_t ExactNumBottomTensors() const { return 0; }
+  virtual inline uint32_t ExactNumInputTensors() const { return 0; }
   /**
    * @brief Returns the minimum number of input tensors required by the op,
    *        or -1 if no minimum number is required.
@@ -203,7 +203,7 @@ class Op {
    * This method should be overridden to return a non-negative value if your
    * op expects some minimum number of input tensors.
    */
-  virtual inline uint32_t MinBottomTensors() const { return 0; }
+  virtual inline uint32_t MinInputTensors() const { return 0; }
   /**
    * @brief Returns the maximum number of input tensors required by the op,
    *        or -1 if no maximum number is required.
@@ -211,7 +211,7 @@ class Op {
    * This method should be overridden to return a non-negative value if your
    * op expects some maximum number of input tensors.
    */
-  virtual inline uint32_t MaxBottomTensors() const { return 0; }
+  virtual inline uint32_t MaxInputTensors() const { return 0; }
   /**
    * @brief Returns the exact number of output tensors required by the op,
    *        or -1 if no exact number is required.
@@ -219,7 +219,7 @@ class Op {
    * This method should be overridden to return a non-negative value if your
    * op expects some exact number of output tensors.
    */
-  virtual inline uint32_t ExactNumTopTensors() const { return 0; }
+  virtual inline uint32_t ExactNumOutputTensors() const { return 0; }
   /**
    * @brief Returns the minimum number of output tensors required by the op,
    *        or -1 if no minimum number is required.
@@ -227,7 +227,7 @@ class Op {
    * This method should be overridden to return a non-negative value if your
    * op expects some minimum number of output tensors.
    */
-  virtual inline uint32_t MinTopTensors() const { return 0; }
+  virtual inline uint32_t MinOutputTensors() const { return 0; }
   /**
    * @brief Returns the maximum number of output tensors required by the op,
    *        or -1 if no maximum number is required.
@@ -235,7 +235,7 @@ class Op {
    * This method should be overridden to return a non-negative value if your
    * op expects some maximum number of output tensors.
    */
-  virtual inline uint32_t MaxTopTensors() const { return 0; }
+  virtual inline uint32_t MaxOutputTensors() const { return 0; }
   /**
    * @brief Returns true if the op requires an equal number of input and
    *        output tensors.
@@ -243,17 +243,17 @@ class Op {
    * This method should be overridden to return true if your op expects an
    * equal number of input and output tensors.
    */
-  virtual inline bool EqualNumBottomTopTensors() const { return false; }
+  virtual inline bool EqualNumInputOutputTensors() const { return false; }
 
   /**
    * @brief Return whether "anonymous" output tensors are created automatically
    *        by the op.
    *
    * If this method returns true, Net::Init will create enough "anonymous"
-   * output tensors to fulfill the requirement specified by ExactNumTopTensors()
-   * or EMinTopTensors().
+   * output tensors to fulfill the requirement specified by
+   * ExactNumOutputTensors() or EMinOutputTensors().
    */
-  virtual inline bool AutoTopTensors() const { return false; }
+  virtual inline bool AutoOutputTensors() const { return false; }
 
   /**
    * @brief Return whether to allow force_backward for a given input tensor
@@ -321,47 +321,47 @@ class Op {
   /**
    * Called by the parent op's SetUp to check that the number of input
    * and output tensors provided as input match the expected numbers specified
-   * by the {ExactNum,Min,Max}{Bottom,Top}tensors() functions.
+   * by the {ExactNum,Min,Max}{input,Output}tensors() functions.
    */
   virtual void CheckTensorCounts(const std::vector<Tensor<Dtype>*>& input,
                                  const std::vector<Tensor<Dtype>*>& output) {
-    if (ExactNumBottomTensors() > 0ul) {
-      DCHECK_EQ(ExactNumBottomTensors(), input.size())
-          << type() << " op takes " << ExactNumBottomTensors()
+    if (ExactNumInputTensors() > 0ul) {
+      DCHECK_EQ(ExactNumInputTensors(), input.size())
+          << type() << " op takes " << ExactNumInputTensors()
           << " input tensor(s) as input.";
     }
 
-    if (MinBottomTensors() > 0ul) {
-      DCHECK_LE(MinBottomTensors(), input.size())
-          << type() << " op takes at least " << MinBottomTensors()
+    if (MinInputTensors() > 0ul) {
+      DCHECK_LE(MinInputTensors(), input.size())
+          << type() << " op takes at least " << MinInputTensors()
           << " input tensor(s) as input.";
     }
 
-    if (MaxBottomTensors() > 0ul) {
-      DCHECK_GE(MaxBottomTensors(), input.size())
-          << type() << " op takes at most " << MaxBottomTensors()
+    if (MaxInputTensors() > 0ul) {
+      DCHECK_GE(MaxInputTensors(), input.size())
+          << type() << " op takes at most " << MaxInputTensors()
           << " input tensor(s) as input.";
     }
 
-    if (ExactNumTopTensors() > 0ul) {
-      DCHECK_EQ(ExactNumTopTensors(), output.size())
-          << type() << " op produces " << ExactNumTopTensors()
+    if (ExactNumOutputTensors() > 0ul) {
+      DCHECK_EQ(ExactNumOutputTensors(), output.size())
+          << type() << " op produces " << ExactNumOutputTensors()
           << " output tensor(s) as output.";
     }
 
-    if (MinTopTensors() > 0ul) {
-      DCHECK_LE(MinTopTensors(), output.size())
-          << type() << " op produces at least " << MinTopTensors()
+    if (MinOutputTensors() > 0ul) {
+      DCHECK_LE(MinOutputTensors(), output.size())
+          << type() << " op produces at least " << MinOutputTensors()
           << " output tensor(s) as output.";
     }
 
-    if (MaxTopTensors() > 0ul) {
-      DCHECK_GE(MaxTopTensors(), output.size())
-          << type() << " op produces at most " << MaxTopTensors()
+    if (MaxOutputTensors() > 0ul) {
+      DCHECK_GE(MaxOutputTensors(), output.size())
+          << type() << " op produces at most " << MaxOutputTensors()
           << " output tensor(s) as output.";
     }
 
-    if (EqualNumBottomTopTensors()) {
+    if (EqualNumInputOutputTensors()) {
       DCHECK_EQ(input.size(), output.size())
           << type() << " op produces one output tensor as output for each "
           << "input tensor input.";
