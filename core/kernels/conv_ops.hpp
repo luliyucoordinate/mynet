@@ -49,7 +49,7 @@ class ConvOp : public Op<Dtype> {
 
   /// @brief The spatial dimensions of the input.
   inline uint32_t input_shape(uint32_t i) {
-    return bottom_shape_[channel_axis_ + i];
+    return input_shape_[channel_axis_ + i];
   }
 
   /// @brief The spatial dimensions of a filter kernel.
@@ -66,11 +66,11 @@ class ConvOp : public Op<Dtype> {
   std::vector<uint32_t> col_buffer_shape_;
   /// @brief The spatial dimensions of the output.
   std::vector<uint32_t> output_shape_;
-  std::vector<uint32_t> bottom_shape_;
+  std::vector<uint32_t> input_shape_;
 
   uint32_t num_spatial_axes_;
-  uint32_t bottom_dim_;
-  uint32_t top_dim_;
+  uint32_t input_dim_;
+  uint32_t output_dim_;
 
   uint32_t channel_axis_;
   uint32_t num_;

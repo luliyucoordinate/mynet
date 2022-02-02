@@ -22,22 +22,22 @@ template <typename Dtype>
 class DummyDataOp : public Op<Dtype> {
  public:
   explicit DummyDataOp(OpParameterT* param) : Op<Dtype>(param) {}
-  virtual void OpSetUp(const std::vector<Tensor<Dtype>*>& bottom,
-                       const std::vector<Tensor<Dtype>*>& top);
-  // Data layers have no bottoms, so reshaping is trivial.
-  virtual void Reshape(const std::vector<Tensor<Dtype>*>& bottom,
-                       const std::vector<Tensor<Dtype>*>& top) {}
+  virtual void OpSetUp(const std::vector<Tensor<Dtype>*>& input,
+                       const std::vector<Tensor<Dtype>*>& output);
+  // Data layers have no inputs, so reshaping is trivial.
+  virtual void Reshape(const std::vector<Tensor<Dtype>*>& input,
+                       const std::vector<Tensor<Dtype>*>& output) {}
 
   virtual inline const char* type() const { return "DummyData"; }
   virtual inline uint32_t ExactNumInputTensors() const { return 0ul; }
   virtual inline uint32_t MinOutputTensors() const { return 1ul; }
 
  protected:
-  virtual void ForwardCpu(const std::vector<Tensor<Dtype>*>& bottom,
-                          const std::vector<Tensor<Dtype>*>& top);
-  virtual void BackwardCpu(const std::vector<Tensor<Dtype>*>& top,
+  virtual void ForwardCpu(const std::vector<Tensor<Dtype>*>& input,
+                          const std::vector<Tensor<Dtype>*>& output);
+  virtual void BackwardCpu(const std::vector<Tensor<Dtype>*>& output,
                            const std::vector<bool>& propagate_down,
-                           const std::vector<Tensor<Dtype>*>& bottom) {}
+                           const std::vector<Tensor<Dtype>*>& input) {}
 
   std::vector<std::shared_ptr<Filler<Dtype>>> fillers_;
   std::vector<bool> refill_;

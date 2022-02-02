@@ -206,23 +206,23 @@ void ConvOp<Dtype>::Reshape(const std::vector<Tensor<Dtype>*>& input,
   DCHECK_EQ(input[0]->shape(channel_axis_), channels_)
       << "Input size incompatible with conv kernel.";
   // TODO(coordinate): generalize to handle inputs of different shapes.
-  for (uint32_t bottom_id = 1; bottom_id < input.size(); ++bottom_id) {
-    DCHECK(input[0]->shape() == input[bottom_id]->shape())
+  for (uint32_t input_id = 1; input_id < input.size(); ++input_id) {
+    DCHECK(input[0]->shape() == input[input_id]->shape())
         << "shape mismatch - input[0]: " << input[0]->shape_string()
-        << " vs. input[" << bottom_id
-        << "]: " << input[bottom_id]->shape_string();
+        << " vs. input[" << input_id
+        << "]: " << input[input_id]->shape_string();
   }
-  // Shape the top.
-  bottom_shape_ = input[0]->shape();
+  // Shape the output.
+  input_shape_ = input[0]->shape();
   compute_output_shape();
-  std::vector<uint32_t> top_shape(input[0]->shape().begin(),
+  std::vector<uint32_t> output_shape(input[0]->shape().begin(),
                                   input[0]->shape().begin() + channel_axis_);
-  top_shape.push_back(num_output_);
+  output_shape.push_back(num_output_);
   for (uint32_t i = 0; i < num_spatial_axes_; ++i) {
-    top_shape.push_back(output_shape_[i]);
+    output_shape.push_back(output_shape_[i]);
   }
-  for (uint32_t top_id = 0; top_id < output.size(); ++top_id) {
-    output[top_id]->Reshape(top_shape);
+  for (uint32_t output_id = 0; output_id < output.size(); ++output_id) {
+    output[output_id]->Reshape(output_shape);
   }
   if (transpose_) {
     conv_out_spatial_dim_ = input[0]->count(first_spatial_axis);
@@ -232,8 +232,8 @@ void ConvOp<Dtype>::Reshape(const std::vector<Tensor<Dtype>*>& input,
   col_offset_ = kernel_dim_ * conv_out_spatial_dim_;
   output_offset_ = conv_out_channels_ * conv_out_spatial_dim_ / group_;
   // Setup input dimensions (conv_input_shape_).
-  std::vector<uint32_t> bottom_dim_tensor_shape(1, num_spatial_axes_ + 1);
-  conv_input_shape_.Reshape(bottom_dim_tensor_shape);
+  std::vector<uint32_t> input_dim_tensor_shape(1, num_spatial_axes_ + 1);
+  conv_input_shape_.Reshape(input_dim_tensor_shape);
   uint32_t* conv_input_shape_data = conv_input_shape_.mutable_cpu_data();
   for (uint32_t i = 0; i < num_spatial_axes_ + 1; ++i) {
     if (transpose_) {
@@ -255,10 +255,10 @@ void ConvOp<Dtype>::Reshape(const std::vector<Tensor<Dtype>*>& input,
     }
   }
   col_buffer_.Reshape(col_buffer_shape_);
-  bottom_dim_ = input[0]->count(channel_axis_);
-  top_dim_ = output[0]->count(channel_axis_);
+  input_dim_ = input[0]->count(channel_axis_);
+  output_dim_ = output[0]->count(channel_axis_);
   num_kernels_im2col_ = conv_in_channels_ * conv_out_spatial_dim_;
-  num_kernels_col2im_ = transpose_ ? top_dim_ : bottom_dim_;
+  num_kernels_col2im_ = transpose_ ? output_dim_ : input_dim_;
   // Set up the all ones "bias multiplier" for adding biases by BLAS
   out_spatial_dim_ = output[0]->count(first_spatial_axis);
   if (bias_term_) {
@@ -366,19 +366,19 @@ void ConvOp<Dtype>::ForwardCpu(const std::vector<Tensor<Dtype>*>& input,
                                const std::vector<Tensor<Dtype>*>& output) {
   const Dtype* weight = this->tensors_[0]->cpu_data();
   for (uint32_t i = 0; i < input.size(); ++i) {
-    const Dtype* bottom_data = input[i]->cpu_data();
-    Dtype* top_data = output[i]->mutable_cpu_data();
+    const Dtype* input_data = input[i]->cpu_data();
+    Dtype* output_data = output[i]->mutable_cpu_data();
     for (uint32_t n = 0; n < this->num_; ++n) {
       if (transpose_) {
-        this->backward_cpu_gemm(bottom_data + n * this->bottom_dim_, weight,
-                                top_data + n * this->top_dim_);
+        this->backward_cpu_gemm(input_data + n * this->input_dim_, weight,
+                                output_data + n * this->output_dim_);
       } else {
-        this->forward_cpu_gemm(bottom_data + n * this->bottom_dim_, weight,
-                               top_data + n * this->top_dim_);
+        this->forward_cpu_gemm(input_data + n * this->input_dim_, weight,
+                               output_data + n * this->output_dim_);
       }
       if (this->bias_term_) {
         const Dtype* bias = this->tensors_[1]->cpu_data();
-        this->forward_cpu_bias(top_data + n * this->top_dim_, bias);
+        this->forward_cpu_bias(output_data + n * this->output_dim_, bias);
       }
     }
   }
@@ -391,14 +391,14 @@ void ConvOp<Dtype>::BackwardCpu(const std::vector<Tensor<Dtype>*>& output,
   const Dtype* weight = this->tensors_[0]->cpu_data();
   Dtype* weight_diff = this->tensors_[0]->mutable_cpu_diff();
   for (uint32_t i = 0; i < output.size(); ++i) {
-    const Dtype* top_diff = output[i]->cpu_diff();
-    const Dtype* bottom_data = input[i]->cpu_data();
-    Dtype* bottom_diff = input[i]->mutable_cpu_diff();
+    const Dtype* output_diff = output[i]->cpu_diff();
+    const Dtype* input_data = input[i]->cpu_data();
+    Dtype* input_diff = input[i]->mutable_cpu_diff();
     // Bias gradient, if necessary.
     if (this->bias_term_ && this->param_propagate_down_[1]) {
       Dtype* bias_diff = this->tensors_[1]->mutable_cpu_diff();
       for (uint32_t n = 0; n < this->num_; ++n) {
-        this->backward_cpu_bias(bias_diff, top_diff + n * this->top_dim_);
+        this->backward_cpu_bias(bias_diff, output_diff + n * this->output_dim_);
       }
     }
     if (this->param_propagate_down_[0] || propagate_down[i]) {
@@ -406,23 +406,23 @@ void ConvOp<Dtype>::BackwardCpu(const std::vector<Tensor<Dtype>*>& output,
         // gradient w.r.t. weight. Note that we will accumulate diffs.
         if (this->param_propagate_down_[0]) {
           if (transpose_) {
-            this->weight_cpu_gemm(top_diff + n * this->top_dim_,
-                                  bottom_data + n * this->bottom_dim_,
+            this->weight_cpu_gemm(output_diff + n * this->output_dim_,
+                                  input_data + n * this->input_dim_,
                                   weight_diff);
           } else {
-            this->weight_cpu_gemm(bottom_data + n * this->bottom_dim_,
-                                  top_diff + n * this->top_dim_, weight_diff);
+            this->weight_cpu_gemm(input_data + n * this->input_dim_,
+                                  output_diff + n * this->output_dim_, weight_diff);
           }
         }
         // gradient w.r.t. input data, if necessary.
         if (propagate_down[i]) {
           if (transpose_) {
-            this->forward_cpu_gemm(top_diff + n * this->top_dim_, weight,
-                                   bottom_diff + n * this->bottom_dim_,
+            this->forward_cpu_gemm(output_diff + n * this->output_dim_, weight,
+                                   input_diff + n * this->input_dim_,
                                    this->param_propagate_down_[0]);
           } else {
-            this->backward_cpu_gemm(top_diff + n * this->top_dim_, weight,
-                                    bottom_diff + n * this->bottom_dim_);
+            this->backward_cpu_gemm(output_diff + n * this->output_dim_, weight,
+                                    input_diff + n * this->input_dim_);
           }
         }
       }

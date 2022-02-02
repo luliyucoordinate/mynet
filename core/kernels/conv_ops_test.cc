@@ -509,7 +509,7 @@ TYPED_TEST(ConvOpTest, TestSobelConv) {
   // as a single filter then comparing the result
   // as the conv of two rectangular filters.
   typedef typename TypeParam::Dtype Dtype;
-  // Fill bottoms with identical Gaussian noise.
+  // Fill inputs with identical Gaussian noise.
   FillerParameterT filler_param;
   filler_param.value = 1.0f;
   auto filler = std::make_shared<UniformFiller<Dtype>>(&filler_param);

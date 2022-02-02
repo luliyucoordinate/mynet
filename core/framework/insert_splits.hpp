@@ -13,8 +13,8 @@
 
 namespace mynet {
 
-// Copy NetParameterTs with SplitOps added to replace any shared bottom
-// tensors with unique bottom tensors provided by the SplitOp.
+// Copy NetParameterTs with SplitOps added to replace any shared input
+// tensors with unique input tensors provided by the SplitOp.
 void InsertSplits(NetParameterT* param);
 
 void ConfigureSplitOp(const std::string& op_name,
