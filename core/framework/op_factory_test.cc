@@ -1,13 +1,14 @@
 // Copyright 2021 coordinate
 // Author: coordinate
 
+#include "op_factory.hpp"
+
 #include <map>
 #include <memory>
 #include <string>
 
 #include "flatbuffers/flatbuffers.h"
 #include "mynet_test_main.hpp"
-#include "op_factory.hpp"
 
 namespace mynet {
 

@@ -41,7 +41,7 @@ class OpRegistry {
     if (Mynet::root_solver()) {
       LOG(INFO) << "Creating Op " << param->name;
     }
-    auto type = param->type;
+    const auto& type = param->type;
     CreatorRegistry& registry = Registry();
     DCHECK_EQ(registry.count(type), 1ul)
         << "Unknown Op type: " << type
@@ -51,11 +51,11 @@ class OpRegistry {
 
   static std::vector<std::string> OpTypeList() {
     CreatorRegistry& registry = Registry();
-    std::vector<std::string> Op_types;
+    std::vector<std::string> op_types;
     for (const auto& [k, v] : registry) {
-      Op_types.push_back(k);
+      op_types.push_back(k);
     }
-    return Op_types;
+    return op_types;
   }
 
  private:
@@ -64,15 +64,15 @@ class OpRegistry {
   OpRegistry() {}
 
   static std::string OpTypeListString() {
-    std::vector<std::string> Op_types = OpTypeList();
-    std::string Op_types_str;
-    for (auto iter = Op_types.begin(); iter != Op_types.end(); ++iter) {
-      if (iter != Op_types.begin()) {
-        Op_types_str += ", ";
+    std::vector<std::string> op_types = OpTypeList();
+    std::string op_types_str;
+    for (auto iter = op_types.begin(); iter != op_types.end(); ++iter) {
+      if (iter != op_types.begin()) {
+        op_types_str += ", ";
       }
-      Op_types_str += *iter;
+      op_types_str += *iter;
     }
-    return Op_types_str;
+    return op_types_str;
   }
 };
 

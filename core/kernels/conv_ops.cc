@@ -216,7 +216,7 @@ void ConvOp<Dtype>::Reshape(const std::vector<Tensor<Dtype>*>& input,
   input_shape_ = input[0]->shape();
   compute_output_shape();
   std::vector<uint32_t> output_shape(input[0]->shape().begin(),
-                                  input[0]->shape().begin() + channel_axis_);
+                                     input[0]->shape().begin() + channel_axis_);
   output_shape.push_back(num_output_);
   for (uint32_t i = 0; i < num_spatial_axes_; ++i) {
     output_shape.push_back(output_shape_[i]);
@@ -411,7 +411,8 @@ void ConvOp<Dtype>::BackwardCpu(const std::vector<Tensor<Dtype>*>& output,
                                   weight_diff);
           } else {
             this->weight_cpu_gemm(input_data + n * this->input_dim_,
-                                  output_diff + n * this->output_dim_, weight_diff);
+                                  output_diff + n * this->output_dim_,
+                                  weight_diff);
           }
         }
         // gradient w.r.t. input data, if necessary.
