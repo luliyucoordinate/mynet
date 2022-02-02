@@ -1,4 +1,60 @@
 cc_test(
+    name = "net_test",
+    srcs = ["net_test.cc"],
+    copts = [
+        "-std=c++17",
+    ],
+    data = [
+        "//core/test_data:tinynet.json",
+    ],
+    deps = [
+        ":net",
+        "//core/framework:mynet_test_main",
+    ],
+)
+
+cc_library(
+    name = "net",
+    srcs = [
+        "net.cc",
+    ],
+    hdrs = ["net.hpp"],
+    copts = [
+        "-std=c++17",
+    ],
+    deps = [
+        ":common",
+        ":insert_splits",
+        ":op",
+        ":op_factory",
+        ":tensor",
+        "//core/kernels:dummy_data_op",
+        "//core/kernels:euclidean_loss_op",
+        "//core/kernels:fully_connected_op",
+        "//core/kernels:split_op",
+        "//core/lib:io",
+        "//core/schema:mynet_fbs",
+    ],
+)
+
+cc_library(
+    name = "insert_splits",
+    srcs = [
+        "insert_splits.cc",
+    ],
+    hdrs = ["insert_splits.hpp"],
+    copts = [
+        "-std=c++17",
+    ],
+    deps = [
+        ":common",
+        ":mynet_test_main",
+        ":op",
+        "//core/schema:mynet_fbs",
+    ],
+)
+
+cc_test(
     name = "solver_factory_test",
     srcs = ["solver_factory_test.cc"],
     copts = [
@@ -63,6 +119,7 @@ cc_library(
         ":common",
         ":op",
         "//core/kernels:conv_ops",
+        "//core/kernels:softmax_op",
     ],
 )
 
@@ -180,7 +237,9 @@ cc_library(
     srcs = ["common.cc"],
     hdrs = [
         "common.hpp",
-        "rng.hpp",
+    ],
+    copts = [
+        "-std=c++17",
     ],
     visibility = ["//visibility:public"],
     deps = [

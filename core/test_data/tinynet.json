@@ -1,0 +1,82 @@
+{
+    "name": "TinyTestNetwork",
+    "ops": [
+        {
+            "name": "data",
+            "type": "DummyData",
+            "dummy_data_param": {
+                "shape": [
+                    {
+                        "dim": [
+                            5,
+                            2,
+                            3,
+                            4
+                        ]
+                    },
+                    {
+                        "dim": [
+                            5,
+                            1,
+                            1,
+                            1
+                        ]
+                    }
+                ],
+                "data_filler": [
+                    {
+                        "type": "gaussian",
+                        "std": 0.01
+                    }
+                ]
+            },
+            "output": [
+                "data",
+                "label"
+            ]
+        },
+        {
+            "name": "fullyconnected",
+            "type": "FullyConnected",
+            "fully_connected_param": {
+                "num_output": 1,
+                "weight_filler": {
+                    "type": "gaussian",
+                    "std": 0.01
+                },
+                "bias_filler": {
+                    "type": "constant",
+                    "value": 0
+                }
+            },
+            "param": [
+                {
+                    "lr_mult": 1,
+                    "decay_mult": 1
+                },
+                {
+                    "lr_mult": 2,
+                    "decay_mult": 0
+                }
+            ],
+            "input": [
+                "data"
+            ],
+            "output": [
+                "fullyconnected"
+            ]
+        },
+        {
+            "name": "loss",
+            "type": "EuclideanLoss",
+            "input": [
+                "fullyconnected",
+                "label"
+            ]
+        }
+    ],
+    "force_backward": true,
+    "state": {
+        "phase": "TRAIN"
+    }
+}

@@ -2,12 +2,6 @@ include "mynet.fbs";
 
 namespace mynet;
 
-table NetState {
-    phase: Phase = TEST;
-    level: uint;
-    stage: [string];
-}
-
 enum SolverMode : byte {
     CPU = 0, 
     GPU = 1,
@@ -66,7 +60,7 @@ table SolverParameter {
     debug_info: bool;
     snapshot_after_train: bool;
 
-    ops_wise_reduce: bool = true;
+    op_wise_reduce: bool = true;
     weight_path: [string];
 }
 

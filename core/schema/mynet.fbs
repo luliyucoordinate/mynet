@@ -1,7 +1,13 @@
 include "tensor.fbs";
-include "ops.fbs";
+include "op.fbs";
 
 namespace mynet;
+
+table NetState {
+    phase: Phase = TEST;
+    level: uint;
+    stage: [string];
+}
 
 table NetParameter {
     name: string;
@@ -9,8 +15,9 @@ table NetParameter {
     input_shape: [TensorShape];
 
     force_backward: bool;
+    state: NetState;
     debug_info: bool;
-    ops: [OpsParameter];
+    ops: [OpParameter];
 }
 
 root_type NetParameter;
