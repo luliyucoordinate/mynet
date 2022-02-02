@@ -37,6 +37,7 @@ cc_library(
         "//core/schema:op.fbs",
         "//core/schema:tensor.fbs",
     ],
+    visibility = ["//visibility:public"],
     deps = [
         ":format",
         "//core/schema:mynet_fbs",
