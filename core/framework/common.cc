@@ -3,9 +3,11 @@
 
 #include "common.hpp"
 
+#include <algorithm>
+#include <chrono>
+#include <iterator>
 #include <memory>
-
-#include "rng.hpp"
+#include <random>
 
 namespace mynet {
 
@@ -20,21 +22,7 @@ Mynet& Mynet::Get() {
 
 // random seeding
 int64_t cluster_seedgen(void) {
-  int64_t s, seed, pid;
-  FILE* f = fopen("/dev/urandom", "rb");
-  if (f && fread(&seed, 1, sizeof(seed), f) == sizeof(seed)) {
-    fclose(f);
-    return seed;
-  }
-
-  LOG(INFO) << "System entropy source not available, "
-               "using fallback algorithm to generate seed instead.";
-  if (f) fclose(f);
-
-  pid = getpid();
-  s = time(NULL);
-  seed = std::abs(((s * 181) * ((pid - 83) * 359)) % 104729);
-  return seed;
+  return std::chrono::system_clock::now().time_since_epoch().count();
 }
 
 void GlobalInit(int* pargc, char*** pargv) {
@@ -57,12 +45,12 @@ void Mynet::set_random_seed(uint32_t seed) {
 
 class Mynet::RNG::Generator {
  public:
-  Generator() : rng_(new mynet::rng_t(cluster_seedgen())) {}
-  explicit Generator(unsigned int seed) : rng_(new mynet::rng_t(seed)) {}
-  mynet::rng_t* rng() { return rng_.get(); }
+  Generator() : rng_(new std::mt19937(cluster_seedgen())) {}
+  explicit Generator(unsigned int seed) : rng_(new std::mt19937(seed)) {}
+  std::mt19937* rng() { return rng_.get(); }
 
  private:
-  std::shared_ptr<mynet::rng_t> rng_;
+  std::shared_ptr<std::mt19937> rng_;
 };
 
 Mynet::RNG::RNG() : generator_(new Generator()) {}
