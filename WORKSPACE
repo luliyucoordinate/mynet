@@ -16,6 +16,7 @@ http_archive(
 
 http_archive(
     name = "com_google_googletest",
+    sha256 = "5cf189eb6847b4f8fc603a3ffff3b0771c08eec7dd4bd961bfd45477dd13eb73",
     strip_prefix = "googletest-609281088cfefc76f9d0ce82e1ff6c30cc3591e5",
     urls = ["https://github.com/google/googletest/archive/609281088cfefc76f9d0ce82e1ff6c30cc3591e5.zip"],
 )
@@ -38,6 +39,7 @@ rules_foreign_cc_dependencies()
 http_archive(
     name = "openblas",
     build_file_content = all_content,
+    sha256 = "30a99dec977594b387a17f49904523e6bc8dd88bd247266e83485803759e4bbe",
     strip_prefix = "OpenBLAS-0.3.15",
     urls = ["https://github.com/xianyi/OpenBLAS/archive/v0.3.15.tar.gz"],
 )
