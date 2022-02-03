@@ -23,9 +23,9 @@ table SolverParameter {
     train_state: NetState;
     test_state: [NetState];
 
-    test_iter: uint;
+    test_iter: [uint];
     test_interval: uint;
-    test_compute_loass: bool;
+    test_compute_loss: bool;
     test_initialization: bool;
     base_lr: float;
 
