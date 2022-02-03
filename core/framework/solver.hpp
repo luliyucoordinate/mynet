@@ -4,13 +4,18 @@
 #ifndef CORE_FRAMEWORK_SOLVER_HPP_
 #define CORE_FRAMEWORK_SOLVER_HPP_
 
+#include <functional>
+#include <memory>
 #include <string>
 #include <vector>
-#include <memory>
-#include <functional>
 
 // #include "benchmark.hpp"
-// #include "net.hpp"
+#include "core/schema/filler_generated.h"
+#include "core/schema/tensor_generated.h"
+#include "core/schema/op_generated.h"
+#include "core/schema/mynet_generated.h"
+#include "core/schema/solver_generated.h"
+#include "net.hpp"
 #include "solver_factory.hpp"
 
 namespace mynet {
@@ -46,9 +51,9 @@ typedef std::function<SolverAction::Enum()> ActionCallback;
 template <typename Dtype>
 class Solver {
  public:
-  explicit Solver(const SolverParameterT* param);
+  explicit Solver(SolverParameterT* param);
   explicit Solver(const std::string& param_file);
-  void Init(const SolverParameterT* param);
+  void Init(SolverParameterT* param);
   void InitTrainNet();
   void InitTestNets();
 
@@ -59,9 +64,11 @@ class Solver {
   SolverAction::Enum GetRequestedAction();
   // The main entry of the solver function. In default, iter will be zero. Pass
   // in a non-zero iter number to resume training for a pre-trained net.
-  virtual void Solve(const char* resume_file = NULL);
-  inline void Solve(const std::string& resume_file) { Solve(resume_file.c_str()); }
-  void Step(int iters);
+  virtual void Solve(const char* resume_file = nullptr);
+  inline void Solve(const std::string& resume_file) {
+    Solve(resume_file.c_str());
+  }
+  void Step(uint32_t iters);
   // The Restore method simply dispatches to one of the
   // RestoreSolverStateFrom___ protected methods. You should implement these
   // methods to restore the state from the appropriate snapshot type.
@@ -73,11 +80,11 @@ class Solver {
   void Snapshot();
   virtual ~Solver() {}
   inline const SolverParameterT* param() const { return param_; }
-//   inline std::shared_ptr<Net<Dtype> > net() { return net_; }
-//   inline const std::vector<std::shared_ptr<Net<Dtype>>>& test_nets() {
-//     return test_nets_;
-//   }
-  int iter() const { return iter_; }
+  inline std::shared_ptr<Net<Dtype>> net() { return net_; }
+  inline const std::vector<std::shared_ptr<Net<Dtype>>>& test_nets() {
+    return test_nets_;
+  }
+  uint32_t iter() const { return iter_; }
 
   // Invoked at specific points during an iteration
   class Callback {
@@ -102,22 +109,22 @@ class Solver {
 
  protected:
   std::string SnapshotFilename(const std::string& extension);
-  std::string SnapshotToBinaryProto();
-  std::string SnapshotToHDF5();
+  std::string SnapshotToBinaryFlat();
   // The test routine
   void TestAll();
-  void Test(const int test_net_id = 0);
+  void Test(const uint32_t test_net_id = 0);
   virtual void SnapshotSolverState(const std::string& model_filename) = 0;
-  virtual void RestoreSolverStateFromHDF5(const std::string& state_file) = 0;
-  virtual void RestoreSolverStateFromBinaryProto(const std::string& state_file) = 0;
-  void DisplayOutputBlobs(const int net_id);
-  void UpdateSmoothedLoss(Dtype loss, int start_iter, int average_loss);
+  virtual void RestoreSolverStateFromBinaryFlat(
+      const std::string& state_file) = 0;
+  void DisplayOutputTensors(const uint32_t net_id);
+  void UpdateSmoothedLoss(Dtype loss, uint32_t start_iter,
+                          uint32_t average_loss);
 
   SolverParameterT* param_;
-  int iter_;
-  int current_step_;
-//   std::shared_ptr<Net<Dtype>> net_;
-//   std::vector<std::shared_ptr<Net<Dtype>>> test_nets_;
+  uint32_t iter_;
+  uint32_t current_step_;
+  std::shared_ptr<Net<Dtype>> net_;
+  std::vector<std::shared_ptr<Net<Dtype>>> test_nets_;
   std::vector<Callback*> callbacks_;
   std::vector<Dtype> losses_;
   Dtype smoothed_loss_;
@@ -130,7 +137,6 @@ class Solver {
   bool requested_early_exit_;
 
   // Timing information, handy to tune e.g. nbr of GPUs
-//   Timer iteration_timer_;
   float iterations_last_;
 
   DISABLE_COPY_AND_ASSIGN(Solver);
