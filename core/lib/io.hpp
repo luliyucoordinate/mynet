@@ -14,8 +14,9 @@
 
 #include "core/schema/filler_generated.h"
 #include "core/schema/tensor_generated.h"
-#include "core/schema/op_generated.h"  // tensor and filler must before than op
+#include "core/schema/op_generated.h"
 #include "core/schema/mynet_generated.h"
+#include "core/schema/solver_generated.h"  // filler, tensor, op, mynet, solver
 #include "format.hpp"
 
 #ifndef MYNET_TMP_DIR_RETRIES
@@ -47,7 +48,7 @@ inline void MakeTempFilename(std::string* temp_filename) {
     temp_files_subpath = path_string;
   }
   *temp_filename =
-      (temp_files_subpath / mynet::format_int(next_temp_file++, 9)).string();
+      (temp_files_subpath / format_int(next_temp_file++, 9)).string();
 }
 
 bool ReadNetParamsFromTextFile(const char* filename, NetParameterT** flat);
@@ -76,6 +77,10 @@ inline void WriteNetParamsToBinaryFile(const NetParameterT* flat,
                                        const std::string& filename) {
   WriteNetParamsToBinaryFile(flat, filename.c_str());
 }
+
+// Read parameters from a file into a SolverParameter proto message.
+void ReadSolverParamsFromTextFile(const std::string& param_file,
+                                  SolverParameterT** param);
 
 }  // namespace mynet
 
