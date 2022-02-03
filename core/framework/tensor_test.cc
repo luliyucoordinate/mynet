@@ -84,7 +84,7 @@ TYPED_TEST(TensorSimpleTest, TestToFlat) {
   EXPECT_EQ(tensor_flat->channels, 2ul);
 }
 
-TYPED_TEST(TensorSimpleTest, TestLegacytensorFlatShapeEquals) {
+TYPED_TEST(TensorSimpleTest, TestLegacyTensorFlatShapeEquals) {
   TensorFlatT tensor_flat;
   // Reshape to (3 x 2).
   std::vector<uint32_t> shape = {3ul, 2ul};
