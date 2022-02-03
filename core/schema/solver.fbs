@@ -61,7 +61,7 @@ table SolverParameter {
     snapshot_after_train: bool;
 
     op_wise_reduce: bool = true;
-    weight_path: [string];
+    weights: [string];
 }
 
 root_type SolverParameter;
