@@ -282,4 +282,17 @@ template void mynet_add<float>(uint32_t n, const float* a, const float* b,
 template void mynet_add<double>(uint32_t n, const double* a, const double* b,
                                 double* y);
 
+template <typename Dtype>
+void mynet_cpu_sign(uint32_t n, const Dtype* a, Dtype* b) {
+  DCHECK_LE(n, static_cast<uint32_t>(INT32_MAX));
+  DCHECK(a);
+  DCHECK(b);
+  for (uint32_t i = 0; i < n; i++) {
+    b[i] = (Dtype(0) < a[i]) - (a[i] < Dtype(0));
+  }
+}
+
+template void mynet_cpu_sign<float>(uint32_t n, const float* a, float* b);
+
+template void mynet_cpu_sign<double>(uint32_t n, const double* a, double* b);
 }  // namespace mynet

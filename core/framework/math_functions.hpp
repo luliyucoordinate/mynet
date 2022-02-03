@@ -77,6 +77,9 @@ void mynet_add(uint32_t n, const Dtype* a, const Dtype* b, Dtype* y);
 template <typename Dtype>
 void mynet_sub(uint32_t n, const Dtype* a, const Dtype* b, Dtype* y);
 
+template <typename Dtype>
+void mynet_cpu_sign(uint32_t n, const Dtype* a, Dtype* b);
+
 }  // namespace mynet
 
 #endif  // CORE_FRAMEWORK_MATH_FUNCTIONS_HPP_
