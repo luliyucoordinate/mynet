@@ -708,15 +708,19 @@ void Net<Dtype>::CopyTrainedOpsFromBinaryFlat(
 
 template <typename Dtype>
 flatbuffers::DetachedBuffer Net<Dtype>::ToFlat(bool write_diff) {
+  NetParameterT net_param;
+  net_param.name = name_;
+  // Add input and output
+  DLOG(INFO) << "Serializing " << ops_.size() << " ops";
   flatbuffers::FlatBufferBuilder flatbuffer_builder;
   for (uint32_t i = 0; i < ops_.size(); ++i) {
     flatbuffers::unique_ptr<mynet::OpParameterT> op(
         flatbuffers::GetMutableRoot<OpParameter>(
             ops_[i]->ToFlat(write_diff).data())
             ->UnPack());
-    net_param_->ops.push_back(std::move(op));
+    net_param.ops.push_back(std::move(op));
   }
-  flatbuffer_builder.Finish(NetParameter::Pack(flatbuffer_builder, net_param_));
+  flatbuffer_builder.Finish(NetParameter::Pack(flatbuffer_builder, &net_param));
   return flatbuffer_builder.Release();
 }
 

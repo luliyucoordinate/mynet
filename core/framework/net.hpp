@@ -288,8 +288,6 @@ class Net {
   /// @brief Helper for displaying debug info in Update.
   void UpdateDebugInfo(uint32_t param_id);
 
-  /** The flatbuffer that stores the net parameters */
-  NetParameterT* net_param_;
   /// @brief The network name
   std::string name_;
   /// @brief The phase: TRAIN or TEST
