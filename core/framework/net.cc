@@ -589,7 +589,7 @@ void Net<Dtype>::UpdateDebugInfo(uint32_t param_id) {
 }
 
 template <typename Dtype>
-void Net<Dtype>::ShareTrainedOpWith(const Net* other) {
+void Net<Dtype>::ShareTrainedOpsWith(const Net* other) {
   uint32_t num_source_op = other->ops().size();
   for (uint32_t i = 0; i < num_source_op; ++i) {
     auto source_op = other->ops()[i].get();

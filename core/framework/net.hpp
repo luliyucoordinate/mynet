@@ -111,7 +111,7 @@ class Net {
    * @brief For an already initialized net, implicitly copies (i.e., using no
    *        additional memory) the pre-trained op from another Net.
    */
-  void ShareTrainedOpWith(const Net* other);
+  void ShareTrainedOpsWith(const Net* other);
   // For an already initialized net, CopyTrainedOpFrom() copies the already
   // trained op from another net parameter instance.
   /**
