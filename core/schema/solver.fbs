@@ -12,6 +12,13 @@ enum SnapshotFormat : byte {
     BINARY = 1,
 }
 
+table SolverState {
+    iter: uint;
+    learned_net: string;
+    history: [TensorFlat];
+    current_step: uint = 0;
+}
+
 table SolverParameter {
     net: string;
     net_param: NetParameter;
@@ -42,7 +49,7 @@ table SolverParameter {
 
     regularization_type: string;
     step_size: uint;
-    step_value: uint;
+    step_value: [uint];
 
     clip_gradients: float = -1;
     snapshot: uint;
