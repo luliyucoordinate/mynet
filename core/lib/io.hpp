@@ -79,8 +79,13 @@ inline void WriteNetParamsToBinaryFile(const NetParameterT* flat,
 }
 
 // Read parameters from a file into a SolverParameter proto message.
-void ReadSolverParamsFromTextFile(const std::string& param_file,
+bool ReadSolverParamsFromTextFile(const char* param_file,
                                   SolverParameterT** param);
+
+bool ReadSolverParamsFromTextFile(const std::string& param_file,
+                                  SolverParameterT** param) {
+  return ReadSolverParamsFromTextFile(param_file.c_str(), param);
+}
 
 }  // namespace mynet
 
