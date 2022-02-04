@@ -9,7 +9,12 @@
 #include <vector>
 
 #include "common.hpp"
+#include "core/schema/filler_generated.h"
+#include "core/schema/tensor_generated.h"
+#include "core/schema/op_generated.h"
 #include "core/schema/mynet_generated.h"
+#include "core/schema/solver_generated.h"
+#include "solver.hpp"
 
 namespace mynet {
 
@@ -19,7 +24,7 @@ class Solver;
 template <typename Dtype>
 class SolverRegistry {
  public:
-  typedef Solver<Dtype>* (*Creator)(const SolverParameterT*);
+  typedef Solver<Dtype>* (*Creator)(SolverParameterT*);
   typedef std::map<std::string, Creator> CreatorRegistry;
 
   static CreatorRegistry& Registry() {
@@ -36,7 +41,7 @@ class SolverRegistry {
   }
 
   // Get a solver using a SolverParameter.
-  static Solver<Dtype>* CreateSolver(const SolverParameterT* param) {
+  static Solver<Dtype>* CreateSolver(SolverParameterT* param) {
     const std::string& type = param->type;
     CreatorRegistry& registry = Registry();
     DCHECK_EQ(registry.count(type), 1ul)
@@ -76,7 +81,7 @@ template <typename Dtype>
 class SolverRegisterer {
  public:
   SolverRegisterer(const std::string& type,
-                   Solver<Dtype>* (*creator)(const SolverParameterT*)) {
+                   Solver<Dtype>* (*creator)(SolverParameterT*)) {
     SolverRegistry<Dtype>::AddCreator(type, creator);
   }
 };
@@ -85,11 +90,11 @@ class SolverRegisterer {
   static SolverRegisterer<float> g_creator_f_##type(#type, creator<float>); \
   static SolverRegisterer<double> g_creator_d_##type(#type, creator<double>)
 
-#define REGISTER_SOLVER_CLASS(type)                                     \
-  template <typename Dtype>                                             \
-  Solver<Dtype>* Creator_##type##Solver(const SolverParameter& param) { \
-    return new type##Solver<Dtype>(param);                              \
-  }                                                                     \
+#define REGISTER_SOLVER_CLASS(type)                                \
+  template <typename Dtype>                                        \
+  Solver<Dtype>* Creator_##type##Solver(SolverParameterT* param) { \
+    return new type##Solver<Dtype>(param);                         \
+  }                                                                \
   REGISTER_SOLVER_CREATOR(type, Creator_##type##Solver)
 
 }  // namespace mynet
