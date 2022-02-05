@@ -119,10 +119,13 @@ void Solver<Dtype>::InitTrainNet() {
   net_state->phase = Phase_TRAIN;
   net_state->stage = net_param->state->stage;
   net_state->level = net_param->state->level;
-  const auto& param_train_state_stage = param_->train_state->stage;
-  net_state->stage.insert(net_state->stage.end(),
-                          param_train_state_stage.begin(),
-                          param_train_state_stage.end());
+  if (param_->train_state != nullptr) {
+    const auto& param_train_state_stage = param_->train_state->stage;
+    net_state->stage.insert(net_state->stage.end(),
+                            param_train_state_stage.begin(),
+                            param_train_state_stage.end());
+  }
+
   net_param->state = std::move(net_state);
   net_.reset(new Net<Dtype>(net_param));
   for (uint32_t w_idx = 0; w_idx < param_->weights.size(); ++w_idx) {

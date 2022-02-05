@@ -35,6 +35,7 @@ cc_library(
         "//core/schema:filler.fbs",
         "//core/schema:net.fbs",
         "//core/schema:op.fbs",
+        "//core/schema:solver.fbs",
         "//core/schema:tensor.fbs",
     ],
     visibility = ["//visibility:public"],

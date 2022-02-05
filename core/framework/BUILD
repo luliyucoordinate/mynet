@@ -62,7 +62,6 @@ cc_test(
     ],
     deps = [
         ":mynet_test_main",
-        ":solver",
         ":solver_factory",
         "//core/schema:mynet_fbs",
     ],
@@ -76,18 +75,57 @@ cc_library(
     ],
     deps = [
         ":common",
+        ":solver",
         "//core/schema:mynet_fbs",
     ],
 )
 
 cc_library(
-    name = "solver",
-    hdrs = ["solver.hpp"],
+    name = "sgd_solver",
+    srcs = ["sgd_solver.cc"],
+    hdrs = ["sgd_solver.hpp"],
     copts = [
         "-std=c++17",
     ],
     deps = [
         ":common",
+        ":solver",
+        ":solver_factory",
+        "//core/lib:io",
+        "//core/schema:mynet_fbs",
+    ],
+)
+
+cc_test(
+    name = "solver_test",
+    srcs = ["solver_test.cc"],
+    copts = [
+        "-std=c++17",
+    ],
+    data = [
+        "//core/test_data:solver.json",
+    ],
+    deps = [
+        ":common",
+        ":mynet_test_main",
+        ":sgd_solver",
+        "//core/lib:io",
+    ],
+)
+
+cc_library(
+    name = "solver",
+    srcs = ["solver.cc"],
+    hdrs = [
+        "solver.hpp",
+    ],
+    copts = [
+        "-std=c++17",
+    ],
+    deps = [
+        ":common",
+        ":net",
+        "//core/lib:io",
         "//core/schema:mynet_fbs",
     ],
 )

@@ -1,3 +1,4 @@
+include "tensor.fbs";
 include "net.fbs";
 
 namespace mynet;
