@@ -1,4 +1,4 @@
-include "mynet.fbs";
+include "net.fbs";
 
 namespace mynet;
 

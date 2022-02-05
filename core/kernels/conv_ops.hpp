@@ -8,7 +8,7 @@
 
 #include "core/framework/op.hpp"
 #include "core/framework/tensor.hpp"
-#include "core/schema/mynet_generated.h"
+#include "core/schema/net_generated.h"
 #include "im2col.hpp"
 
 namespace mynet {

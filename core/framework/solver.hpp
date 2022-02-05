@@ -13,10 +13,9 @@
 #include "core/schema/filler_generated.h"
 #include "core/schema/tensor_generated.h"
 #include "core/schema/op_generated.h"
-#include "core/schema/mynet_generated.h"
+#include "core/schema/net_generated.h"
 #include "core/schema/solver_generated.h"
 #include "net.hpp"
-#include "solver_factory.hpp"
 
 namespace mynet {
 

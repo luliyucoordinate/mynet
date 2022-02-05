@@ -17,7 +17,7 @@ namespace mynet {
 
 bool ReadNetParamsFromTextFile(const char* filename, NetParameterT** flat) {
   std::string schema_file, json_file;
-  DCHECK(flatbuffers::LoadFile("core/schema/mynet.fbs", false, &schema_file))
+  DCHECK(flatbuffers::LoadFile("core/schema/net.fbs", false, &schema_file))
       << "Load schema file error";
   DCHECK(flatbuffers::LoadFile(filename, false, &json_file))
       << "File not found: " << filename;
@@ -38,7 +38,7 @@ void WriteNetParamsToTextFile(const NetParameterT* flat, const char* filename) {
   fbb.Finish(NetParameter::Pack(fbb, flat));
 
   std::string schema_file;
-  DCHECK(flatbuffers::LoadFile("core/schema/mynet.fbs", false, &schema_file));
+  DCHECK(flatbuffers::LoadFile("core/schema/net.fbs", false, &schema_file));
 
   flatbuffers::Parser parser;
   const char* include_directories[] = {"core/schema", nullptr};

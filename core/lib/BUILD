@@ -33,7 +33,7 @@ cc_library(
     ],
     data = [
         "//core/schema:filler.fbs",
-        "//core/schema:mynet.fbs",
+        "//core/schema:net.fbs",
         "//core/schema:op.fbs",
         "//core/schema:tensor.fbs",
     ],

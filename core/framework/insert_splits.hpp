@@ -9,7 +9,7 @@
 #include "core/schema/filler_generated.h"
 #include "core/schema/tensor_generated.h"
 #include "core/schema/op_generated.h"
-#include "core/schema/mynet_generated.h"
+#include "core/schema/net_generated.h"
 
 namespace mynet {
 
